@@ -29,6 +29,7 @@ alias push='git push origin'
 alias stat='git status'
 alias tag='git tag'
 alias newtag='git tag -a'
+
 # User-specific dotfiles alias
 # alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 
@@ -45,7 +46,7 @@ compiler() {
 	return 0;
 }
 
-# Extract function
+# Extract function (More Portable Version)
 # (Requires relevant extractors: unzip, p7zip-full, unrar, bsdtar/libarchive-tools, etc.)
 alias extract='extractor'
 extractor() {
@@ -62,18 +63,18 @@ extractor() {
 			continue
 		fi
 
-		# Use Zsh compatible case matching
+		# Use more portable case matching
 		case $i in
-			*.t@(gz|lz|xz|b@(2|z?(2))|a@(z|r)?(.@(Z|bz?(2)|gz|lzma|xz|zst)))) )
+			*.tar.bz2|*.tar.gz|*.tar.xz|*.tbz2|*.tgz|*.txz|*.tar)
 				c=(bsdtar xvf);;
+			*.zip) c=(unzip);;
+			*.rar) c=(unrar x);;
 			*.7z)  c=(7z x);;
 			*.Z)   c=(uncompress);;
 			*.bz2) c=(bunzip2);;
 			*.exe) c=(cabextract);;
 			*.gz)  c=(gunzip);;
-			*.rar) c=(unrar x);;
 			*.xz)  c=(unxz);;
-			*.zip) c=(unzip);;
 			*.zst) c=(unzstd);;
 			*)     echo "$0: unrecognized file extension: \`$i'" >&2
 				continue;;
@@ -115,7 +116,9 @@ ipinformation() {
 # Set preferred programs (can be overridden by shell-specific files if needed)
 export NAVIGATOR="brave"
 export EDITOR="nvim"
-export TERM="kitty" # Ensure kitty terminfo is installed on target machines
+
+# Alias for VS Code Flatpak
+alias code='flatpak run com.visualstudio.code'
 
 # Flatpak path (if exists)
 [ -d "/var/lib/flatpak/exports/bin" ] && export PATH="$PATH:/var/lib/flatpak/exports/bin"

@@ -64,7 +64,6 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 	else
 		print_error "Unsupported OS/Distribution. Cannot automatically install packages."
 		print_info "Please manually install dependencies for your system."
-		# Don't exit, just skip installation block
 		INSTALL_CMD="unknown"
 	fi
 
@@ -153,12 +152,16 @@ ln -sf "$DOTFILES_DIR/.profile" "$HOME/.profile" || print_error "Failed to link 
 ln -sf "$DOTFILES_DIR/.bashrc" "$HOME/.bashrc" || print_error "Failed to link .bashrc"
 ln -sf "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc" || print_error "Failed to link .zshrc"
 ln -sf "$DOTFILES_DIR/.bash_logout" "$HOME/.bash_logout" || print_error "Failed to link .bash_logout"
-# Add other links here if needed
+
+# Add link for Fish config - UPDATED source filename
+mkdir -p "$HOME/.config/fish" || print_error "Failed to create fish config directory"
+ln -sf "$DOTFILES_DIR/.config.fish" "$HOME/.config/fish/config.fish" || print_error "Failed to link config.fish"
 
 print_info "Dotfiles linked."
 
 print_info "Setup finished!"
 print_info "Please restart your shell or run 'source ~/.bashrc' / 'source ~/.zshrc' for changes to take effect."
+print_info "(For Fish, changes should apply on next launch)"
 
 # Kill the sudo keep-alive background process explicitly using PID
 if [ -n "$sudo_keep_alive_pid" ] && kill -0 "$sudo_keep_alive_pid" 2>/dev/null; then

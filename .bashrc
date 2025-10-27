@@ -26,7 +26,10 @@ fi
 # --- Bash Git-Aware Prompt ---
 
 # Source the git-prompt script (locations vary)
-if [ -f /usr/share/git-core/contrib/completion/git-prompt.sh ]; then
+if [ -n "$PREFIX" ] && [ -f "$PREFIX/share/git/contrib/completion/git-prompt.sh" ]; then
+	# TERMUX-SPECIFIC PATH: Check for git-prompt.sh in Termux's $PREFIX
+	. "$PREFIX/share/git/contrib/completion/git-prompt.sh"
+elif [ -f /usr/share/git-core/contrib/completion/git-prompt.sh ]; then
 	. /usr/share/git-core/contrib/completion/git-prompt.sh
 elif [ -f /usr/lib/git-core/git-prompt.sh ]; then
 	. /usr/lib/git-core/git-prompt.sh

@@ -14,9 +14,20 @@ print_error() {
 
 # --- Global Variable ---
 CAN_INSTALL_PACKAGES=true # Assume yes initially
+IS_TERMUX=false # --- TERMUX CHANGE ---
 
 # Check sudo, set flag if installation isn't possible
 check_sudo_and_set_flag() {
+	# --- TERMUX CHANGE ---
+	# Check for Termux (which doesn't use sudo)
+	if [ -n "$PREFIX" ] && [ -d "$PREFIX/etc" ]; then
+		IS_TERMUX=true
+		CAN_INSTALL_PACKAGES=true
+		print_info "Termux environment detected. Skipping sudo check."
+		return
+	fi
+	# --- END TERMUX CHANGE ---
+
 	if [ "$EUID" -ne 0 ]; then
 		if ! command -v sudo > /dev/null 2>&1; then
 			print_error "sudo command not found. Skipping package installation."
@@ -53,7 +64,11 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 	# --- Basic OS Detection ---
 	OS_ID=""
 	ID_LIKE=""
-	if [ -f /etc/os-release ]; then
+	# --- TERMUX CHANGE ---
+	if [ "$IS_TERMUX" = true ]; then
+		OS_ID="termux"
+	# --- END TERMUX CHANGE ---
+	elif [ -f /etc/os-release ]; then
 		. /etc/os-release
 		OS_ID=$ID
 		ID_LIKE=$ID_LIKE
@@ -69,7 +84,11 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 
 	# Determine Install Command
 	if [[ -z "$INSTALL_CMD" ]]; then # Check if INSTALL_CMD was already set to unknown
-		if [[ "$OS_ID" == "steamos" || "$ID_LIKE" == *"arch"* || "$OS_ID" == "arch" ]]; then
+		# --- TERMUX CHANGE ---
+		if [ "$OS_ID" == "termux" ]; then
+			INSTALL_CMD="pkg"
+		# --- END TERMUX CHANGE ---
+		elif [[ "$OS_ID" == "steamos" || "$ID_LIKE" == *"arch"* || "$OS_ID" == "arch" ]]; then
 			INSTALL_CMD="pacman"
 		elif [[ "$OS_ID" == "ubuntu" || "$OS_ID" == "debian" || "$ID_LIKE" == *"debian"* ]]; then
 			INSTALL_CMD="apt"
@@ -86,7 +105,21 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 
 	# --- Install Commands based on Package Manager ---
 	INSTALL_FAILED=false
-	if [ "$INSTALL_CMD" == "apt" ]; then
+	# --- TERMUX CHANGE ---
+	if [ "$INSTALL_CMD" == "pkg" ]; then
+		print_info "Updating package list (pkg)..."
+		pkg update -y || INSTALL_FAILED=true
+
+		if [ "$INSTALL_FAILED" = false ]; then
+			print_info "Installing packages for Termux..."
+			# Note: No 'sudo'
+			pkg install -y \
+				fish git build-essential curl dnsutils unzip p7zip unrar libarchive cabextract zstd \
+				fzf bat fd ripgrep zoxide \
+				|| INSTALL_FAILED=true
+		fi
+	# --- END TERMUX CHANGE ---
+	elif [ "$INSTALL_CMD" == "apt" ]; then
 		print_info "Updating package list (apt)..."
 		sudo apt-get update -qq || INSTALL_FAILED=true
 

@@ -36,13 +36,18 @@ This configuration provides:
 * Colorized output for `ls`, `grep`, `ip`.
 * Human-readable `df` and `free`.
 * Process management shortcuts (`psa`, `psgrep`, `psmem`, `pscpu`).
-* Common Git commands (`addup`, `addall`, `stat`, `pull`, `push`, etc.).
+* Common Git commands (`addup`, `addall`, `stat`, `pull`, `push`, `gl` for pretty log, etc.).
+* Aliases for modern command-line tools: **`cat`** (replaces with `bat`), **`find`** (replaces with `fd`), and **`grep`** (replaces with `ripgrep` or `rg`).
 * `code` alias for the VS Code Flatpak.
 
 **Helper Functions**:
 * `compile`: Simple C/C++ compilation and execution.
 * `extract`: Universal extractor for various archive types.
-* `ipinfo`: Quick IP/domain information lookup using `curl`.
+* **`ipinfo`**: Quick IP/domain information lookup using `curl`. Calling it without an argument shows **your own** IP information.
+
+**Productivity Tools**:
+* **`zoxide`**: Smart directory jumping (`z <partial dir name>`).
+* **`fzf`**: Interactive fuzzy finder for history (`CTRL-R`), files (`CTRL-T`), and directories (`ALT-C`).
 
 **PATH Management**: Adds `~/.local/bin`, `~/.cargo/bin`, and Flatpak paths to the `PATH`.
 
@@ -56,6 +61,7 @@ This configuration provides:
 
 The `setup.sh` script automatically detects the OS and installs dependencies for:
 
+- **Termux** (Mobile Linux environment)
 - Debian / Ubuntu and derivatives
 - Arch Linux / SteamOS
 - openSUSE
@@ -78,17 +84,15 @@ Manual installation of dependencies might be required on other systems. Basic al
     ```sh
     bash .setup.sh
     ```
-    The script will first check for sudo access.
+    The script handles platform detection, including Termux. It checks for sudo access (which is skipped in Termux) and installs all necessary packages (`fish`, `git`, `fzf`, `bat`, `zoxide`, etc.) using the appropriate package manager.
 
-    If sudo is available, it will detect your Linux distribution and attempt to install necessary packages (e.g., `fish`, `git`, `build-essential` / `base-devel`, `curl`, `dnsutils` / `bind`, `unzip`, `p7zip-full`, `unrar`, `libarchive-tools` / `bsdtar`, `cabextract`, `zstd`).
-
-    If sudo is unavailable (e.g., on school computers), it will skip package installation and print a warning.
-
-    Crucially, it will then automatically create symbolic links from the files in this repository (like `.bashrc`, `.zshrc`, `.sh_common`, and `.config.fish`) to the correct locations in your home directory (`~` and `~/.config/fish/`).
+    It then automatically creates symbolic links from the files in this repository (like `.bashrc`, `.zshrc`, `.sh_common`, and `.config.fish`) to the correct locations in your home directory (`~` and `~/.config/fish/`).
 
 3.  Restart Your Shell:
 
     Close and reopen your terminal, or run `source ~/.bashrc` (for Bash) or `source ~/.zshrc` (for Zsh) to apply the new configuration. Fish will pick up the changes on its next launch.
+
+    **Note for Termux Users:** To make Fish your default shell in Termux, you must run `chsh -s fish` once manually after the setup is complete.
 
 ---
 
@@ -96,11 +100,10 @@ Manual installation of dependencies might be required on other systems. Basic al
 
 Once installed and sourced, the aliases and functions are available in your terminal.
 
-Example: `extract archive.zip`
-
-Example: `compile my_program.c`
-
-Example: `ipinfo google.com`
+Example: `ipinfo` (Shows your own IP details)
+Example: `ipinfo google.com` (Shows IP details for google.com)
+Example: `z cool` (Jumps to your most-used directory containing "cool")
+Example: `cat my_script.sh` (Shows the script with syntax highlighting via `bat`)
 
 Note: Aliases/functions requiring external commands will only work if those commands were successfully installed by `setup.sh` or are already present on the system.
 
@@ -108,19 +111,19 @@ Note: Aliases/functions requiring external commands will only work if those comm
 
 ## Structure
 
-`.sh_common`: Contains aliases, functions, exports shared between **Bash and Zsh**.
+`.sh_common`: Contains aliases, functions, exports shared between **Bash and Zsh**. Includes checks for modern tools like `bat` and `zoxide`.
 
 `.config.fish`: Standalone configuration for the **Fish shell**. Mirrors the aliases, functions, and exports from `.sh_common` using Fish-native syntax.
 
 `.profile`: Read by login shells. Sources `.sh_common` (which sets shared PATH/env vars) and sources `.bashrc` for interactive Bash login shells.
 
-`.bashrc`: Read by interactive non-login Bash shells. Sets Bash-specific options, prompt, completion, sources `.sh_common`, and contains the Fish switch logic.
+`.bashrc`: Read by interactive non-login Bash shells. Sets Bash-specific options, **Git-aware prompt with Termux support**, completion, sources `.sh_common`, and contains the Fish switch logic.
 
-`.zshrc`: Read by interactive Zsh shells. Sets Zsh-specific options, prompt, completion, history, and sources `.sh_common`.
+`.zshrc`: Read by interactive Zsh shells. Sets Zsh-specific options, **Git-aware prompt with variable substitution**, completion, history, and sources `.sh_common`.
 
 `.bash_logout`: Read by Bash login shells upon exit.
 
-`.setup.sh`: Script to install dependencies and link the configuration files into place.
+`.setup.sh`: Script to install dependencies and link the configuration files into place, now including specialized support for **Termux (using `pkg` without `sudo`)**.
 
 ---
 

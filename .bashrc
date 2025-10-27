@@ -23,8 +23,31 @@ if [[ $DISPLAY ]]; then
 	fi
 fi
 
-# Bash Prompt configuration
-PS1='[\u@\h \W]\$ '
+# --- Bash Git-Aware Prompt ---
+
+# Source the git-prompt script (locations vary)
+if [ -f /usr/share/git-core/contrib/completion/git-prompt.sh ]; then
+	. /usr/share/git-core/contrib/completion/git-prompt.sh
+elif [ -f /usr/lib/git-core/git-prompt.sh ]; then
+	. /usr/lib/git-core/git-prompt.sh
+elif [ -f /etc/bash_completion.d/git-prompt ]; then
+	. /etc/bash_completion.d/git-prompt
+fi
+
+# Enable features: %s = branch, * = unstaged, + = staged
+if command -v __git_ps1 > /dev/null; then
+	export GIT_PS1_SHOWDIRTYSTATE=1
+	export GIT_PS1_SHOWUNTRACKEDFILES=
+	export GIT_PS1_SHOWSTASHSTATE=
+	export GIT_PS1_SHOWUPSTREAM=
+
+	# Set the prompt format: [user@host dir] (git-info)$
+	# Use cyan for main prompt, magenta for git
+	PS1='\[\e[0;36m\][\u@\h \W]\[\e[0m\]\[\e[0;35m\]$(__git_ps1 " (%s)")\[\e[0m\]\$ '
+else
+	# Fallback to original prompt if git-prompt.sh wasn't found
+	PS1='[\u@\h \W]\$ '
+fi
 
 # Bash specific options
 shopt -s extglob

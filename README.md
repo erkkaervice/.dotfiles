@@ -29,8 +29,8 @@ This configuration provides:
 **Fish Shell Auto-switch**: Automatically attempts to switch to the Fish shell in graphical sessions (from Bash) if installed.
 
 **Custom Prompt**:
-* Bash: Simple `[\u@\h \W]\$` prompt.
-* Zsh: Git-aware `[%n@%m %1~]%# ` prompt.
+* **Git-Aware Prompts**: Bash, Zsh, and Fish all now feature prompts that display the current Git branch and status (e.g., `*` for unstaged changes, `+` for staged changes).
+* **Color-Coded**: The main prompt (`[user@host dir]`) is colored cyan, and the Git information is colored magenta for clear visibility, mimicking the Fish shell's default behavior.
 
 **Useful Aliases**:
 * Colorized output for `ls`, `grep`, `ip`.

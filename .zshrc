@@ -12,14 +12,27 @@ fi
 autoload -Uz compinit
 compinit -u
 
-# Initialize Prompt System (includes colors) - Keep for other prompt features
+# --- Zsh Git-Aware Prompt ---
+
+# Initialize Prompt System (includes colors)
 autoload -U promptinit
 promptinit
 
-# Zsh prompt configuration using ANSI escape codes
-# \e[0;36m sets color to cyan
-# \e[0m resets color
-PROMPT=$'\e[0;36m[%n@%m %1~]\e[0m%# '
+# Load version control info
+autoload -Uz vcs_info
+precmd() { vcs_info }
+
+# Set a format for the vcs_info
+# %b = branch, %u = unstaged, %c = staged
+# This will show like (main *+): * for unstaged, + for staged
+zstyle ':vcs_info:git:*' formats ' \e[0;35m(%b%u%c)\e[0m'
+zstyle ':vcs_info:git:*' actionformats ' \e[0;35m(%b|%a%u%c)\e[0m'
+zstyle ':vcs_info:git:*' unstagedchars '*'
+zstyle ':vcs_info:git:*' stagedchars '+'
+
+# Set the prompt
+# Cyan for main, plus git info from vcs_info
+PROMPT=$'\e[0;36m[%n@%m %1~]\e[0m${vcs_info_msg_0_}%# '
 
 # Zsh specific options
 setopt EXTENDED_GLOB

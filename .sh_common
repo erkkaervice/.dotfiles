@@ -29,9 +29,33 @@ alias push='git push origin'
 alias stat='git status'
 alias tag='git tag'
 alias newtag='git tag -a'
+alias gl='git log --oneline --graph --decorate --all'
 
 # User-specific dotfiles alias
 # alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
+
+# --- Modern Tool Aliases ---
+# (Requires: bat, fd-find, ripgrep)
+
+# Use bat as a cat replacement
+if command -v bat > /dev/null 2>&1; then
+	alias cat='bat --paging=never'
+# Handle Ubuntu's batcat naming
+elif command -v batcat > /dev/null 2>&1; then
+	alias cat='batcat --paging=never'
+fi
+
+# Use fd as a find replacement
+if command -v fd > /dev/null 2>&1; then
+	alias find='fd'
+fi
+
+# Use ripgrep as a grep replacement
+if command -v rg > /dev/null 2>&1; then
+	alias grep='rg'
+fi
+
+# --- Functions ---
 
 # Compiler function
 # (Requires: build-essential [Debian/Ubuntu] or base-devel [Arch])

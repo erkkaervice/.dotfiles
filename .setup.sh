@@ -94,6 +94,7 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 			print_info "Installing packages for Debian/Ubuntu based system..."
 			sudo apt-get install -y \
 				fish git build-essential curl dnsutils unzip p7zip-full unrar libarchive-tools cabextract zstd \
+				fzf bat fd-find ripgrep zoxide \
 				|| INSTALL_FAILED=true
 		fi
 
@@ -101,6 +102,7 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 		print_info "Installing packages for Arch based system (Arch/SteamOS)..."
 		sudo pacman -Syu --noconfirm --needed \
 			fish git base-devel curl bind unzip p7zip unrar bsdtar cabextract zstd \
+			fzf bat fd ripgrep zoxide \
 			|| INSTALL_FAILED=true
 
 	elif [ "$INSTALL_CMD" == "zypper" ]; then
@@ -111,6 +113,7 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 			print_info "Installing packages for openSUSE..."
 			sudo zypper install -y \
 				fish git-core patterns-devel-base-devel curl bind-utils unzip p7zip-full unrar libarchive-tools cabextract zstd \
+				fzf bat fd-find ripgrep zoxide \
 				|| INSTALL_FAILED=true
 		fi
 
@@ -122,6 +125,7 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 			print_info "Installing packages for Alpine..."
 			sudo apk add \
 				fish git build-base curl bind-tools unzip p7zip unrar libarchive cabextract zstd \
+				fzf bat fd ripgrep zoxide \
 				|| INSTALL_FAILED=true
 		fi
 	else
@@ -169,4 +173,3 @@ if [ -n "$sudo_keep_alive_pid" ] && kill -0 "$sudo_keep_alive_pid" 2>/dev/null; 
 fi
 
 exit 0
-

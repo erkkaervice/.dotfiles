@@ -49,6 +49,18 @@ else
 	PS1='[\u@\h \W]\$ '
 fi
 
+# --- Initialize Modern Tools ---
+
+# Initialize zoxide (smarter cd)
+if command -v zoxide > /dev/null 2>&1; then
+	eval "$(zoxide init bash)"
+fi
+
+# Initialize fzf (fuzzy finder keybindings)
+if [ -f ~/.fzf.bash ]; then
+	. ~/.fzf.bash
+fi
+
 # Bash specific options
 shopt -s extglob
 shopt -s histappend
@@ -83,4 +95,4 @@ complete -cf sudo
 #unset rc
 
 # Example lesspipe setup (often default on Ubuntu)
-#[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+#[ -x /usr/bin/lesspipe ] && eval

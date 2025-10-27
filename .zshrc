@@ -37,6 +37,18 @@ zstyle ':vcs_info:git:*' stagedchars '+'
 # Cyan for main, plus git info from vcs_info
 PROMPT=$'\e[0;36m[%n@%m %1~]\e[0m${vcs_info_msg_0_}%# '
 
+# --- Initialize Modern Tools ---
+
+# Initialize zoxide (smarter cd)
+if command -v zoxide > /dev/null 2>&1; then
+	eval "$(zoxide init zsh)"
+fi
+
+# Initialize fzf (fuzzy finder keybindings)
+if [ -f ~/.fzf.zsh ]; then
+	. ~/.fzf.zsh
+fi
+
 # Zsh specific options
 setopt EXTENDED_GLOB
 setopt HIST_IGNORE_DUPS

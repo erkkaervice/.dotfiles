@@ -49,12 +49,34 @@ alias push='git push origin'
 alias stat='git status'
 alias tag='git tag'
 alias newtag='git tag -a'
+alias gl='git log --oneline --graph --decorate --all'
 # User-specific dotfiles alias
 # alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 
 # Alias for VS Code Flatpak
 # (Requires: flatpak run com.visualstudio.code)
 alias code='flatpak run com.visualstudio.code'
+
+# --- Modern Tool Aliases ---
+# (Requires: bat, fd-find, ripgrep)
+
+# Use bat as a cat replacement
+if command -v bat > /dev/null
+	alias cat='bat --paging=never'
+# Handle Ubuntu's batcat naming
+else if command -v batcat > /dev/null
+	alias cat='batcat --paging=never'
+end
+
+# Use fd as a find replacement
+if command -v fd > /dev/null
+	alias find='fd'
+end
+
+# Use ripgrep as a grep replacement
+if command -v rg > /dev/null
+	alias grep='rg'
+end
 
 # --- Functions ---
 
@@ -156,5 +178,17 @@ function ipinformation --description 'Get IP info using ipinfo.io'
 	echo
 end
 alias ipinfo='ipinformation'
+
+# --- Initialize Modern Tools ---
+
+# Initialize zoxide (smarter cd)
+if command -v zoxide > /dev/null
+	zoxide init fish | source
+end
+
+# Initialize fzf (fuzzy finder keybindings)
+if command -v fzf > /dev/null
+	fzf --fish | source
+end
 
 echo "Fish config loaded."

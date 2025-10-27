@@ -46,8 +46,8 @@ if command -v __git_ps1 > /dev/null; then
 
 	# Set the prompt format: [user@host dir] (git-info)$
 	# Use cyan for main prompt, magenta for git
-	# Use $PS1_USER instead of \u for custom display name
-	PS1='\[\e[0;36m\][$PS1_USER@\h \W]\[\e[0m\]\[\e[0;35m\]$(__git_ps1 " (%s)")\[\e[0m\]\$ '
+	# Use service_user function for the fixed username, and \h for the actual hostname
+	PS1='\[\e[0;36m\][$(service_user)@\h \W]\[\e[0m\]\[\e[0;35m\]$(__git_ps1 " (%s)")\[\e[0m\]\$ '
 else
 	# Fallback to original prompt if git-prompt.sh wasn't found
 	PS1='[\u@\h \W]\$ '

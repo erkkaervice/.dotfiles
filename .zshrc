@@ -35,8 +35,8 @@ zstyle ':vcs_info:git:*' stagedchars '+'
 
 # Set the prompt
 # Cyan for main, plus git info from vcs_info
-# Use $PS1_USER instead of %n for custom display name
-PROMPT=$'\e[0;36m[$PS1_USER@%m %1~]\e[0m${vcs_info_msg_0_}%# '
+# Use service_user function for the fixed username
+PROMPT=$'\e[0;36m[$(service_user)@%m %1~]\e[0m${vcs_info_msg_0_}%# '
 
 # --- Initialize Modern Tools ---
 

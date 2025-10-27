@@ -143,9 +143,12 @@ ipinformation() {
 # Set preferred programs (can be overridden by shell-specific files if needed)
 export NAVIGATOR="brave"
 export EDITOR="nvim"
-# --- Custom Termux Display Names ---
-export HOST="fold"
-export PS1_USER="service"
+
+# --- Prompt Helper Function ---
+# Function to override the displayed system username
+service_user() {
+	echo "ervice"
+}
 
 # Alias for VS Code Flatpak
 alias code='flatpak run com.visualstudio.code'

@@ -1,24 +1,20 @@
 # ~/.config/fish/config.fish - Fish shell configuration
 
 # --- Basic Checks ---
-# Only run in interactive shells
 if not status is-interactive
 	exit
 end
 
 # --- Environment Variables (Global, Exported) ---
-# Set preferred programs
 set -gx EDITOR nvim
 set -gx NAVIGATOR brave
-set -gx TERM kitty # Ensure kitty terminfo is installed
+# TERM is usually best left for the terminal emulator to set
 
 # --- PATH Modifications ---
 # Fish automatically includes ~/.local/bin if it exists
-# Add Cargo bin path if it exists
 if test -d "$HOME/.cargo/bin"
 	fish_add_path "$HOME/.cargo/bin"
 end
-# Add Flatpak path if it exists
 if test -d "/var/lib/flatpak/exports/bin"
 	fish_add_path "/var/lib/flatpak/exports/bin"
 end
@@ -35,7 +31,6 @@ alias free='free -m'
 
 # Processes
 alias psa="ps auxf"
-# Note: Fish doesn't support Bash's -E for psgrep, adjust grep pattern if needed
 alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -e"
 alias psmem='ps auxf | sort -nr -k 4'
 alias pscpu='ps auxf | sort -nr -k 3'
@@ -57,63 +52,50 @@ alias newtag='git tag -a'
 # User-specific dotfiles alias
 # alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 
+# Alias for VS Code Flatpak
+# (Requires: flatpak run com.visualstudio.code)
+alias code='flatpak run com.visualstudio.code'
+
 # --- Functions ---
 
 # Compiler function
 # (Requires: build-essential/base-devel)
 function compile --description 'Compile and run a C/C++ file'
-	# Check for argument
 	if test -z "$argv[1]"
 		echo "Missing operand" >&2
 		return 1
 	end
-
-	# Check if file exists and is readable
 	if not test -r "$argv[1]"
 		printf "File %s does not exist or is not readable\n" "$argv[1]" >&2
 		return 1
 	end
-
-	# Get filename without path for output
 	set -l filename (basename "$argv[1]")
-	set -l output_path "/tmp/$filename.out" # Use simple output name
-
-	# Compile using gcc (can switch to g++ if needed)
+	set -l output_path "/tmp/$filename.out"
 	if gcc "$argv[1]" -Wall -Wextra -Werror -o "$output_path"
-		# Execute if compilation succeeded
 		"$output_path"
-		set -l status $status # Save exit status of the program
+		set -l status $status
 	else
-		# Report compilation failure
 		echo "Compilation failed" >&2
-		set -l status 1 # Set failure status
+		set -l status 1
 	end
-
-	# Clean up executable
 	rm -f "$output_path"
-
 	return $status
 end
 
 # Extract function (Adapted for Fish syntax)
 # (Requires relevant extractors)
 function extract --description 'Extract various archive types'
-	# Check for arguments
 	if test -z "$argv"
-		return 0 # No files given, nothing to do
+		return 0
 	end
-
-	set -l status 0 # Overall status
-
+	set -l status 0
 	for i in $argv
 		set -l cmd
 		if not test -r "$i"
 			echo "extract: file is unreadable: '$i'" >&2
-			set status 1 # Mark failure
+			set status 1
 			continue
 		end
-
-		# Use string match for extensions
 		switch "$i"
 			case '*.tar.bz2' '*.tar.gz' '*.tar.lz' '*.tar.xz' '*.tbz2' '*.tgz' '*.tlz' '*.txz' '*.tar'
 				set cmd bsdtar xvf
@@ -137,29 +119,25 @@ function extract --description 'Extract various archive types'
 				set cmd unzstd
 			case '*'
 				echo "extract: unrecognized file extension: '$i'" >&2
-				set status 1 # Mark failure
+				set status 1
 				continue
 		end
-
-		# Execute the command
-		if set -q cmd[1] # Check if cmd was set
+		if set -q cmd[1]
 			command $cmd "$i"
 			if test $status -ne 0
-				set status 1 # Mark failure if command failed
+				set status 1
 			end
 		end
 	end
 	return $status
 end
-alias extract='extract' # Create alias for the function
+alias extract='extract'
 
 # IP information function (Adapted for Fish syntax)
 # (Requires: curl, host [dnsutils/bind])
 function ipinformation --description 'Get IP info using ipinfo.io'
-	# Check if $1 looks like an IP address (simplified regex)
 	if string match -qr '^([0-9]{1,3}\.){3}[0-9]{1,3}$' -- "$argv[1]"
 		curl "ipinfo.io/$argv[1]"
-	# Check if $1 looks like a domain name (simplified regex)
 	else if string match -qr '^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$' -- "$argv[1]"
 		set -l ip_address (host "$argv[1]" | command grep 'has address' | awk '{print $NF; exit}')
 		if test -n "$ip_address"
@@ -174,22 +152,6 @@ function ipinformation --description 'Get IP info using ipinfo.io'
 	end
 	echo
 end
-alias ipinfo='ipinformation' # Create alias for the function
+alias ipinfo='ipinformation'
 
-
-# --- Fish Specific Settings (Optional) ---
-# Example: Use vi keybindings
-# fish_vi_key_bindings
-
-# Example: Source Oh My Fish or Fisher plugins if installed
-# if status is-interactive
-#    source ~/.local/share/omf/init.fish
-# end
-
-# Example: Set custom prompt function
-# function fish_prompt
-#    # Your custom prompt logic here
-#    printf '[%s@%s %s]%s ' (whoami) (hostname|cut -d . -f 1) (prompt_pwd) (fish_is_root_user && echo '#' || echo '$')
-# end
-
-echo "Fish config loaded." # Optional: Confirmation message
+echo "Fish config loaded."

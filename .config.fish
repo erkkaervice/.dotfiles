@@ -136,12 +136,15 @@ alias extract='extract'
 # IP information function (Adapted for Fish syntax)
 # (Requires: curl, host [dnsutils/bind])
 function ipinformation --description 'Get IP info using ipinfo.io'
-	if string match -qr '^([0-9]{1,3}\.){3}[0-9]{1,3}$' -- "$argv[1]"
-		curl "ipinfo.io/$argv[1]"
+	# If no argument is given, show own IP info
+	if test -z "$argv[1]"
+		curl ipinfo.io | grep -v '"readme":'
+	else if string match -qr '^([0-9]{1,3}\.){3}[0-9]{1,3}$' -- "$argv[1]"
+		curl "ipinfo.io/$argv[1]" | grep -v '"readme":'
 	else if string match -qr '^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$' -- "$argv[1]"
 		set -l ip_address (host "$argv[1]" | command grep 'has address' | awk '{print $NF; exit}')
 		if test -n "$ip_address"
-			curl "ipinfo.io/$ip_address"
+			curl "ipinfo.io/$ip_address" | grep -v '"readme":'
 		else
 			echo "Could not resolve IP for $argv[1]" >&2
 			return 1

@@ -90,15 +90,18 @@ extractor() {
 # (Requires: curl, dnsutils [Debian/Ubuntu] or bind [Arch])
 alias ipinfo='ipinformation'
 ipinformation() {
+	# If no argument is given, show own IP info
+	if [[ -z "$1" ]]; then
+		curl ipinfo.io | grep -v '"readme":'
 	# Check if $1 looks like an IP address
-	if echo "$1" | grep -Pq '^(([1-9]?\d|1\d{2}|2[0-4]\d|25[0-5])\.){3}([1-9]?\d|1\d{2}|2[0-4]\d|25[0-5])$'; then
-		curl ipinfo.io/"$1"
+	elif echo "$1" | grep -Pq '^(([1-9]?\d|1\d{2}|2[0-4]\d|25[0-5])\.){3}([1-9]?\d|1\d{2}|2[0-4]\d|25[0-5])$'; then
+		curl ipinfo.io/"$1" | grep -v '"readme":'
 	# Check if $1 looks like a domain name
 	elif echo "$1" | grep -Pq '^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'; then
 		# Use host -t A for IPv4 only, or just host
 		ip_address=$(host "$1" | awk '/has address/ { print $NF; exit }')
 		if [[ -n "$ip_address" ]]; then
-			curl ipinfo.io/"$ip_address"
+			curl ipinfo.io/"$ip_address" | grep -v '"readme":'
 		else
 			echo "Could not resolve IP for $1" >&2
 		fi

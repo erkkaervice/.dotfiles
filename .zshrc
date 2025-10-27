@@ -18,6 +18,9 @@ compinit -u
 autoload -U promptinit
 promptinit
 
+# Tell Zsh to expand variables/substitutions in the prompt
+setopt PROMPT_SUBST
+
 # Load version control info
 autoload -Uz vcs_info
 precmd() { vcs_info }

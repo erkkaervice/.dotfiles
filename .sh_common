@@ -167,7 +167,18 @@ fi
 # Pulls latest changes, runs setup.sh to re-link, and sources the current shell config.
 alias refresh='dotfiles_refresh'
 dotfiles_refresh() {
-	DOTFILES_DIR="$( cd "$( dirname "$HOME/.sh_common" )" &> /dev/null && pwd )"
+	# --- FINAL ROBUST FIX: Finds the true directory of the sourced file ---
+	# Uses the shell's internal variable ($BASH_SOURCE or $ZSH_VERSION equivalent) 
+	# to find the path to the currently running file, resolves its symlink, 
+	# and gets the parent directory (e.g., /home/user/dotfiles).
+	
+	# Determine the source variable based on the shell
+	local SOURCE_VAR="${BASH_SOURCE[0]:-${(%):-%x}}"
+	
+	# Resolve the symlink and get the directory name
+	# 'cd ...' handles directory changes; 'pwd -P' prints the physical path
+	DOTFILES_DIR="$( cd "$( dirname "$SOURCE_VAR" )" >/dev/null 2>&1 && pwd -P )"
+	
 	echo "--- Refreshing Dotfiles ---"
 	
 	# 1. Pull the latest repository changes
@@ -175,6 +186,7 @@ dotfiles_refresh() {
 		echo "1. Pulling latest changes..."
 		# Check if the directory is a git repository
 		if [ -d "$DOTFILES_DIR/.git" ]; then
+			# Go to the repository directory and pull
 			(cd "$DOTFILES_DIR" && git pull origin main) || { echo "Git pull failed." >&2; return 1; }
 		else
 			echo "Warning: Dotfiles directory is not a Git repository. Skipping pull."
@@ -185,7 +197,7 @@ dotfiles_refresh() {
 	
 	# 2. Re-run the setup script to ensure correct links and install new tools
 	echo "2. Running setup script..."
-	# Use the full path to ensure it runs correctly
+	# Execute the script from the correctly resolved DOTFILES_DIR
 	bash "$DOTFILES_DIR/.setup.sh" || { echo "Setup script failed." >&2; return 1; }
 	
 	# 3. Source the current shell's config to apply changes immediately

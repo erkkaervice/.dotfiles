@@ -144,12 +144,6 @@ ipinformation() {
 export NAVIGATOR="brave"
 export EDITOR="nvim"
 
-# --- Prompt Helper Function ---
-# Function to override the displayed system username
-service_user() {
-	echo "ervice"
-}
-
 # Alias for VS Code Flatpak
 alias code='flatpak run com.visualstudio.code'
 

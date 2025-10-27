@@ -162,22 +162,36 @@ if [ -f "$HOME/.ssh_agent_init" ]; then
 	. "$HOME/.ssh_agent_init"
 fi
 
+# ... (inside .sh_common) ...
+
 # --- Dotfiles Management Function ---
 # Alias: refresh
 # Pulls latest changes, runs setup.sh to re-link, and sources the current shell config.
 alias refresh='dotfiles_refresh'
 dotfiles_refresh() {
-	# --- FINAL ROBUST FIX: Finds the true directory of the sourced file ---
-	# Uses the shell's internal variable ($BASH_SOURCE or $ZSH_VERSION equivalent) 
-	# to find the path to the currently running file, resolves its symlink, 
-	# and gets the parent directory (e.g., /home/user/dotfiles).
+	# --- FINAL ROBUST FIX: Resolve the symlink of the SOURCED file to find the repository's absolute directory ---
+	# We rely on the absolute path of the symlinked file (~/.sh_common) to find the original repo.
 	
-	# Determine the source variable based on the shell
-	local SOURCE_VAR="${BASH_SOURCE[0]:-${(%):-%x}}"
+	# Step 1: Find the absolute path of the symlink target (e.g., /path/to/dotfiles/.sh_common)
+	# This handles the symlink resolution cross-platform (Bash/Zsh compatibility)
+	local ABSOLUTE_PATH_TO_FILE
+	if command -v readlink > /dev/null 2>&1; then
+		# Use readlink -f (standard Linux/Termux tool)
+		ABSOLUTE_PATH_TO_FILE="$(readlink -f "$HOME/.sh_common")"
+	else
+		# Fallback for systems without readlink -f
+		ABSOLUTE_PATH_TO_FILE="$(python3 -c "import os; print(os.path.realpath('$HOME/.sh_common'))" 2>/dev/null)"
+	fi
 	
-	# Resolve the symlink and get the directory name
-	# 'cd ...' handles directory changes; 'pwd -P' prints the physical path
-	DOTFILES_DIR="$( cd "$( dirname "$SOURCE_VAR" )" >/dev/null 2>&1 && pwd -P )"
+	# Step 2: Extract the directory name from the resolved path (e.g., /path/to/dotfiles)
+	DOTFILES_DIR="$(dirname "$ABSOLUTE_PATH_TO_FILE")"
+	
+	# Check if DOTFILES_DIR is actually valid before proceeding
+	if [ -z "$DOTFILES_DIR" ] || [ ! -d "$DOTFILES_DIR" ]; then
+		echo "ERROR: Could not find dotfiles repository directory." >&2
+		echo "Ensure the symlink $HOME/.sh_common points to the correct location." >&2
+		return 1
+	fi
 	
 	echo "--- Refreshing Dotfiles ---"
 	

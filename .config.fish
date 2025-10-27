@@ -179,6 +179,12 @@ function ipinformation --description 'Get IP info using ipinfo.io'
 end
 alias ipinfo='ipinformation'
 
+# --- SSH Agent Management ---
+# Source the agent manager script (needed for Termux/non-graphical sessions)
+if test -f "$HOME/.ssh_agent_init"
+	source "$HOME/.ssh_agent_init"
+end
+
 # --- Initialize Modern Tools ---
 
 # Initialize zoxide (smarter cd)
@@ -190,5 +196,46 @@ end
 if command -v fzf > /dev/null
 	fzf --fish | source
 end
+
+# --- Dotfiles Management Function ---
+# Alias: refresh
+# Pulls latest changes, runs setup.sh to re-link, and sources the Fish config.
+function dotfiles_refresh --description 'Pull, re-link, and source dotfiles config'
+	set -l DOTFILES_DIR (dirname (status --current-filename))
+	echo "--- Refreshing Dotfiles ---"
+	
+	# 1. Pull the latest repository changes
+	if type -q git
+		echo "1. Pulling latest changes..."
+		# Check if the directory is a git repository
+		if test -d "$DOTFILES_DIR/.git"
+			(cd "$DOTFILES_DIR"; git pull origin main)
+			if test $status -ne 0
+				echo "Git pull failed." >&2
+				return 1
+			end
+		else
+			echo "Warning: Dotfiles directory is not a Git repository. Skipping pull."
+		end
+	else
+		echo "Warning: Git not found. Skipping pull."
+	end
+	
+	# 2. Re-run the setup script to ensure correct links and install new tools
+	echo "2. Running setup script..."
+	# Fish can execute the bash script directly
+	bash "$DOTFILES_DIR/.setup.sh"
+	if test $status -ne 0
+		echo "Setup script failed." >&2
+		return 1
+	end
+	
+	# 3. Source the Fish config to apply changes immediately
+	echo "3. Sourcing Fish config..."
+	source (status --current-filename)
+	
+	echo "--- Dotfiles Refreshed ---"
+end
+alias refresh 'dotfiles_refresh'
 
 echo "Fish config loaded."

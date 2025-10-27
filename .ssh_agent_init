@@ -1,0 +1,31 @@
+# Termux-compatible script to load SSH Agent across sessions
+
+SSH_ENV="$HOME/.ssh/agent-info-$(hostname)"
+
+function start_agent {
+	echo "Initializing new SSH agent..."
+	# Use ssh-agent and write its environment variables to the file
+	/usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
+	chmod 600 "${SSH_ENV}"
+	. "${SSH_ENV}" > /dev/null
+	ssh-add
+}
+
+# Check if the environment file exists
+if [ -f "${SSH_ENV}" ]; then
+	. "${SSH_ENV}" > /dev/null
+	# Check if the agent process is actually running (Termux-compatible check)
+	if ps -p $SSH_AGENT_PID | grep ssh-agent > /dev/null; then
+		# Agent is running, everything is good.
+		return 0
+	else
+		# Agent died, start a new one.
+		start_agent
+	fi
+else
+	# Environment file doesn't exist yet, start agent for the first time.
+	start_agent
+fi
+
+# Note: The first time this runs, it will prompt for your passphrase via ssh-add.
+# Subsequent sessions will use the saved PID/Socket without prompting.

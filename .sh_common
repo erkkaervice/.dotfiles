@@ -143,9 +143,55 @@ ipinformation() {
 # Set preferred programs (can be overridden by shell-specific files if needed)
 export NAVIGATOR="brave"
 export EDITOR="nvim"
+# --- Custom Termux Display Names ---
+export HOST="fold"
+export PS1_USER="service"
 
 # Alias for VS Code Flatpak
 alias code='flatpak run com.visualstudio.code'
 
 # Flatpak path (if exists)
 [ -d "/var/lib/flatpak/exports/bin" ] && export PATH="$PATH:/var/lib/flatpak/exports/bin"
+
+# --- SSH Agent Management ---
+# Source the agent manager script (needed for Termux/non-graphical sessions)
+if [ -f "$HOME/.ssh_agent_init" ]; then
+	. "$HOME/.ssh_agent_init"
+fi
+
+# --- Dotfiles Management Function ---
+# Alias: refresh
+# Pulls latest changes, runs setup.sh to re-link, and sources the current shell config.
+alias refresh='dotfiles_refresh'
+dotfiles_refresh() {
+	DOTFILES_DIR="$( cd "$( dirname "$HOME/.sh_common" )" &> /dev/null && pwd )"
+	echo "--- Refreshing Dotfiles ---"
+	
+	# 1. Pull the latest repository changes
+	if command -v git > /dev/null 2>&1; then
+		echo "1. Pulling latest changes..."
+		# Check if the directory is a git repository
+		if [ -d "$DOTFILES_DIR/.git" ]; then
+			(cd "$DOTFILES_DIR" && git pull origin main) || { echo "Git pull failed." >&2; return 1; }
+		else
+			echo "Warning: Dotfiles directory is not a Git repository. Skipping pull."
+		fi
+	else
+		echo "Warning: Git not found. Skipping pull."
+	fi
+	
+	# 2. Re-run the setup script to ensure correct links and install new tools
+	echo "2. Running setup script..."
+	# Use the full path to ensure it runs correctly
+	bash "$DOTFILES_DIR/.setup.sh" || { echo "Setup script failed." >&2; return 1; }
+	
+	# 3. Source the current shell's config to apply changes immediately
+	echo "3. Sourcing current shell config..."
+	if [ -n "$BASH_VERSION" ]; then
+		source "$HOME/.bashrc"
+	elif [ -n "$ZSH_VERSION" ]; then
+		source "$HOME/.zshrc"
+	fi
+	
+	echo "--- Dotfiles Refreshed ---"
+}

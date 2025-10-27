@@ -1,0 +1,121 @@
+# Common Aliases, Functions, and Exports for Bash and Zsh
+
+# Command color settings
+alias ls='ls --color=auto'
+alias grep='grep --color=auto'
+alias ip='ip -color=auto'
+
+# Disk usage
+alias df='df -h'
+alias free='free -m'
+
+# Processes
+alias psa="ps auxf"
+alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -E"
+alias psmem='ps auxf | sort -nr -k 4'
+alias pscpu='ps auxf | sort -nr -k 3'
+
+# Git aliases
+# (Requires: git)
+alias addup='git add -u'
+alias addall='git add .'
+alias branch='git branch'
+alias checkout='git checkout'
+alias clone='git clone'
+alias commit='git commit -m'
+alias fetch='git fetch'
+alias pull='git pull origin'
+alias push='git push origin'
+alias stat='git status'
+alias tag='git tag'
+alias newtag='git tag -a'
+# User-specific dotfiles alias
+# alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
+
+# Compiler function
+# (Requires: build-essential [Debian/Ubuntu] or base-devel [Arch])
+alias compile='compiler'
+compiler() {
+	[[ $1 ]] || { echo "Missing operand" >&2; return 1; }
+	[[ -r $1 ]] || { printf "File %s does not exist or is not readable\n" "$1" >&2; return 1; }
+	local output_path=${TMPDIR:-/tmp}/${1##*/};
+	# Use CXX for C++ or CC for C compiler variables if preferred
+	gcc "$1" -Wall -Wextra -Werror -o "$output_path" && "$output_path";
+	rm "$output_path";
+	return 0;
+}
+
+# Extract function
+# (Requires relevant extractors: unzip, p7zip-full, unrar, bsdtar/libarchive-tools, etc.)
+alias extract='extractor'
+extractor() {
+	local c e i
+
+	(($#)) || return
+
+	for i; do
+		c=''
+		e=1
+
+		if [[ ! -r $i ]]; then
+			echo "$0: file is unreadable: \`$i'" >&2
+			continue
+		fi
+
+		# Use Zsh compatible case matching
+		case $i in
+			*.t@(gz|lz|xz|b@(2|z?(2))|a@(z|r)?(.@(Z|bz?(2)|gz|lzma|xz|zst)))) )
+				c=(bsdtar xvf);;
+			*.7z)  c=(7z x);;
+			*.Z)   c=(uncompress);;
+			*.bz2) c=(bunzip2);;
+			*.exe) c=(cabextract);;
+			*.gz)  c=(gunzip);;
+			*.rar) c=(unrar x);;
+			*.xz)  c=(unxz);;
+			*.zip) c=(unzip);;
+			*.zst) c=(unzstd);;
+			*)     echo "$0: unrecognized file extension: \`$i'" >&2
+				continue;;
+		esac
+
+		command "${c[@]}" "$i"
+		((e = e || $?))
+	done
+	return "$e"
+}
+
+# IP information function
+# (Requires: curl, dnsutils [Debian/Ubuntu] or bind [Arch])
+alias ipinfo='ipinformation'
+ipinformation() {
+	# Check if $1 looks like an IP address
+	if echo "$1" | grep -Pq '^(([1-9]?\d|1\d{2}|2[0-4]\d|25[0-5])\.){3}([1-9]?\d|1\d{2}|2[0-4]\d|25[0-5])$'; then
+		curl ipinfo.io/"$1"
+	# Check if $1 looks like a domain name
+	elif echo "$1" | grep -Pq '^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'; then
+		# Use host -t A for IPv4 only, or just host
+		ip_address=$(host "$1" | awk '/has address/ { print $NF; exit }')
+		if [[ -n "$ip_address" ]]; then
+			curl ipinfo.io/"$ip_address"
+		else
+			echo "Could not resolve IP for $1" >&2
+		fi
+	else
+		echo "Input does not look like an IP address or domain name: $1" >&2
+		return 1
+	fi
+	echo
+}
+
+# Add ~/.local/bin and Cargo bin to PATH if they exist
+[ -d "$HOME/.local/bin" ] && export PATH="$HOME/.local/bin:$PATH"
+[ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
+
+# Set preferred programs (can be overridden by shell-specific files if needed)
+export NAVIGATOR="brave"
+export EDITOR="nvim"
+export TERM="kitty" # Ensure kitty terminfo is installed on target machines
+
+# Flatpak path (if exists)
+[ -d "/var/lib/flatpak/exports/bin" ] && export PATH="$PATH:/var/lib/flatpak/exports/bin"

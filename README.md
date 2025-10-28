@@ -29,6 +29,7 @@ This configuration provides:
 **Fish Shell Auto-switch**: Automatically attempts to switch to the Fish shell in graphical sessions (from Bash) if installed.
 
 **Custom Prompt**:
+* **Fixed Username**: The username is fixed to **`ervice`** across all shells/systems, regardless of the underlying Android UID or Linux user.
 * **Git-Aware Prompts**: Bash, Zsh, and Fish all now feature prompts that display the current Git branch and status (e.g., `*` for unstaged changes, `+` for staged changes).
 * **Color-Coded**: The main prompt (`[user@host dir]`) is colored cyan, and the Git information is colored magenta for clear visibility, mimicking the Fish shell's default behavior.
 
@@ -48,6 +49,10 @@ This configuration provides:
 **Productivity Tools**:
 * **`zoxide`**: Smart directory jumping (`z <partial dir name>`).
 * **`fzf`**: Interactive fuzzy finder for history (`CTRL-R`), files (`CTRL-T`), and directories (`ALT-C`).
+
+**Maintenance & Setup**:
+* **`refresh` alias**: A single command to pull the latest changes from the Git repository, re-run the setup script, and reload the current shell configuration.
+* **SSH Agent Persistence**: Includes a solution (`.ssh_agent_init`) to start the `ssh-agent` automatically and add keys, avoiding repetitive passphrase entry in Termux and non-desktop environments.
 
 **PATH Management**: Adds `~/.local/bin`, `~/.cargo/bin`, and Flatpak paths to the `PATH`.
 
@@ -100,6 +105,7 @@ Manual installation of dependencies might be required on other systems. Basic al
 
 Once installed and sourced, the aliases and functions are available in your terminal.
 
+Example: `refresh` (Updates all dotfiles from the repository and reloads config)
 Example: `ipinfo` (Shows your own IP details)
 Example: `ipinfo google.com` (Shows IP details for google.com)
 Example: `z cool` (Jumps to your most-used directory containing "cool")
@@ -111,7 +117,7 @@ Note: Aliases/functions requiring external commands will only work if those comm
 
 ## Structure
 
-`.sh_common`: Contains aliases, functions, exports shared between **Bash and Zsh**. Includes checks for modern tools like `bat` and `zoxide`.
+`.sh_common`: Contains aliases, functions, exports shared between **Bash and Zsh**. Includes checks for modern tools like `bat` and `zoxide`, and the **`service_user`** function.
 
 `.config.fish`: Standalone configuration for the **Fish shell**. Mirrors the aliases, functions, and exports from `.sh_common` using Fish-native syntax.
 
@@ -119,7 +125,7 @@ Note: Aliases/functions requiring external commands will only work if those comm
 
 `.bashrc`: Read by interactive non-login Bash shells. Sets Bash-specific options, **Git-aware prompt with Termux support**, completion, sources `.sh_common`, and contains the Fish switch logic.
 
-`.zshrc`: Read by interactive Zsh shells. Sets Zsh-specific options, **Git-aware prompt with variable substitution**, completion, history, and sources `.sh_common`.
+`.zshrc`: Read by interactive Zsh shells. Sets Zsh-specific options, **Git-aware prompt with fixed user name and variable substitution**, completion, history, and sources `.sh_common`.
 
 `.bash_logout`: Read by Bash login shells upon exit.
 
@@ -149,8 +155,10 @@ The configuration is split. Settings are **not** automatically shared between Fi
 
 **Zsh Completion Issues**: You might need to run `compinit -i` once if you encounter completion problems after a new install.
 
+**Git Passphrase Repetition**: Ensure the `.ssh_agent_init` file is linked and being sourced, and that you entered your passphrase when the script first prompted you.
+
 ---
 
 ## License
 
-This project is licensed under the [MIT License](LICENCE.txt) - see the LICENSE file for details.
+[cite_start]This project is licensed under the [MIT License](LICENSE.txt) [cite: 1] - see the LICENSE file for details.

@@ -1,21 +1,21 @@
 # Common Aliases, Functions, and Exports for Bash and Zsh
 
-# Command color settings
+# --- Command Color Settings ---
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
 alias ip='ip -color=auto'
 
-# Disk usage
+# --- Disk Usage ---
 alias df='df -h'
 alias free='free -m'
 
-# Processes
+# --- Processes ---
 alias psa="ps auxf"
 alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -E"
 alias psmem='ps auxf | sort -nr -k 4'
 alias pscpu='ps auxf | sort -nr -k 3'
 
-# Git aliases
+# --- Git Aliases ---
 # (Requires: git)
 alias addup='git add -u'
 alias addall='git add .'
@@ -136,6 +136,12 @@ ipinformation() {
 	echo
 }
 
+# --- Prompt Helper Function ---
+# Function to override the displayed system username
+service_user() {
+	echo "ervice"
+}
+
 # Add ~/.local/bin and Cargo bin to PATH if they exist
 [ -d "$HOME/.local/bin" ] && export PATH="$HOME/.local/bin:$PATH"
 [ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
@@ -155,8 +161,6 @@ alias code='flatpak run com.visualstudio.code'
 if [ -f "$HOME/.ssh_agent_init" ]; then
 	. "$HOME/.ssh_agent_init"
 fi
-
-# ... (inside .sh_common) ...
 
 # --- Dotfiles Management Function ---
 # Alias: refresh

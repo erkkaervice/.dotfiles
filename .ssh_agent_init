@@ -1,7 +1,9 @@
 # Termux-compatible script to load SSH Agent across sessions
 
+# --- Global Environment File ---
 SSH_ENV="$HOME/.ssh/agent-info-$(hostname)"
 
+# --- SSH Agent Initialization Function ---
 function start_agent {
 	echo "Initializing new SSH agent..."
 	# Use ssh-agent and write its environment variables to the file
@@ -10,6 +12,8 @@ function start_agent {
 	. "${SSH_ENV}" > /dev/null
 	ssh-add
 }
+
+# --- Main Agent Check Logic ---
 
 # Check if the environment file exists
 if [ -f "${SSH_ENV}" ]; then

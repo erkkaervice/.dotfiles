@@ -20,22 +20,23 @@ if test -d "/var/lib/flatpak/exports/bin"
 end
 
 # --- Aliases ---
-# Color settings
+
+# --- Command Color Settings ---
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
 alias ip='ip -color=auto'
 
-# Disk usage
+# --- Disk Usage ---
 alias df='df -h'
 alias free='free -m'
 
-# Processes
+# --- Processes ---
 alias psa="ps auxf"
 alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -e"
 alias psmem='ps auxf | sort -nr -k 4'
 alias pscpu='ps auxf | sort -nr -k 3'
 
-# Git aliases
+# --- Git Aliases ---
 # (Requires: git)
 alias addup='git add -u'
 alias addall='git add .'
@@ -50,6 +51,7 @@ alias stat='git status'
 alias tag='git tag'
 alias newtag='git tag -a'
 alias gl='git log --oneline --graph --decorate --all'
+
 # User-specific dotfiles alias
 # alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 

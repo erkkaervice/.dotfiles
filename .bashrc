@@ -3,11 +3,12 @@
 # If not running interactively, don't do anything
 [[ $- != *i* ]] && return
 
-# Source common settings
+# --- Source Common Settings ---
 if [ -f "$HOME/.sh_common" ]; then
 	. "$HOME/.sh_common"
 fi
 
+# --- Fish Shell Auto-Switch ---
 # Enter fish for graphical sessions
 # (Requires: fish)
 if [[ $DISPLAY ]]; then
@@ -65,13 +66,13 @@ if [ -f ~/.fzf.bash ]; then
 	. ~/.fzf.bash
 fi
 
-# Bash specific options
+# --- Bash Specific Options ---
 shopt -s extglob
 shopt -s histappend
 shopt -s checkwinsize
 export HISTCONTROL=ignoreboth
 
-# Bash completion
+# --- Bash Completion ---
 # Ensure bash-completion package is installed
 if ! shopt -oq posix; then
 	if [ -f /usr/share/bash-completion/bash_completion ]; then
@@ -83,11 +84,13 @@ fi
 complete -c man which
 complete -cf sudo
 
+# --- Global Definitions (Optional) ---
 # Source global definitions if applicable
 #if [ -f /etc/bashrc ]; then
 #	. /etc/bashrc
 #fi
 
+# --- User Customizations (Optional) ---
 # User specific aliases and functions directory (Bash convention)
 #if [ -d ~/.bashrc.d ]; then
 #	for rc in ~/.bashrc.d/*; do

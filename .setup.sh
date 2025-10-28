@@ -12,13 +12,12 @@ print_error() {
 	echo "[ERROR] $1" >&2
 }
 
-# --- Global Variable ---
+# --- Global Variables ---
 CAN_INSTALL_PACKAGES=true # Assume yes initially
-IS_TERMUX=false # --- TERMUX CHANGE ---
+IS_TERMUX=false
 
 # Check sudo, set flag if installation isn't possible
 check_sudo_and_set_flag() {
-	# --- TERMUX CHANGE ---
 	# Check for Termux (which doesn't use sudo)
 	if [ -n "$PREFIX" ] && [ -d "$PREFIX/etc" ]; then
 		IS_TERMUX=true
@@ -26,7 +25,6 @@ check_sudo_and_set_flag() {
 		print_info "Termux environment detected. Skipping sudo check."
 		return
 	fi
-	# --- END TERMUX CHANGE ---
 
 	if [ "$EUID" -ne 0 ]; then
 		if ! command -v sudo > /dev/null 2>&1; then
@@ -64,10 +62,9 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 	# --- Basic OS Detection ---
 	OS_ID=""
 	ID_LIKE=""
-	# --- TERMUX CHANGE ---
+	
 	if [ "$IS_TERMUX" = true ]; then
 		OS_ID="termux"
-	# --- END TERMUX CHANGE ---
 	elif [ -f /etc/os-release ]; then
 		. /etc/os-release
 		OS_ID=$ID
@@ -84,10 +81,8 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 
 	# Determine Install Command
 	if [[ -z "$INSTALL_CMD" ]]; then # Check if INSTALL_CMD was already set to unknown
-		# --- TERMUX CHANGE ---
 		if [ "$OS_ID" == "termux" ]; then
 			INSTALL_CMD="pkg"
-		# --- END TERMUX CHANGE ---
 		elif [[ "$OS_ID" == "steamos" || "$ID_LIKE" == *"arch"* || "$OS_ID" == "arch" ]]; then
 			INSTALL_CMD="pacman"
 		elif [[ "$OS_ID" == "ubuntu" || "$OS_ID" == "debian" || "$ID_LIKE" == *"debian"* ]]; then
@@ -105,7 +100,7 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 
 	# --- Install Commands based on Package Manager ---
 	INSTALL_FAILED=false
-	# --- TERMUX CHANGE ---
+	
 	if [ "$INSTALL_CMD" == "pkg" ]; then
 		print_info "Updating package list (pkg)..."
 		pkg update -y || INSTALL_FAILED=true
@@ -118,7 +113,6 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 				fzf bat fd ripgrep zoxide \
 				|| INSTALL_FAILED=true
 		fi
-	# --- END TERMUX CHANGE ---
 	elif [ "$INSTALL_CMD" == "apt" ]; then
 		print_info "Updating package list (apt)..."
 		sudo apt-get update -qq || INSTALL_FAILED=true

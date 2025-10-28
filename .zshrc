@@ -3,7 +3,7 @@
 # If not running interactively, don't do anything
 [[ ! -o interactive ]] && return
 
-# Source common settings FIRST (might define functions/aliases needed later)
+# --- Source Common Settings ---
 if [[ -f ~/.sh_common ]]; then
 	source ~/.sh_common
 fi
@@ -13,6 +13,10 @@ autoload -Uz compinit
 compinit -u
 
 # --- Zsh Git-Aware Prompt ---
+
+# FIX: Force the displayed username to 'ervice' on all machines (for zsh/termux)
+# This overrides the default UID (u0_a...) in non-standard environments.
+export USER="ervice"
 
 # Initialize Prompt System (includes colors)
 autoload -U promptinit
@@ -50,7 +54,7 @@ if [ -f ~/.fzf.zsh ]; then
 	. ~/.fzf.zsh
 fi
 
-# Zsh specific options
+# --- Zsh Specific Options ---
 setopt EXTENDED_GLOB
 setopt HIST_IGNORE_DUPS
 setopt HIST_IGNORE_SPACE
@@ -61,14 +65,16 @@ setopt CORRECT
 setopt COMPLETE_IN_WORD
 # setopt NO_BEEP
 
-# Zsh history settings
+# --- Zsh History Settings ---
 HISTFILE=~/.zsh_history
 HISTSIZE=10000
 SAVEHIST=10000
 
+# --- Keybindings ---
 # Keybindings (Example: Use emacs mode)
 bindkey -e
 
+# --- Global Definitions (Optional) ---
 # Source global Zsh config if it exists
 #if [[ -f /etc/zshrc ]]; then
 #  source /etc/zshrc

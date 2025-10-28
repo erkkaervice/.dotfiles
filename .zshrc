@@ -4,8 +4,25 @@
 [[ ! -o interactive ]] && return
 
 # --- Source Common Settings ---
+# Source common settings FIRST (might define functions/aliases needed later)
 if [[ -f ~/.sh_common ]]; then
 	source ~/.sh_common
+fi
+
+# --- Fish Shell Auto-Switch ---
+# Enter fish for graphical sessions
+# (Requires: fish)
+if [[ $DISPLAY ]]; then
+	# Check if current shell is already fish to avoid loops
+	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
+		if command -v fish > /dev/null 2>&1; then
+			export SHELL=/usr/bin/fish
+			exec fish "$@"
+			# If exec fails, reset SHELL and print error
+			export SHELL=/bin/zsh
+			echo "Failed to switch to fish shell." >&2
+		fi
+	fi
 fi
 
 # Initialize Zsh Completion System EARLY
@@ -14,33 +31,37 @@ compinit -u
 
 # --- Zsh Git-Aware Prompt ---
 
-# FIX: Force the displayed username to 'ervice' on all machines (for zsh/termux)
-# This overrides the default UID (u0_a...) in non-standard environments.
-export USER="ervice"
-
 # Initialize Prompt System (includes colors)
 autoload -U promptinit
 promptinit
 
-# Tell Zsh to expand variables/substitutions in the prompt
+# Tell Zsh to expand variables/substitutions in the prompt (required for vcs_info, service_user)
 setopt PROMPT_SUBST
 
 # Load version control info
 autoload -Uz vcs_info
-precmd() { vcs_info }
 
-# Set a format for the vcs_info
-# %b = branch, %u = unstaged, %c = staged
-# This will show like (main *+): * for unstaged, + for staged
-zstyle ':vcs_info:git:*' formats ' \e[0;35m(%b%u%c)\e[0m'
-zstyle ':vcs_info:git:*' actionformats ' \e[0;35m(%b|%a%u%c)\e[0m'
-zstyle ':vcs_info:git:*' unstagedchars '*'
-zstyle ':vcs_info:git:*' stagedchars '+'
+# Enable Git backend explicitly (Crucial for status to appear)
+zstyle ':vcs_info:*' enable git
+
+# Tell vcs_info to check for staged/unstaged changes (Set early)
+zstyle ':vcs_info:*' check-for-changes true
+
+# 1. Global reset: Set the default format to empty to ensure the status disappears outside a repo.
+zstyle ':vcs_info:*' formats ''
+zstyle ':vcs_info:*' actionformats ''
+
+# 2. Define the specific Git format (this overrides the global format when a Git repo is found)
+# %b = branch, %u = unstaged (default 'U'), %c = staged (default '+')
+zstyle ':vcs_info:git:*' formats '%F{magenta}(%b%u%c)%f'
+zstyle ':vcs_info:git:*' actionformats '%F{magenta}(%b|%a%u%c)%f'
+
+# Execute vcs_info just before each prompt is rendered (Define function after styles)
+precmd() { vcs_info }
 
 # Set the prompt
 # Cyan for main, plus git info from vcs_info
-# Use service_user function for the fixed username
-PROMPT=$'\e[0;36m[$(service_user)@%m %1~]\e[0m${vcs_info_msg_0_}%# '
+PROMPT="%F{cyan}[$(service_user)@%m%1~]%f${vcs_info_msg_0_}%# "
 
 # --- Initialize Modern Tools ---
 

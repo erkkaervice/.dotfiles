@@ -1,4 +1,4 @@
-# ~/.config/fish/config.fish - Fish shell configuration
+# ~/.config.fish/config.fish - Fish shell configuration
 
 # --- Basic Checks ---
 if not status is-interactive
@@ -11,13 +11,18 @@ set -gx NAVIGATOR brave
 # TERM is usually best left for the terminal emulator to set
 
 # --- PATH Modifications ---
-# Fish automatically includes ~/.local/bin if it exists
+# Fish automatically includes ~/.local.bin if it exists
 if test -d "$HOME/.cargo/bin"
 	fish_add_path "$HOME/.cargo/bin"
 end
 if test -d "/var/lib/flatpak/exports/bin"
 	fish_add_path "/var/lib/flatpak/exports/bin"
 end
+
+# --- Fish Git Prompt Configuration ---
+# Note: We manually add indicators below, so these are less critical now
+# set -g fish_git_prompt_char_dirtystate '*'
+# set -g fish_git_prompt_char_stagedstate '+'
 
 # --- Aliases ---
 
@@ -52,9 +57,6 @@ alias tag='git tag'
 alias newtag='git tag -a'
 alias gl='git log --oneline --graph --decorate --all'
 
-# User-specific dotfiles alias
-# alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
-
 # Alias for VS Code Flatpak
 # (Requires: flatpak run com.visualstudio.code)
 alias code='flatpak run com.visualstudio.code'
@@ -81,6 +83,59 @@ if command -v rg > /dev/null
 end
 
 # --- Functions ---
+
+# --- Custom Prompt Function ---
+# Overrides default Fish prompt to match Bash/Zsh (Cyan/Magenta)
+function fish_prompt
+	# Use the 'service_user' function from .sh_common for the username
+	set -l user_name ""
+	if test -f "$HOME/.sh_common"
+		set user_name (bash -c 'source ~/.sh_common && service_user')
+	else
+		set user_name (whoami) # Fallback if .sh_common isn't found
+	end
+
+	# Define colors using Fish's set_color
+	set -l color_cyan (set_color cyan)
+	set -l color_magenta (set_color magenta)
+	set -l color_normal (set_color normal)
+
+	# Main prompt part: [user@host dir] in Cyan
+	echo -n $color_cyan"["$user_name"@"
+	echo -n (prompt_hostname) # Hostname
+	echo -n (prompt_pwd) # Directory
+	echo -n "]"$color_normal # Closing bracket and reset color
+
+	# Git status part: (branch*+) in Magenta
+	# Manually check git status for unstaged/staged indicators
+	set -l git_branch (git symbolic-ref --short HEAD 2> /dev/null)
+	if test -n "$git_branch" # Check if we are inside a git repo
+		set -l git_status (git status --porcelain 2> /dev/null)
+		set -l unstaged ""
+		set -l staged ""
+
+		# Check porcelain output for indicators
+		if string match -q -- "* M *" $git_status; or string match -q -- "*??*" $git_status; or string match -q -- "* D *" $git_status
+			set unstaged "*"
+		end
+		if string match -q -- "M *" $git_status; or string match -q -- "A *" $git_status; or string match -q -- "D *" $git_status
+			set staged "+"
+		end
+		
+		# Combine branch and indicators
+		set -l vcs_indicator "("$git_branch$unstaged$staged")"
+
+		# Print with a single leading space, trimmed
+		echo -n $color_magenta(string trim -- $vcs_indicator)$color_normal
+	end
+
+	# Prompt ending character (# for root, > for normal user)
+	if fish_is_root_user
+		echo -n "# "
+	else
+		echo -n "> "
+	end
+end
 
 # Compiler function
 # (Requires: build-essential/base-devel)
@@ -203,15 +258,21 @@ end
 # Alias: refresh
 # Pulls latest changes, runs setup.sh to re-link, and sources the Fish config.
 function dotfiles_refresh --description 'Pull, re-link, and source dotfiles config'
-	set -l DOTFILES_DIR (dirname (status --current-filename))
+	# Use readlink -f on the symlinked config file to reliably find the actual repository directory.
+	set -l CONFIG_PATH ~/.config/fish/config.fish
+	set -l DOTFILES_DIR (dirname (readlink -f $CONFIG_PATH))
+
 	echo "--- Refreshing Dotfiles ---"
-	
+
 	# 1. Pull the latest repository changes
 	if type -q git
 		echo "1. Pulling latest changes..."
 		# Check if the directory is a git repository
 		if test -d "$DOTFILES_DIR/.git"
-			(cd "$DOTFILES_DIR"; git pull origin main)
+			begin
+				cd "$DOTFILES_DIR"
+				git pull origin main
+			end
 			if test $status -ne 0
 				echo "Git pull failed." >&2
 				return 1
@@ -222,20 +283,20 @@ function dotfiles_refresh --description 'Pull, re-link, and source dotfiles conf
 	else
 		echo "Warning: Git not found. Skipping pull."
 	end
-	
+
 	# 2. Re-run the setup script to ensure correct links and install new tools
 	echo "2. Running setup script..."
-	# Fish can execute the bash script directly
+	# Execute the bash script from the correctly resolved DOTFILES_DIR
 	bash "$DOTFILES_DIR/.setup.sh"
 	if test $status -ne 0
 		echo "Setup script failed." >&2
 		return 1
 	end
-	
+
 	# 3. Source the Fish config to apply changes immediately
 	echo "3. Sourcing Fish config..."
 	source (status --current-filename)
-	
+
 	echo "--- Dotfiles Refreshed ---"
 end
 alias refresh 'dotfiles_refresh'

@@ -31,9 +31,6 @@ alias tag='git tag'
 alias newtag='git tag -a'
 alias gl='git log --oneline --graph --decorate --all'
 
-# User-specific dotfiles alias
-# alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
-
 # --- Modern Tool Aliases ---
 # (Requires: bat, fd-find, ripgrep)
 
@@ -149,6 +146,10 @@ service_user() {
 # Set preferred programs (can be overridden by shell-specific files if needed)
 export NAVIGATOR="brave"
 export EDITOR="nvim"
+
+# Force the displayed username to 'ervice' on all machines (for zsh/termux bash)
+export USER="ervice"
+export MAIL="erkka@ervice.fi"
 
 # Alias for VS Code Flatpak
 alias code='flatpak run com.visualstudio.code'

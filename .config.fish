@@ -10,6 +10,11 @@ set -gx EDITOR nvim
 set -gx NAVIGATOR brave
 # TERM is usually best left for the terminal emulator to set
 
+# --- Disable Fish Greeting ---
+function fish_greeting
+	# Intentionally empty to suppress the welcome message
+end
+
 # --- PATH Modifications ---
 # Fish automatically includes ~/.local.bin if it exists
 if test -d "$HOME/.cargo/bin"
@@ -303,5 +308,3 @@ function dotfiles_refresh --description 'Pull, re-link, and source dotfiles conf
 	echo "--- Dotfiles Refreshed ---"
 end
 alias refresh 'dotfiles_refresh'
-
-echo "Fish config loaded."

@@ -12,22 +12,75 @@ fi
 # --- Fish Shell Auto-Switch ---
 # Enter fish for graphical sessions
 # (Requires: fish)
-if [[ $DISPLAY ]]; then
-	# Check if current shell is already fish to avoid loops
-	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
-		if command -v fish > /dev/null 2>&1; then
-			export SHELL=/usr/bin/fish
-			exec fish "$@"
-			# If exec fails, reset SHELL and print error
-			export SHELL=/bin/zsh
-			echo "Failed to switch to fish shell." >&2
-		fi
-	fi
-fi
+# if [[ $DISPLAY ]]; then
+# 	# Check if current shell is already fish to avoid loops
+# 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
+# 		if command -v fish > /dev/null 2>&1; then
+# 			export SHELL=/usr/bin/fish
+# 			exec fish "$@"
+# 			# If exec fails, reset SHELL and print error
+# 			export SHELL=/bin/zsh
+# 			echo "Failed to switch to fish shell." >&2
+# 		fi
+# 	fi
+# fi
 
 # Initialize Zsh Completion System EARLY
 autoload -Uz compinit
 compinit -u
+
+# --- Path Abbreviation Function ---
+_zsh_abbreviate_path_manual() {
+	# Get path relative to home, substituting ~
+	local pwd_relative_to_home=${PWD/#$HOME/\~}
+	# Handle root and home directories explicitly
+	[[ "$pwd_relative_to_home" == "/" ]] && { echo "/"; return }
+	[[ "$pwd_relative_to_home" == "~" ]] && { echo "~"; return }
+
+	local prefix=""
+	local path_to_process=""
+	# Determine prefix (~/ or /) and the rest of the path
+	if [[ "$pwd_relative_to_home" == \~* ]]; then
+		prefix="~/"
+		path_to_process=${pwd_relative_to_home#\~/}
+	elif [[ "$pwd_relative_to_home" == /* ]]; then
+		prefix="/"
+		path_to_process=${pwd_relative_to_home#/}
+	else
+		echo "$pwd_relative_to_home"; return # Fallback for unexpected paths
+	fi
+
+	# Split the path components using Zsh's =(s:/:) syntax
+	local -a path_parts
+	path_parts=( ${(s:/:)path_to_process} )
+
+	local result="$prefix"
+	local num_parts=${#path_parts[@]}
+	local i
+
+	# Loop through components (Zsh arrays are 1-based)
+	for (( i=1; i <= num_parts; i++ )); do
+		if (( i < num_parts )); then # Intermediate directory
+			if [[ "${path_parts[i]}" == .* ]]; then
+				 # Keep dot, take first char after dot (index 2), add slash
+				result+=".${path_parts[i][2]}/"
+			 elif [[ -n "${path_parts[i]}" ]]; then
+				 # Take first char (index 1), add slash
+				result+="${path_parts[i][1]}/"
+			fi
+		elif [[ -n "${path_parts[i]}" ]]; then # Last directory
+			result+="${path_parts[i]}"
+		fi
+	done
+
+	# Remove potential trailing slash if needed (e.g., if result is just prefix/)
+	if [[ "$result" == */ ]] && [[ "$num_parts" -eq 0 && "$prefix" != "/" ]]; then
+		result="${result%/}"
+	fi
+
+	echo "$result"
+}
+
 
 # --- Zsh Git-Aware Prompt ---
 
@@ -56,12 +109,23 @@ zstyle ':vcs_info:*' actionformats ''
 zstyle ':vcs_info:git:*' formats '%F{magenta}(%b%u%c)%f'
 zstyle ':vcs_info:git:*' actionformats '%F{magenta}(%b|%a%u%c)%f'
 
-# Execute vcs_info just before each prompt is rendered (Define function after styles)
-precmd() { vcs_info }
+# Execute vcs_info and build the prompt *before* each prompt render
+precmd() {
+	# Run vcs_info to populate the status variable
+	vcs_info
+	
+	# Get the abbreviated path using the manual function
+	local abbreviated_wd=$(_zsh_abbreviate_path_manual)
+	
+	# Build the main prompt part with the abbreviated path (NO space after %m)
+	local main_prompt="%F{cyan}[$(service_user)@%m${abbreviated_wd}]%f"
+	
+	# Combine main prompt and Git status into the final PROMPT variable
+	PROMPT="${main_prompt}${vcs_info_msg_0_}> "
+}
 
-# Set the prompt
-# Cyan for main, plus git info from vcs_info
-PROMPT="%F{cyan}[$(service_user)@%m~/%1~]%f${vcs_info_msg_0_}%# "
+# Set an initial basic prompt (will be overridden by precmd)
+PROMPT="> "
 
 # --- Initialize Modern Tools ---
 

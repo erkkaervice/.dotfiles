@@ -29,14 +29,12 @@ This configuration provides:
 **Fish Shell Auto-switch**: Automatically attempts to switch to the Fish shell in graphical sessions **(from Bash or Zsh)** if installed.
 
 **Custom Prompt**:
-* **Fixed Username**: The username is fixed to **`ervice`** across all shells/systems, regardless of the underlying Android UID or Linux user.
+* **Fixed Username**: The username is fixed to **`ervice`** across all shells/systems.
 * **Git-Aware Prompts**: Bash, Zsh, and Fish all now feature prompts that display the current Git branch and status. The status indicators appear **only when inside a Git repository** and disappear otherwise.
-    * **Bash & Fish**: Use `*` for unstaged changes and `+` for staged changes.
-    * **Zsh**: Uses `U` for unstaged changes and `+` for staged changes (Zsh defaults).
+    * Indicators for unstaged (`U`) and staged (`+`) changes are shown consistently across all three shells.
 * **Color-Coded**: The main prompt (`[user@host dir]`) is colored **cyan**, and the Git information is colored **magenta** across all shells.
-* **Directory Display**:
-    * **Bash & Zsh**: Show only the **basename** of the current directory (e.g., `.dotfiles`).
-    * **Fish**: Shows the **full path relative to home** (e.g., `~/h/.dotfiles`).
+* **Abbreviated Path Display**: All three shells now display the path relative to the home directory (`~`), with intermediate directories shortened to their first letter (e.g., `~/h/.dotfiles`).
+* **Consistent Prompt End**: All shells use `>` as the final prompt character for non-root users.
 
 **Useful Aliases**:
 * Colorized output for `ls`, `grep`, `ip`.
@@ -122,15 +120,15 @@ Note: Aliases/functions requiring external commands will only work if those comm
 
 ## Structure
 
-`.sh_common`: Contains aliases, functions, exports shared between **Bash and Zsh**. Includes checks for modern tools like `bat` and `zoxide`, the **`service_user`** function, and the `export USER` override.
+`.sh_common`: Contains aliases, functions, exports shared between **Bash and Zsh**. Includes the **`service_user`** function and the `export USER` override.
 
-`.config.fish`: Standalone configuration for the **Fish shell**. Contains a custom `fish_prompt` function to ensure color/user consistency. Mirrors aliases/functions from `.sh_common` using Fish-native syntax.
+`.config.fish`: Standalone configuration for the **Fish shell**. Contains a custom `fish_prompt` function to ensure color/user/path/indicator consistency. Mirrors aliases/functions from `.sh_common` using Fish-native syntax.
 
 `.profile`: Read by login shells. Sources `.sh_common` (which sets shared PATH/env vars) and sources `.bashrc` for interactive Bash login shells.
 
-`.bashrc`: Read by interactive non-login Bash shells. Sets Bash-specific options, **Git-aware prompt with Termux support**, completion, sources `.sh_common`, and contains the Fish switch logic.
+`.bashrc`: Read by interactive non-login Bash shells. Sets Bash-specific options, defines path abbreviation and **custom Git prompt functions**, sources `.sh_common`, and contains the Fish switch logic.
 
-`.zshrc`: Read by interactive Zsh shells. Sets Zsh-specific options, **Git-aware prompt with fixed user name and variable substitution**, completion, history, sources `.sh_common`, and contains the Fish switch logic.
+`.zshrc`: Read by interactive Zsh shells. Sets Zsh-specific options, defines path abbreviation function and uses `precmd` to build the **Git-aware prompt**, sources `.sh_common`, and contains the Fish switch logic.
 
 `.bash_logout`: Read by Bash login shells upon exit.
 

@@ -57,6 +57,9 @@ alias tag='git tag'
 alias newtag='git tag -a'
 alias gl='git log --oneline --graph --decorate --all'
 
+# User-specific dotfiles alias
+# alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
+
 # Alias for VS Code Flatpak
 # (Requires: flatpak run com.visualstudio.code)
 alias code='flatpak run com.visualstudio.code'
@@ -100,42 +103,42 @@ function fish_prompt
 	set -l color_magenta (set_color magenta)
 	set -l color_normal (set_color normal)
 
-	# Main prompt part: [user@host dir] in Cyan
+	# --- CORRECTED SPACING LOGIC ---
+	# 1. Main prompt part: [user@hostdir] in Cyan - NO trailing space
 	echo -n $color_cyan"["$user_name"@"
-	echo -n (prompt_hostname) # Hostname
-	echo -n (prompt_pwd) # Directory
-	echo -n "]"$color_normal # Closing bracket and reset color
+	echo -n (prompt_hostname)
+	echo -n (prompt_pwd)
+	echo -n "]"$color_normal
 
-	# Git status part: (branch*+) in Magenta
-	# Manually check git status for unstaged/staged indicators
+	# 2. Git status part: (branchU+) in Magenta - NO leading space
 	set -l git_branch (git symbolic-ref --short HEAD 2> /dev/null)
 	if test -n "$git_branch" # Check if we are inside a git repo
 		set -l git_status (git status --porcelain 2> /dev/null)
 		set -l unstaged ""
 		set -l staged ""
 
-		# Check porcelain output for indicators
+		# Use 'U' for unstaged to match Zsh default
 		if string match -q -- "* M *" $git_status; or string match -q -- "*??*" $git_status; or string match -q -- "* D *" $git_status
-			set unstaged "*"
+			set unstaged "U"
 		end
 		if string match -q -- "M *" $git_status; or string match -q -- "A *" $git_status; or string match -q -- "D *" $git_status
 			set staged "+"
 		end
-		
-		# Combine branch and indicators
 		set -l vcs_indicator "("$git_branch$unstaged$staged")"
-
-		# Print with a single leading space, trimmed
+		# Print *only* the colored status
 		echo -n $color_magenta(string trim -- $vcs_indicator)$color_normal
 	end
 
-	# Prompt ending character (# for root, > for normal user)
+	# 3. Prompt ending character - Add the SINGLE separator space HERE
 	if fish_is_root_user
-		echo -n "# "
+		echo -n "#" # Space before #
 	else
-		echo -n "> "
+		echo -n ">" # Space before >
 	end
+	# Add the final space *after* the prompt character for typing
+	echo -n " "
 end
+
 
 # Compiler function
 # (Requires: build-essential/base-devel)

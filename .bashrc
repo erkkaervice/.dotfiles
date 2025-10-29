@@ -11,47 +11,99 @@ fi
 # --- Fish Shell Auto-Switch ---
 # Enter fish for graphical sessions
 # (Requires: fish)
-if [[ $DISPLAY ]]; then
-	# Check if current shell is already fish to avoid loops
-	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
-		if command -v fish > /dev/null 2>&1; then
-			export SHELL=/usr/bin/fish
-			exec fish "$@"
-			# If exec fails, reset SHELL and print error
-			export SHELL=/bin/bash
-			echo "Failed to switch to fish shell." >&2
-		fi
+# if [[ $DISPLAY ]]; then
+# 	# Check if current shell is already fish to avoid loops
+# 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
+# 		if command -v fish > /dev/null 2>&1; then
+# 			export SHELL=/usr/bin/fish
+# 			exec fish "$@"
+# 			# If exec fails, reset SHELL and print error
+# 			export SHELL=/bin/bash
+# 			echo "Failed to switch to fish shell." >&2
+# 		fi
+# 	fi
+# fi
+
+# --- Path Abbreviation Function ---
+_bash_abbreviate_path() {
+	local full_path="${PWD/#$HOME/\~}"
+	# Handle root edge case
+	if [[ "$full_path" == "/" ]]; then echo "/"; return; fi
+	# Handle home edge case
+	if [[ "$full_path" == "~" ]]; then echo "~"; return; fi
+
+	local prefix=""
+	local path_to_process=""
+	if [[ "$full_path" == \~* ]]; then
+		prefix="~/"
+		path_to_process="${full_path#\~/}"
+	elif [[ "$full_path" == /* ]]; then
+		prefix="/"
+		path_to_process="${full_path#/}"
+	else
+		 echo "$full_path"; return; # Fallback for relative/unexpected paths
 	fi
-fi
+
+	local IFS='/'
+	local -a path_parts
+	read -ra path_parts <<< "$path_to_process"
+
+	local result="$prefix"
+	local num_parts=${#path_parts[@]}
+	local i
+
+	for (( i=0; i < num_parts; i++ )); do
+		if (( i < num_parts - 1 )); then # Intermediate directory
+			if [[ "${path_parts[i]}" == .* ]]; then
+				# Keep dot, take first char after dot, add slash
+				result+=".${path_parts[i]:1:1}/"
+			elif [ -n "${path_parts[i]}" ]; then # Avoid empty parts creating //
+				# Take first char, add slash
+				 result+="${path_parts[i]:0:1}/"
+			fi
+		elif [ -n "${path_parts[i]}" ]; then # Last directory
+			result+="${path_parts[i]}"
+		fi
+	done
+
+	# Remove trailing slash if necessary (e.g. results in ~/a/)
+	if [[ "$result" == */ ]] && [[ "$num_parts" -gt 0 ]]; then
+		 result="${result%/}"
+	fi
+
+	echo "$result"
+}
+
+# --- Custom Git Prompt Function (for Bash) ---
+# Replaces __git_ps1 to use 'U' for unstaged changes like Zsh/Fish
+_bash_custom_git_prompt() {
+	local git_branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+	if [[ -n "$git_branch" ]]; then # Check if inside a git repo
+		local git_status=$(git status --porcelain 2>/dev/null)
+		local unstaged=""
+		local staged=""
+
+		# Check porcelain output for unstaged/modified/deleted/untracked
+		if [[ "$git_status" =~ ( M | \?\? | D ) ]]; then
+			unstaged="U" # Use U like Zsh
+		fi
+		# Check porcelain output for staged adds/mods/deletes
+		if [[ "$git_status" =~ ^(M |A |D) ]]; then
+			staged="+"
+		fi
+
+		# Construct the output string, e.g., "(mainU+)"
+		echo "(${git_branch}${unstaged}${staged})"
+	fi
+}
+
 
 # --- Bash Git-Aware Prompt ---
 
-# Source the git-prompt script (locations vary)
-if [ -n "$PREFIX" ] && [ -f "$PREFIX/share/git/contrib/completion/git-prompt.sh" ]; then
-	# TERMUX-SPECIFIC PATH: Check for git-prompt.sh in Termux's $PREFIX
-	. "$PREFIX/share/git/contrib/completion/git-prompt.sh"
-elif [ -f /usr/share/git-core/contrib/completion/git-prompt.sh ]; then
-	. /usr/share/git-core/contrib/completion/git-prompt.sh
-elif [ -f /usr/lib/git-core/git-prompt.sh ]; then
-	. /usr/lib/git-core/git-prompt.sh
-elif [ -f /etc/bash_completion.d/git-prompt ]; then
-	. /etc/bash_completion.d/git-prompt
-fi
+# Set the prompt format: [user@host abbr_dir](git-info)>
+# Calls _bash_custom_git_prompt for Git status
+PS1='\[\e[0;36m\][$(service_user)@\h$(_bash_abbreviate_path)]\[\e[0m\]\[\e[0;35m\]$(_bash_custom_git_prompt)\[\e[0m\]> '
 
-# Enable features: %s = branch, * = unstaged, + = staged
-if command -v __git_ps1 > /dev/null; then
-	export GIT_PS1_SHOWDIRTYSTATE=1
-	export GIT_PS1_SHOWUNTRACKEDFILES=
-	export GIT_PS1_SHOWSTASHSTATE=
-	export GIT_PS1_SHOWUPSTREAM=
-
-	# Set the prompt format: [user@host dir] (git-info)$
-	# CORRECTED: Ensure space between \h and \W, add single space before git info, use "(%s)" format
-	PS1='\[\e[0;36m\][$(service_user)@\h~/\W]\[\e[0m\]\[\e[0;35m\]$(__git_ps1 "(%s)")\[\e[0m\]\$ '
-else
-	# Fallback to original prompt if git-prompt.sh wasn't found
-	PS1='[\u@\h \W]\$ '
-fi
 
 # --- Initialize Modern Tools ---
 

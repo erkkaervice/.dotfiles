@@ -61,7 +61,7 @@ precmd() { vcs_info }
 
 # Set the prompt
 # Cyan for main, plus git info from vcs_info
-PROMPT="%F{cyan}[$(service_user)@%m%1~]%f${vcs_info_msg_0_}%# "
+PROMPT="%F{cyan}[$(service_user)@%m~/%1~]%f${vcs_info_msg_0_}%# "
 
 # --- Initialize Modern Tools ---
 

@@ -47,6 +47,9 @@ check_sudo_and_set_flag() {
 print_info "Starting dotfiles setup..."
 DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
+# ensure ~/.local/bin is in PATH for this script immediately
+export PATH="$HOME/.local/bin:$PATH"
+
 check_sudo_and_set_flag
 
 # --- Basic OS Detection (Needed for both system and local installs) ---

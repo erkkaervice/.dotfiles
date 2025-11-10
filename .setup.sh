@@ -98,16 +98,35 @@ if [ "$IS_TERMUX" = false ]; then
 	if ! command -v kitty >/dev/null 2>&1 && [ "$OS_ID" != "macos" ]; then
 		if command -v curl >/dev/null 2>&1; then
 			print_info "Fallback: Installing Kitty locally..."
-			curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
+			# Use official installer but tell it NOT to integrate, we will do it manually better
+			curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n dest="$HOME/.local"
+			
+			# Create symlinks
 			ln -sf "$HOME/.local/kitty.app/bin/kitty" "$HOME/.local/bin/kitty"
 			ln -sf "$HOME/.local/kitty.app/bin/kitten" "$HOME/.local/bin/kitten"
 			
-			# Desktop Integration for Local Install
+			# --- Desktop Integration (Robust Version) ---
 			print_info "Integrating local Kitty with desktop environment..."
 			mkdir -p "$HOME/.local/share/applications"
-			cp "$HOME/.local/kitty.app/share/applications/kitty.desktop" "$HOME/.local/share/applications/" 2>/dev/null
-			sed -i "s|Icon=kitty|Icon=$HOME/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" "$HOME/.local/share/applications/kitty.desktop" 2>/dev/null
-			sed -i "s|Exec=kitty|Exec=$HOME/.local/bin/kitty|g" "$HOME/.local/share/applications/kitty.desktop" 2>/dev/null
+			DESKTOP_FILE="$HOME/.local/share/applications/kitty.desktop"
+			
+			# Copy template
+			cp "$HOME/.local/kitty.app/share/applications/kitty.desktop" "$DESKTOP_FILE"
+			
+			# Define exact paths for stability
+			KITTY_BIN="$HOME/.local/bin/kitty"
+			KITTY_ICON="$HOME/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png"
+
+			# Use safer regex anchors (^) to only replace standard lines
+			sed -i "s|^Exec=kitty|Exec=$KITTY_BIN|g" "$DESKTOP_FILE"
+			sed -i "s|^TryExec=kitty|TryExec=$KITTY_BIN|g" "$DESKTOP_FILE"
+			sed -i "s|^Icon=kitty|Icon=$KITTY_ICON|g" "$DESKTOP_FILE"
+
+			# Force desktop database refresh if possible
+			if command -v update-desktop-database >/dev/null 2>&1; then
+				print_info "Refreshing desktop database..."
+				update-desktop-database "$HOME/.local/share/applications"
+			fi
 		else
 			print_error "curl missing. Cannot install Kitty fallback."
 		fi

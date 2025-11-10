@@ -1,7 +1,7 @@
 # dotfiles
 Personal shell configuration files for creating a consistent, powerful environment across various Linux distributions, macOS, and Termux.
 
-This repository provides synchronized setups for Bash, Zsh, and Fish. It standardizes not just the shell, but the entire terminal experience by including configurations for the **Kitty** terminal emulator and system-wide font preferences. It features automated setup scripts that handle everything from package installation (with non-root fallbacks) to desktop environment integration.
+This repository provides synchronized setups for Bash, Zsh, and Fish. It standardizes not just the shell, but the entire terminal experience by including configurations for the **Kitty** terminal emulator and bundled system-wide font preferences. It features automated setup scripts that handle everything from package installation (with non-root fallbacks) to desktop environment integration.
 
 ---
 
@@ -26,7 +26,7 @@ This configuration provides:
 * **Universal Terminal**: Standardizes on **Kitty** across all desktop systems for a consistent rendering experience.
 * **Consistent Fonts**:
     * **Terminal**: Automatically installs and configures **Inconsolata** as the default monospace font.
-    * **UI/Desktop**: Supports custom UI fonts (e.g., **Candara**) via a drop-in `.fonts` directory.
+    * **UI/Desktop**: Includes and installs **Candara** as the default UI font via a bundled `.fonts` directory.
 * **Desktop Integration**: A specialized script (`.configure_desktop.sh`) automatically sets Kitty as the default terminal and applies font settings on GNOME, KDE Plasma, and XFCE.
 
 ### Multi-Shell Support
@@ -47,15 +47,15 @@ This configuration provides:
 * **Git Shortcuts**: `addup`, `addall`, `stat`, `pull`, `push`, `gl` (pretty log).
 
 ### Helper Functions
-* **`refresh`**: The master command. Pulls updates from Git, re-runs the full setup/installation script, integrates desktop changes, and reloads the current shell.
+* **`refresh`**: The master command. Pulls updates from Git, re-runs the full setup/installation script, updates fonts/desktop integration, and reloads the current shell.
 * **`extract`**: Universal archive extractor.
 * **`ipinfo`**: Quick public IP and domain lookup.
 * **`compile`**: Simple C/C++ builder.
 
 ### Automation & Maintenance
-* **Smart Auto-Refresh**: Runs the setup logic once per session (or if critical tools are missing) to ensure school/shared computers are always configured.
+* **Smart Auto-Refresh**: Runs the setup logic once per session (or if critical tools are missing) to ensure school/shared computers are always configured correctly upon login.
 * **Robust Installation**: `setup.sh` detects the OS, handles `sudo`/non-`sudo` scenarios, and installs packages accordingly.
-    * **Non-Root Fallback**: If `sudo` is unavailable, it automatically installs Kitty, Zoxide, and FZF locally to `~/.local/bin`.
+    * **Non-Root Fallback**: If `sudo` is unavailable, it automatically installs Kitty, Zoxide, and FZF locally to `~/.local/bin` and integrates them with the desktop.
 * **SSH Persistence**: keeps `ssh-agent` running across sessions.
 
 ---
@@ -81,25 +81,18 @@ The `setup.sh` script automatically detects and supports:
     cd ~/dotfiles
     ```
 
-2.  **(Optional) Add Custom Fonts:**
-    If you want to use proprietary fonts like **Candara**, create a `.fonts` directory in the repo and drop the `.ttf` files there before running setup.
-    ```sh
-    mkdir -p ~/dotfiles/.fonts
-    # Copy your Candara*.ttf files into this directory
-    ```
-
-3.  **Run the Setup Script:**
+2.  **Run the Setup Script:**
     ```sh
     bash .setup.sh
     ```
     *What it does:*
     * Detects OS and checks for `sudo` rights.
     * Installs required packages (falling back to local user install if `sudo` is missing).
-    * Installs custom fonts from `.fonts` and system fonts (Inconsolata).
+    * Installs bundled custom fonts (Candara) and system fonts (Inconsolata).
     * Symlinks all configuration files (`.bashrc`, `.zshrc`, `.config/fish`, `.kitty.conf`, etc.).
-    * Triggers desktop integration to set Kitty as default.
+    * Triggers desktop integration to set Kitty and standard fonts as default.
 
-4.  **Restart:**
+3.  **Restart:**
     Close and reopen your terminal. You should now be in Fish (if graphical) or have all standard aliases available.
 
 ---
@@ -120,12 +113,13 @@ If installed successfully, Kitty should appear in your system's application menu
 
 ## Structure
 
-* **`.setup.sh`**: Master installation script. Handles OS detection, package managers, local fallbacks, and file linking.
+* **`.setup.sh`**: Master installation script. Handles OS detection, package managers, local fallbacks, font installation, and file linking.
 * **`.configure_desktop.sh`**: Called by setup.sh to apply GNOME/KDE/XFCE specific settings (default terminal, fonts).
 * **`.sh_common`**: Core logic shared by Bash and Zsh (aliases, exports, auto-refresh).
 * **`.config.fish`**: Feature-equivalent configuration for Fish shell.
 * **`.kitty.conf`**: Cross-platform configuration for the Kitty terminal (fonts, opacity).
 * **`.fonts.conf`**: System-wide configuration to map "monospace" to Inconsolata and "sans-serif" to Candara.
+* **`.fonts/`**: Directory containing bundled TrueType fonts.
 * **`.bashrc` / `.zshrc` / `.profile`**: Standard shell entry points that source the common config.
 
 ---
@@ -134,7 +128,7 @@ If installed successfully, Kitty should appear in your system's application menu
 
 * **Terminal Settings**: Edit `.kitty.conf` to change opacity or font size across all your machines.
 * **Aliases/Functions**: Add to `.sh_common` (for Bash/Zsh) AND `.config.fish` (for Fish) to ensure they are available everywhere.
-* **Fonts**: Just drop new `.ttf` files into the `.fonts/` directory and run `refresh`.
+* **New Fonts**: Just drop new `.ttf` files into the `.fonts/` directory and run `refresh`.
 
 ---
 

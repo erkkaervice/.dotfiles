@@ -11,18 +11,18 @@ fi
 # --- Fish Shell Auto-Switch ---
 # Enter fish for graphical sessions
 # (Requires: fish)
-if [[ $DISPLAY ]]; then
-	# Check if current shell is already fish to avoid loops
-	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
-		if command -v fish > /dev/null 2>&1; then
-			export SHELL=/usr/bin/fish
-			exec fish "$@"
-			# If exec fails, reset SHELL and print error
-			export SHELL=/bin/bash
-			echo "Failed to switch to fish shell." >&2
-		fi
-	fi
-fi
+# if [[ $DISPLAY ]]; then
+# 	# Check if current shell is already fish to avoid loops
+# 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
+# 		if command -v fish > /dev/null 2>&1; then
+# 			export SHELL=/usr/bin/fish
+# 			exec fish "$@"
+# 			# If exec fails, reset SHELL and print error
+# 			export SHELL=/bin/bash
+# 			echo "Failed to switch to fish shell." >&2
+# 		fi
+# 	fi
+# fi
 
 # --- Path Abbreviation Function ---
 _bash_abbreviate_path() {

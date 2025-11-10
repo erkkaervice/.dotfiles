@@ -41,7 +41,7 @@ alias code='flatpak run com.visualstudio.code'
 function fish_prompt
 	set -l user_name ""; if test -f "$HOME/.sh_common"; set user_name (bash -c 'source ~/.sh_common && service_user'); else; set user_name (whoami); end
 	set -l c_cyan (set_color cyan); set -l c_magenta (set_color magenta); set -l c_norm (set_color normal)
-	echo -n $c_cyan"["$user_name"@" (prompt_hostname) (prompt_pwd) "]"$c_norm
+	echo -n $c_cyan"["$user_name"@"(prompt_hostname)(prompt_pwd)"]"$c_norm
 	set -l g_branch (git symbolic-ref --short HEAD 2> /dev/null)
 	if test -n "$g_branch"
 		set -l g_status (git status --porcelain 2> /dev/null); set -l u ""; set -l s ""
@@ -69,11 +69,8 @@ function cleanup
 	end
 	if test "$do_clean" = true
 		echo "Clearing..."
-		# Fish-safe cleanup: delete the directory itself to avoid wildcard errors if empty
 		rm -rf ~/.local/share/Trash ~/.thumbnails
-		# For cache, it's safer to recreate it immediately so active apps don't crash
 		rm -rf ~/.cache; mkdir -p ~/.cache
-		
 		if command -v sudo >/dev/null 2>&1; and sudo -n true 2>/dev/null
 			echo "Cleaning system package cache (sudo)..."
 			if command -v apt-get >/dev/null; sudo apt-get autoremove -y; and sudo apt-get clean; end

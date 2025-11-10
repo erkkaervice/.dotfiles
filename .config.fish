@@ -6,8 +6,11 @@ if not status is-interactive
 end
 
 # --- Environment Variables (Global, Exported) ---
+set -gx TERMINAL kitty
 set -gx EDITOR nvim
 set -gx NAVIGATOR brave
+set -gx USER ervice
+set -gx MAIL erkka@ervice.fi
 # TERM is usually best left for the terminal emulator to set
 
 # --- Disable Fish Greeting ---

@@ -146,6 +146,7 @@ service_user() {
 # Set preferred programs (can be overridden by shell-specific files if needed)
 export NAVIGATOR="brave"
 export EDITOR="nvim"
+export TERMINAL="kitty"
 
 # Force the displayed username to 'ervice' on all machines (for zsh/termux bash)
 export USER="ervice"

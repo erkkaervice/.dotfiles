@@ -94,45 +94,36 @@ fi
 if [ "$IS_TERMUX" = false ]; then
 	mkdir -p "$HOME/.local/bin"
 
-	# 1. Kitty Fallback (Linux only, skip on macOS as it usually needs standard install)
+	# 1. Kitty Installation
 	if ! command -v kitty >/dev/null 2>&1 && [ "$OS_ID" != "macos" ]; then
 		if command -v curl >/dev/null 2>&1; then
 			print_info "Fallback: Installing Kitty locally..."
-			# Use official installer but tell it NOT to integrate, we will do it manually better
+			# Use official installer but tell it NOT to integrate, we will manually do it better below
 			curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n dest="$HOME/.local"
-			
-			# Create symlinks
 			ln -sf "$HOME/.local/kitty.app/bin/kitty" "$HOME/.local/bin/kitty"
 			ln -sf "$HOME/.local/kitty.app/bin/kitten" "$HOME/.local/bin/kitten"
-			
-			# --- Desktop Integration (Robust Version) ---
-			print_info "Integrating local Kitty with desktop environment..."
-			mkdir -p "$HOME/.local/share/applications"
-			DESKTOP_FILE="$HOME/.local/share/applications/kitty.desktop"
-			
-			# Copy template
-			cp "$HOME/.local/kitty.app/share/applications/kitty.desktop" "$DESKTOP_FILE"
-			
-			# Define exact paths for stability
-			KITTY_BIN="$HOME/.local/bin/kitty"
-			KITTY_ICON="$HOME/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png"
-
-			# Use safer regex anchors (^) to only replace standard lines
-			sed -i "s|^Exec=kitty|Exec=$KITTY_BIN|g" "$DESKTOP_FILE"
-			sed -i "s|^TryExec=kitty|TryExec=$KITTY_BIN|g" "$DESKTOP_FILE"
-			sed -i "s|^Icon=kitty|Icon=$KITTY_ICON|g" "$DESKTOP_FILE"
-
-			# Force desktop database refresh if possible
-			if command -v update-desktop-database >/dev/null 2>&1; then
-				print_info "Refreshing desktop database..."
-				update-desktop-database "$HOME/.local/share/applications"
-			fi
 		else
 			print_error "curl missing. Cannot install Kitty fallback."
 		fi
 	fi
 
-	# 2. Zoxide Fallback
+	# 2. Kitty Desktop Integration (Run ALWAYS if local kitty exists)
+	if [ -d "$HOME/.local/kitty.app" ]; then
+		# We force update this every time to ensure paths are correct
+		mkdir -p "$HOME/.local/share/applications"
+		DESKTOP_FILE="$HOME/.local/share/applications/kitty.desktop"
+		if [ ! -f "$DESKTOP_FILE" ] || ! grep -q "Exec=$HOME/.local/bin/kitty" "$DESKTOP_FILE"; then
+			print_info "Updating local Kitty desktop integration..."
+			cp "$HOME/.local/kitty.app/share/applications/kitty.desktop" "$DESKTOP_FILE"
+			sed -i "s|^Exec=kitty|Exec=$HOME/.local/bin/kitty|g" "$DESKTOP_FILE"
+			sed -i "s|^TryExec=kitty|TryExec=$HOME/.local/bin/kitty|g" "$DESKTOP_FILE"
+			sed -i "s|^Icon=kitty|Icon=$HOME/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" "$DESKTOP_FILE"
+			# Refresh database if possible
+			command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$HOME/.local/share/applications"
+		fi
+	fi
+
+	# 3. Zoxide Fallback
 	if ! command -v zoxide >/dev/null 2>&1; then
 		if command -v curl >/dev/null 2>&1; then
 			print_info "Fallback: Installing Zoxide locally..."
@@ -142,7 +133,7 @@ if [ "$IS_TERMUX" = false ]; then
 		fi
 	fi
 
-	# 3. FZF Fallback
+	# 4. FZF Fallback
 	if ! command -v fzf >/dev/null 2>&1; then
 		if command -v git >/dev/null 2>&1; then
 			print_info "Fallback: Installing FZF locally..."

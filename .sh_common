@@ -1,5 +1,17 @@
 # Common Aliases, Functions, and Exports for Bash and Zsh
 
+# --- Auto-Refresh (Once per session) ---
+if [ ! -f "/tmp/dotfiles_initialized_$(id -u)" ]; then
+	if ! command -v kitty >/dev/null 2>&1; then
+		echo "[Auto-Setup] Essential tools missing. Running setup..."
+		if command -v readlink >/dev/null 2>&1; then
+			 COMMON_PATH=$(readlink -f "$HOME/.sh_common"); REPO_ROOT=$(dirname "$COMMON_PATH"); SETUP_SCRIPT="$REPO_ROOT/.setup.sh"
+		else SETUP_SCRIPT="$HOME/dotfiles/.setup.sh"; fi
+		[ -f "$SETUP_SCRIPT" ] && bash "$SETUP_SCRIPT" || echo "[Auto-Setup] Error: Could not find .setup.sh"
+	fi
+	touch "/tmp/dotfiles_initialized_$(id -u)"
+fi
+
 # --- Command Color Settings ---
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
@@ -16,7 +28,6 @@ alias psmem='ps auxf | sort -nr -k 4'
 alias pscpu='ps auxf | sort -nr -k 3'
 
 # --- Git Aliases ---
-# (Requires: git)
 alias addup='git add -u'
 alias addall='git add .'
 alias branch='git branch'
@@ -32,195 +43,70 @@ alias newtag='git tag -a'
 alias gl='git log --oneline --graph --decorate --all'
 
 # --- Modern Tool Aliases ---
-# (Requires: bat, fd-find, ripgrep)
-
-# Use bat as a cat replacement
-if command -v bat > /dev/null 2>&1; then
-	alias cat='bat --paging=never'
-# Handle Ubuntu's batcat naming
-elif command -v batcat > /dev/null 2>&1; then
-	alias cat='batcat --paging=never'
-fi
-
-# Use fd as a find replacement
-if command -v fd > /dev/null 2>&1; then
-	alias find='fd'
-fi
-
-# Use ripgrep as a grep replacement
-if command -v rg > /dev/null 2>&1; then
-	alias grep='rg'
-fi
+if command -v bat > /dev/null 2>&1; then alias cat='bat --paging=never'
+elif command -v batcat > /dev/null 2>&1; then alias cat='batcat --paging=never'; fi
+if command -v fd > /dev/null 2>&1; then alias find='fd'; fi
+if command -v rg > /dev/null 2>&1; then alias grep='rg'; fi
 
 # --- Functions ---
-
-# Compiler function
-# (Requires: build-essential [Debian/Ubuntu] or base-devel [Arch])
 alias compile='compiler'
 compiler() {
 	[[ $1 ]] || { echo "Missing operand" >&2; return 1; }
 	[[ -r $1 ]] || { printf "File %s does not exist or is not readable\n" "$1" >&2; return 1; }
 	local output_path=${TMPDIR:-/tmp}/${1##*/};
-	# Use CXX for C++ or CC for C compiler variables if preferred
-	gcc "$1" -Wall -Wextra -Werror -o "$output_path" && "$output_path";
-	rm "$output_path";
-	return 0;
+	gcc "$1" -Wall -Wextra -Werror -o "$output_path" && "$output_path"; rm "$output_path"; return 0;
 }
 
-# Extract function (More Portable Version)
-# (Requires relevant extractors: unzip, p7zip-full, unrar, bsdtar/libarchive-tools, etc.)
 alias extract='extractor'
 extractor() {
-	local c e i
-
-	(($#)) || return
-
+	local c e i; (($#)) || return
 	for i; do
-		c=''
-		e=1
-
-		if [[ ! -r $i ]]; then
-			echo "$0: file is unreadable: \`$i'" >&2
-			continue
-		fi
-
-		# Use more portable case matching
+		c=''; e=1
+		if [[ ! -r $i ]]; then echo "$0: file is unreadable: \`$i'" >&2; continue; fi
 		case $i in
-			*.tar.bz2|*.tar.gz|*.tar.xz|*.tbz2|*.tgz|*.txz|*.tar)
-				c=(bsdtar xvf);;
-			*.zip) c=(unzip);;
-			*.rar) c=(unrar x);;
-			*.7z)  c=(7z x);;
-			*.Z)   c=(uncompress);;
-			*.bz2) c=(bunzip2);;
-			*.exe) c=(cabextract);;
-			*.gz)  c=(gunzip);;
-			*.xz)  c=(unxz);;
-			*.zst) c=(unzstd);;
-			*)     echo "$0: unrecognized file extension: \`$i'" >&2
-				continue;;
+			*.tar.bz2|*.tar.gz|*.tar.xz|*.tbz2|*.tgz|*.txz|*.tar) c=(bsdtar xvf);;
+			*.zip) c=(unzip);; *.rar) c=(unrar x);; *.7z) c=(7z x);; *.Z) c=(uncompress);;
+			*.bz2) c=(bunzip2);; *.exe) c=(cabextract);; *.gz) c=(gunzip);;
+			*.xz) c=(unxz);; *.zst) c=(unzstd);;
+			*) echo "$0: unrecognized file extension: \`$i'" >&2; continue;;
 		esac
-
-		command "${c[@]}" "$i"
-		((e = e || $?))
+		command "${c[@]}" "$i"; ((e = e || $?))
 	done
 	return "$e"
 }
 
-# IP information function
-# (Requires: curl, dnsutils [Debian/Ubuntu] or bind [Arch])
 alias ipinfo='ipinformation'
 ipinformation() {
-	# If no argument is given, show own IP info
-	if [[ -z "$1" ]]; then
-		curl ipinfo.io | grep -v '"readme":'
-	# Check if $1 looks like an IP address
-	elif echo "$1" | grep -Pq '^(([1-9]?\d|1\d{2}|2[0-4]\d|25[0-5])\.){3}([1-9]?\d|1\d{2}|2[0-4]\d|25[0-5])$'; then
-		curl ipinfo.io/"$1" | grep -v '"readme":'
-	# Check if $1 looks like a domain name
+	if [[ -z "$1" ]]; then curl ipinfo.io | grep -v '"readme":'
+	elif echo "$1" | grep -Pq '^(([1-9]?\d|1\d{2}|2[0-4]\d|25[0-5])\.){3}([1-9]?\d|1\d{2}|2[0-4]\d|25[0-5])$'; then curl ipinfo.io/"$1" | grep -v '"readme":'
 	elif echo "$1" | grep -Pq '^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'; then
-		# Use host -t A for IPv4 only, or just host
 		ip_address=$(host "$1" | awk '/has address/ { print $NF; exit }')
-		if [[ -n "$ip_address" ]]; then
-			curl ipinfo.io/"$ip_address" | grep -v '"readme":'
-		else
-			echo "Could not resolve IP for $1" >&2
-		fi
-	else
-		echo "Input does not look like an IP address or domain name: $1" >&2
-		return 1
-	fi
+		if [[ -n "$ip_address" ]]; then curl ipinfo.io/"$ip_address" | grep -v '"readme":'; else echo "Could not resolve IP for $1" >&2; fi
+	else echo "Input does not look like an IP address or domain name: $1" >&2; return 1; fi
 	echo
 }
 
-# --- Prompt Helper Function ---
-# Function to override the displayed system username
-service_user() {
-	echo "ervice"
-}
+service_user() { echo "ervice"; }
 
-# Add ~/.local/bin and Cargo bin to PATH if they exist
 [ -d "$HOME/.local/bin" ] && export PATH="$HOME/.local/bin:$PATH"
 [ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
-
-# Set preferred programs (can be overridden by shell-specific files if needed)
-export NAVIGATOR="brave"
-export EDITOR="nvim"
-export TERMINAL="kitty"
-
-# Force the displayed username to 'ervice' on all machines (for zsh/termux bash)
-export USER="ervice"
-export MAIL="erkka@ervice.fi"
-
-# Alias for VS Code Flatpak
+export NAVIGATOR="brave"; export EDITOR="nvim"; export TERMINAL="kitty"
+export USER="ervice"; export MAIL="erkka@ervice.fi"
 alias code='flatpak run com.visualstudio.code'
-
-# Flatpak path (if exists)
 [ -d "/var/lib/flatpak/exports/bin" ] && export PATH="$PATH:/var/lib/flatpak/exports/bin"
 
-# --- SSH Agent Management ---
-# Source the agent manager script (needed for Termux/non-graphical sessions)
-if [ -f "$HOME/.ssh_agent_init" ]; then
-	. "$HOME/.ssh_agent_init"
-fi
+if [ -f "$HOME/.ssh_agent_init" ]; then . "$HOME/.ssh_agent_init"; fi
 
-# --- Dotfiles Management Function ---
-# Alias: refresh
-# Pulls latest changes, runs setup.sh to re-link, and sources the current shell config.
 alias refresh='dotfiles_refresh'
 dotfiles_refresh() {
-	# --- FINAL ROBUST FIX: Resolve the symlink of the SOURCED file to find the repository's absolute directory ---
-	# We rely on the absolute path of the symlinked file (~/.sh_common) to find the original repo.
-	
-	# Step 1: Find the absolute path of the symlink target (e.g., /path/to/dotfiles/.sh_common)
-	# This handles the symlink resolution cross-platform (Bash/Zsh compatibility)
 	local ABSOLUTE_PATH_TO_FILE
-	if command -v readlink > /dev/null 2>&1; then
-		# Use readlink -f (standard Linux/Termux tool)
-		ABSOLUTE_PATH_TO_FILE="$(readlink -f "$HOME/.sh_common")"
-	else
-		# Fallback for systems without readlink -f
-		ABSOLUTE_PATH_TO_FILE="$(python3 -c "import os; print(os.path.realpath('$HOME/.sh_common'))" 2>/dev/null)"
-	fi
-	
-	# Step 2: Extract the directory name from the resolved path (e.g., /path/to/dotfiles)
+	if command -v readlink > /dev/null 2>&1; then ABSOLUTE_PATH_TO_FILE="$(readlink -f "$HOME/.sh_common")"
+	else ABSOLUTE_PATH_TO_FILE="$(python3 -c "import os; print(os.path.realpath('$HOME/.sh_common'))" 2>/dev/null)"; fi
 	DOTFILES_DIR="$(dirname "$ABSOLUTE_PATH_TO_FILE")"
-	
-	# Check if DOTFILES_DIR is actually valid before proceeding
-	if [ -z "$DOTFILES_DIR" ] || [ ! -d "$DOTFILES_DIR" ]; then
-		echo "ERROR: Could not find dotfiles repository directory." >&2
-		echo "Ensure the symlink $HOME/.sh_common points to the correct location." >&2
-		return 1
-	fi
-	
+	if [ -z "$DOTFILES_DIR" ] || [ ! -d "$DOTFILES_DIR" ]; then echo "ERROR: Could not find repo." >&2; return 1; fi
 	echo "--- Refreshing Dotfiles ---"
-	
-	# 1. Pull the latest repository changes
-	if command -v git > /dev/null 2>&1; then
-		echo "1. Pulling latest changes..."
-		# Check if the directory is a git repository
-		if [ -d "$DOTFILES_DIR/.git" ]; then
-			# Go to the repository directory and pull
-			(cd "$DOTFILES_DIR" && git pull origin main) || { echo "Git pull failed." >&2; return 1; }
-		else
-			echo "Warning: Dotfiles directory is not a Git repository. Skipping pull."
-		fi
-	else
-		echo "Warning: Git not found. Skipping pull."
-	fi
-	
-	# 2. Re-run the setup script to ensure correct links and install new tools
-	echo "2. Running setup script..."
-	# Execute the script from the correctly resolved DOTFILES_DIR
-	bash "$DOTFILES_DIR/.setup.sh" || { echo "Setup script failed." >&2; return 1; }
-	
-	# 3. Source the current shell's config to apply changes immediately
-	echo "3. Sourcing current shell config..."
-	if [ -n "$BASH_VERSION" ]; then
-		source "$HOME/.bashrc"
-	elif [ -n "$ZSH_VERSION" ]; then
-		source "$HOME/.zshrc"
-	fi
-	
+	if command -v git > /dev/null 2>&1 && [ -d "$DOTFILES_DIR/.git" ]; then (cd "$DOTFILES_DIR" && git pull origin main) || return 1; fi
+	bash "$DOTFILES_DIR/.setup.sh" || return 1
+	if [ -n "$BASH_VERSION" ]; then source "$HOME/.bashrc"; elif [ -n "$ZSH_VERSION" ]; then source "$HOME/.zshrc"; fi
 	echo "--- Dotfiles Refreshed ---"
 }

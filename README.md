@@ -1,20 +1,20 @@
 # dotfiles
-Personal shell configuration files for creating a consistent environment across various Linux distributions and shells (Bash, Zsh, and Fish).
+Personal shell configuration files for creating a consistent, powerful environment across various Linux distributions, macOS, and Termux.
 
-dotfiles provides setups for Bash, Zsh, and Fish. It includes a shared configuration for Bash/Zsh (`.sh_common`) and a separate, feature-rich configuration for Fish (`.config.fish`). It includes colorized output, useful aliases, helper functions, and a setup script that links configuration files automatically.
+This repository provides synchronized setups for Bash, Zsh, and Fish. It standardizes not just the shell, but the entire terminal experience by including configurations for the **Kitty** terminal emulator and system-wide font preferences. It features automated setup scripts that handle everything from package installation (with non-root fallbacks) to desktop environment integration.
 
 ---
 
 ## Table of Contents
 
-- Features
-- Supported Systems
-- Installation
-- Usage
-- Structure
-- Customization
-- Troubleshooting
-- License
+- [Features](#features)
+- [Supported Systems](#supported-systems)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Structure](#structure)
+- [Customization](#customization)
+- [Troubleshooting](#troubleshooting)
+- [License](#license)
 
 ---
 
@@ -22,148 +22,130 @@ dotfiles provides setups for Bash, Zsh, and Fish. It includes a shared configura
 
 This configuration provides:
 
-**Multi-Shell Support**:
-* Configuration split for Bash (`.bashrc`) and Zsh (`.zshrc`), sourcing a common file (`.sh_common`) for shared settings.
-* A standalone, comprehensive configuration for Fish (`.config.fish`) that provides the same aliases and functions.
+### Core Terminal Experience
+* **Universal Terminal**: Standardizes on **Kitty** across all desktop systems for a consistent rendering experience.
+* **Consistent Fonts**:
+    * **Terminal**: Automatically installs and configures **Inconsolata** as the default monospace font.
+    * **UI/Desktop**: Supports custom UI fonts (e.g., **Candara**) via a drop-in `.fonts` directory.
+* **Desktop Integration**: A specialized script (`.configure_desktop.sh`) automatically sets Kitty as the default terminal and applies font settings on GNOME, KDE Plasma, and XFCE.
 
-**Fish Shell Auto-switch**: Automatically attempts to switch to the Fish shell in graphical sessions **(from Bash or Zsh)** if installed.
+### Multi-Shell Support
+* **Bash & Zsh**: Share a common core configuration (`.sh_common`) for identical aliases, exports, and functions.
+* **Fish**: A feature-rich, standalone configuration (`.config.fish`) that mirrors all POSIX functionality.
+* **Auto-Switch**: Automatically attempts to switch to Fish in graphical sessions if installed.
 
-**Custom Prompt**:
-* **Fixed Username**: The username is fixed to **`ervice`** across all shells/systems.
-* **Git-Aware Prompts**: Bash, Zsh, and Fish all now feature prompts that display the current Git branch and status. The status indicators appear **only when inside a Git repository** and disappear otherwise.
-    * Indicators for unstaged (`U`) and staged (`+`) changes are shown consistently across all three shells.
-* **Color-Coded**: The main prompt (`[user@host dir]`) is colored **cyan**, and the Git information is colored **magenta** across all shells.
-* **Abbreviated Path Display**: All three shells now display the path relative to the home directory (`~`), with intermediate directories shortened to their first letter (e.g., `~/h/.dotfiles`).
-* **Consistent Prompt End**: All shells use `>` as the final prompt character for non-root users.
+### Custom Prompts
+* **Unified Look**: All three shells feature a consistent **Cyan** (user/host) and **Magenta** (Git) color scheme.
+* **Git-Aware**: Displays branch and status indicators (`U` for unstaged, `+` for staged) only when inside a repository.
+* **Smart Paths**: Abbreviates intermediate directories (e.g., `~/h/.dotfiles`).
+* **Fixed Identity**: Forces the displayed username to **`ervice`** across all systems for consistency.
 
-**Useful Aliases**:
-* Colorized output for `ls`, `grep`, `ip`.
-* Human-readable `df` and `free`.
-* Process management shortcuts (`psa`, `psgrep`, `psmem`, `pscpu`).
-* Common Git commands (`addup`, `addall`, `stat`, `pull`, `push`, `gl` for pretty log, etc.).
-* Aliases for modern command-line tools: **`cat`** (replaces with `bat`), **`find`** (replaces with `fd`), and **`grep`** (replaces with `ripgrep` or `rg`).
-* `code` alias for the VS Code Flatpak.
+### Productivity Tools & Aliases
+* **Modern Replacements**: Automatically installs and aliases `cat` → `bat`, `find` → `fd`, `grep` → `ripgrep`, and `cd` → `zoxide`.
+* **Fuzzy Finding**: Integrates `fzf` for history search (`CTRL-R`), file search (`CTRL-T`), and directory jumping (`ALT-C`).
+* **System Management**: Colorized `ip`, human-readable `df`/`free`, and process shortcuts (`psa`, `psmem`, `pscpu`).
+* **Git Shortcuts**: `addup`, `addall`, `stat`, `pull`, `push`, `gl` (pretty log).
 
-**Helper Functions**:
-* `compile`: Simple C/C++ compilation and execution.
-* `extract`: Universal extractor for various archive types.
-* **`ipinfo`**: Quick IP/domain information lookup using `curl`. Calling it without an argument shows **your own** IP information.
+### Helper Functions
+* **`refresh`**: The master command. Pulls updates from Git, re-runs the full setup/installation script, integrates desktop changes, and reloads the current shell.
+* **`extract`**: Universal archive extractor.
+* **`ipinfo`**: Quick public IP and domain lookup.
+* **`compile`**: Simple C/C++ builder.
 
-**Productivity Tools**:
-* **`zoxide`**: Smart directory jumping (`z <partial dir name>`).
-* **`fzf`**: Interactive fuzzy finder for history (`CTRL-R`), files (`CTRL-T`), and directories (`ALT-C`).
-
-**Maintenance & Setup**:
-* **`refresh` alias**: A single command (available in all shells) to pull the latest changes from the Git repository, re-run the setup script, and reload the current shell configuration.
-* **SSH Agent Persistence**: Includes a cross-shell compatible script (`.ssh_agent_init`) sourced by all shells to start the `ssh-agent` automatically and add keys, avoiding repetitive passphrase entry in Termux and non-desktop environments.
-
-**PATH Management**: Adds `~/.local/bin`, `~/.cargo/bin`, and Flatpak paths to the `PATH`.
-
-**Environment Variables**: Sets preferred `EDITOR` (nvim) and `NAVIGATOR` (brave) via `.sh_common`. The fixed username **`ervice`** is also set via `export USER` in `.sh_common` for Bash/Zsh compatibility.
-
-**Automated Setup**: Includes a `setup.sh` script to install dependencies and link configuration files.
+### Automation & Maintenance
+* **Smart Auto-Refresh**: Runs the setup logic once per session (or if critical tools are missing) to ensure school/shared computers are always configured.
+* **Robust Installation**: `setup.sh` detects the OS, handles `sudo`/non-`sudo` scenarios, and installs packages accordingly.
+    * **Non-Root Fallback**: If `sudo` is unavailable, it automatically installs Kitty, Zoxide, and FZF locally to `~/.local/bin`.
+* **SSH Persistence**: keeps `ssh-agent` running across sessions.
 
 ---
 
 ## Supported Systems
 
-The `setup.sh` script automatically detects the OS and installs dependencies for:
+The `setup.sh` script automatically detects and supports:
 
-- **Termux** (Mobile Linux environment)
-- Debian / Ubuntu and derivatives
-- Arch Linux / SteamOS
-- openSUSE
-- Alpine Linux
-
-Manual installation of dependencies might be required on other systems. Basic aliases and functions should work on most POSIX-compliant shells (Bash/Zsh) and Fish.
+* **Debian / Ubuntu** (and derivatives like Mint, Pop!_OS)
+* **Arch Linux / SteamOS**
+* **openSUSE**
+* **Alpine Linux**
+* **macOS** (via Homebrew)
+* **Termux** (Android - text-only mode, skips GUI apps like Kitty)
 
 ---
 
 ## Installation
 
-1.  Clone the repository:
+1.  **Clone the repository:**
     ```sh
     git clone <your-repo-url> ~/dotfiles
     cd ~/dotfiles
     ```
-    (Replace `<your-repo-url>` with your actual repository URL)
 
-2.  Run the Setup Script:
+2.  **(Optional) Add Custom Fonts:**
+    If you want to use proprietary fonts like **Candara**, create a `.fonts` directory in the repo and drop the `.ttf` files there before running setup.
+    ```sh
+    mkdir -p ~/dotfiles/.fonts
+    # Copy your Candara*.ttf files into this directory
+    ```
+
+3.  **Run the Setup Script:**
     ```sh
     bash .setup.sh
     ```
-    The script handles platform detection, including Termux. It checks for sudo access (which is skipped in Termux) and installs all necessary packages (`fish`, `git`, `fzf`, `bat`, `zoxide`, etc.) using the appropriate package manager.
+    *What it does:*
+    * Detects OS and checks for `sudo` rights.
+    * Installs required packages (falling back to local user install if `sudo` is missing).
+    * Installs custom fonts from `.fonts` and system fonts (Inconsolata).
+    * Symlinks all configuration files (`.bashrc`, `.zshrc`, `.config/fish`, `.kitty.conf`, etc.).
+    * Triggers desktop integration to set Kitty as default.
 
-    It then automatically creates symbolic links from the files in this repository (like `.bashrc`, `.zshrc`, `.sh_common`, `.config.fish`, `.ssh_agent_init`) to the correct locations in your home directory (`~` and `~/.config/fish/`).
-
-3.  Restart Your Shell:
-
-    Close and reopen your terminal, or run `source ~/.bashrc` (for Bash) or `source ~/.zshrc` (for Zsh) to apply the new configuration. Fish will pick up the changes on its next launch.
-
-    **Note for Termux Users:** To make Fish your default shell in Termux, you must run `chsh -s fish` once manually after the setup is complete.
+4.  **Restart:**
+    Close and reopen your terminal. You should now be in Fish (if graphical) or have all standard aliases available.
 
 ---
 
 ## Usage
 
-Once installed and sourced, the aliases and functions are available in your terminal.
+Once installed, standard commands work everywhere:
 
-Example: `refresh` (Updates all dotfiles from the repository and reloads config)
-Example: `ipinfo` (Shows your own IP details)
-Example: `ipinfo google.com` (Shows IP details for google.com)
-Example: `z cool` (Jumps to your most-used directory containing "cool")
-Example: `cat my_script.sh` (Shows the script with syntax highlighting via `bat`)
+* **`refresh`**: Update everything. Run this if you add new fonts or change configs.
+* **`z <dir>`**: Jump quickly to a directory.
+* **`CTRL+R`**: Fuzzy search command history.
+* **`ipinfo`**: Check your connection.
 
-Note: Aliases/functions requiring external commands will only work if those commands were successfully installed by `setup.sh` or are already present on the system.
+**Launching Kitty:**
+If installed successfully, Kitty should appear in your system's application menu (Super/Windows key -> type "Kitty").
 
 ---
 
 ## Structure
 
-`.sh_common`: Contains aliases, functions, exports shared between **Bash and Zsh**. Includes the **`service_user`** function and the `export USER` override.
-
-`.config.fish`: Standalone configuration for the **Fish shell**. Contains a custom `fish_prompt` function to ensure color/user/path/indicator consistency. Mirrors aliases/functions from `.sh_common` using Fish-native syntax.
-
-`.profile`: Read by login shells. Sources `.sh_common` (which sets shared PATH/env vars) and sources `.bashrc` for interactive Bash login shells.
-
-`.bashrc`: Read by interactive non-login Bash shells. Sets Bash-specific options, defines path abbreviation and **custom Git prompt functions**, sources `.sh_common`, and contains the Fish switch logic.
-
-`.zshrc`: Read by interactive Zsh shells. Sets Zsh-specific options, defines path abbreviation function and uses `precmd` to build the **Git-aware prompt**, sources `.sh_common`, and contains the Fish switch logic.
-
-`.bash_logout`: Read by Bash login shells upon exit.
-
-`.setup.sh`: Script to install dependencies and link the configuration files into place, including specialized support for **Termux**.
-
-`.ssh_agent_init`: A cross-shell compatible script sourced by all shells to manage the `ssh-agent` process.
+* **`.setup.sh`**: Master installation script. Handles OS detection, package managers, local fallbacks, and file linking.
+* **`.configure_desktop.sh`**: Called by setup.sh to apply GNOME/KDE/XFCE specific settings (default terminal, fonts).
+* **`.sh_common`**: Core logic shared by Bash and Zsh (aliases, exports, auto-refresh).
+* **`.config.fish`**: Feature-equivalent configuration for Fish shell.
+* **`.kitty.conf`**: Cross-platform configuration for the Kitty terminal (fonts, opacity).
+* **`.fonts.conf`**: System-wide configuration to map "monospace" to Inconsolata and "sans-serif" to Candara.
+* **`.bashrc` / `.zshrc` / `.profile`**: Standard shell entry points that source the common config.
 
 ---
 
 ## Customization
 
-The configuration is split. Settings are **not** automatically shared between Fish and the POSIX-compatible shells.
-
-**Bash/Zsh-Specific**: Add new aliases, functions, or exports compatible with both shells to `.sh_common`. Add Bash-only settings to `.bashrc`.
-
-**Fish-Specific**: Add Fish-native settings to `.config.fish`.
-
-**All Shells**: To add a new alias or function everywhere, you must add the POSIX-compliant version to `.sh_common` **and** the Fish-native version to `.config.fish`.
+* **Terminal Settings**: Edit `.kitty.conf` to change opacity or font size across all your machines.
+* **Aliases/Functions**: Add to `.sh_common` (for Bash/Zsh) AND `.config.fish` (for Fish) to ensure they are available everywhere.
+* **Fonts**: Just drop new `.ttf` files into the `.fonts/` directory and run `refresh`.
 
 ---
 
 ## Troubleshooting
 
-**Command Not Found**: If an alias or function fails, ensure the required package was installed successfully by `.setup.sh` (or install it manually). Check your system's package manager.
-
-**Linking Errors**: Ensure you have write permissions in your home directory. Manually run the `ln -sf ...` commands from `.setup.sh` if needed.
-
-**Fish Switch Loop**: The `.bashrc` and `.zshrc` include checks to prevent looping if fish is already the current shell.
-
-**Zsh Completion Issues**: You might need to run `compinit -i` once if you encounter completion problems after a new install.
-
-**Git Passphrase Repetition**: Ensure the `.ssh_agent_init` file is linked and being sourced, and that you entered your passphrase when the script first prompted you. Verify the `SSH_AUTH_SOCK` environment variable is set (`echo $SSH_AUTH_SOCK`).
+* **Kitty not in menu**: Run `refresh` again. The script includes a specific fix to regenerate the `.desktop` file in `~/.local/share/applications` if it's missing.
+* **Wrong Shell**: If you aren't switched to Fish automatically, ensure `fish` is in your standard `/bin` or `/usr/bin`.
+* **Missing Icons**: If your prompt looks weird, ensure a Nerd Font (like the installed Inconsolata) is actually selected in your terminal emulator.
 
 ---
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE.txt) - see the LICENSE file for details.
+[MIT License](LICENSE.txt)

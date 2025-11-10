@@ -77,8 +77,8 @@ The `setup.sh` script automatically detects and supports:
 
 1.  **Clone the repository:**
     ```sh
-    git clone git@github.com:erkkaervice/.dotfiles.git ~/dotfiles
-    cd ~/dotfiles
+    git clone git@github.com:erkkaervice/.dotfiles.git ~/.dotfiles
+    cd ~/.dotfiles
     ```
 
 2.  **Run the Setup Script:**

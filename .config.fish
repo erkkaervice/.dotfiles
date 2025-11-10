@@ -57,6 +57,32 @@ function extract; for i in $argv; switch "$i"; case '*.tar.bz2' '*.tar.gz' '*.ta
 alias ipinfo='ipinformation'
 function ipinformation; if test -z "$argv[1]"; curl ipinfo.io | grep -v '"readme":'; else; curl "ipinfo.io/$argv[1]" | grep -v '"readme":'; end; echo; end
 
+function cleanup
+	echo "--- Disk Usage Cleanup ---"
+	du -sh ~/.cache ~/.local/share/Trash ~/.thumbnails 2>/dev/null
+	set -l do_clean false
+	if contains -- -y $argv
+		set do_clean true
+	else
+		read -l -P "Clear user cache, thumbnails, and trash? [y/N] " confirm
+		if string match -ri "^(y|yes)\$" -- $confirm; set do_clean true; end
+	end
+	if test "$do_clean" = true
+		echo "Clearing..."
+		rm -rf ~/.local/share/Trash/* 2>/dev/null
+		rm -rf ~/.cache/* 2>/dev/null
+		rm -rf ~/.thumbnails/* 2>/dev/null
+		if command -v sudo >/dev/null 2>&1; and sudo -n true 2>/dev/null
+			echo "Cleaning system package cache (sudo)..."
+			if command -v apt-get >/dev/null; sudo apt-get autoremove -y; and sudo apt-get clean; end
+			if command -v pacman >/dev/null; echo -e "y\ny\n" | sudo pacman -Sc; end
+		end
+		echo "Cleanup finished."
+	else
+		echo "Skipping cleanup."
+	end
+end
+
 if test -f "$HOME/.ssh_agent_init"; source "$HOME/.ssh_agent_init"; end
 if command -v zoxide > /dev/null; zoxide init fish | source; end
 if command -v fzf > /dev/null; fzf --fish | source; end

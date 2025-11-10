@@ -86,6 +86,35 @@ ipinformation() {
 	echo
 }
 
+# --- Cleanup Function ---
+cleanup() {
+	echo "--- Disk Usage Cleanup ---"
+	du -sh "$HOME/.cache" "$HOME/.local/share/Trash" "$HOME/.thumbnails" 2>/dev/null
+	local do_clean=false
+	if [[ "$1" == "-y" ]]; then
+		do_clean=true
+	else
+		echo -n "Clear user cache, thumbnails, and trash? [y/N] "
+		read -r response
+		[[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]] && do_clean=true
+	fi
+	if [ "$do_clean" = true ]; then
+		echo "Clearing..."
+		rm -rf "$HOME/.local/share/Trash/"* 2>/dev/null
+		rm -rf "$HOME/.cache/"* 2>/dev/null
+		rm -rf "$HOME/.thumbnails/"* 2>/dev/null
+		if [ "$EUID" -ne 0 ] && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+			echo "Cleaning system package cache (sudo)..."
+			command -v apt-get >/dev/null && sudo apt-get autoremove -y && sudo apt-get clean
+			command -v pacman >/dev/null && echo -e "y\ny\n" | sudo pacman -Sc
+			command -v zypper >/dev/null && sudo zypper clean --all
+		fi
+		echo "Cleanup finished."
+	else
+		echo "Skipping cleanup."
+	fi
+}
+
 service_user() { echo "ervice"; }
 
 [ -d "$HOME/.local/bin" ] && export PATH="$HOME/.local/bin:$PATH"

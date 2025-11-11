@@ -35,6 +35,8 @@ check_sudo_and_set_flag() {
 # --- Main Script ---
 print_info "Starting dotfiles setup..."
 DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+# Add ~/.local/bin to PATH immediately for this script
+# This ensures we can find locally installed Kitty for desktop integration.
 export PATH="$HOME/.local/bin:$PATH"
 
 check_sudo_and_set_flag
@@ -89,16 +91,16 @@ else print_info "Skipping system packages (no sudo)."; fi
 # --- Fallback: Local Tool Installation (No Sudo Required) ---
 if [ "$IS_TERMUX" = false ]; then
 	mkdir -p "$HOME/.local/bin"
-	# Kitty
+	# 1. Kitty Fallback
 	if ! command -v kitty >/dev/null 2>&1 && [ "$OS_ID" != "macos" ]; then
 		if command -v curl >/dev/null 2>&1; then
 			print_info "Fallback: Installing Kitty locally..."
-			curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n dest="$HOME/.local"
+			curl -fSL --proto '=https' https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n dest="$HOME/.local"
 			ln -sf "$HOME/.local/kitty.app/bin/kitty" "$HOME/.local/bin/kitty"
 			ln -sf "$HOME/.local/kitty.app/bin/kitten" "$HOME/.local/bin/kitten"
 		fi
 	fi
-	# Kitty Desktop Integration
+	# 2. Kitty Desktop Integration (Always check, even if installed)
 	if [ -d "$HOME/.local/kitty.app" ]; then
 		mkdir -p "$HOME/.local/share/applications"; DESKTOP_FILE="$HOME/.local/share/applications/kitty.desktop"
 		if [ ! -f "$DESKTOP_FILE" ] || ! grep -q "Exec=$HOME/.local/bin/kitty" "$DESKTOP_FILE"; then
@@ -110,8 +112,8 @@ if [ "$IS_TERMUX" = false ]; then
 			command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$HOME/.local/share/applications"
 		fi
 	fi
-	# Zoxide & FZF Fallbacks
-	if ! command -v zoxide >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then print_info "Fallback: Zoxide..."; curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash; fi
+	# 3. Zoxide & FZF Fallbacks
+	if ! command -v zoxide >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then print_info "Fallback: Zoxide..."; curl -sSf --proto '=https' https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash; fi
 	if ! command -v fzf >/dev/null 2>&1 && command -v git >/dev/null 2>&1; then print_info "Fallback: FZF..."; git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf; ~/.fzf/install --all --no-bash --no-zsh --no-fish; ln -sf "$HOME/.fzf/bin/fzf" "$HOME/.local/bin/fzf"; fi
 fi
 
@@ -124,9 +126,22 @@ if [ "$IS_TERMUX" = false ]; then
 	fi
 fi
 
+# --- Security Hardening ---
+if [ "$IS_TERMUX" = false ]; then
+	if [ -d "$HOME/.ssh" ]; then
+		print_info "Hardening SSH key permissions..."
+		chmod 700 "$HOME/.ssh"
+		chmod 600 "$HOME/.ssh/id_"* 2>/dev/null || true
+		chmod 644 "$HOME/.ssh/id_"*.pub 2>/dev/null || true
+		chmod 644 "$HOME/.ssh/known_hosts" 2>/dev/null || true
+	fi
+fi
+
 # --- Link Dotfiles ---
 print_info "Linking dotfiles..."
-for f in .sh_common .profile .bashrc .zshrc .bash_logout; do ln -sf "$DOTFILES_DIR/$f" "$HOME/$f"; done
+# Loop through all core dotfiles and link them
+for f in .sh_common .profile .bashrc .zshrc .bash_logout .ssh_agent_init; do ln -sf "$DOTFILES_DIR/$f" "$HOME/$f"; done
+# Link config directories
 mkdir -p "$HOME/.config/fish"; ln -sf "$DOTFILES_DIR/.config.fish" "$HOME/.config/fish/config.fish"
 if [ "$IS_TERMUX" = false ]; then
 	mkdir -p "$HOME/.config/kitty" "$HOME/.config/fontconfig"
@@ -135,5 +150,6 @@ if [ "$IS_TERMUX" = false ]; then
 fi
 print_info "Dotfiles linked. Setup finished!"
 
+# Run desktop configuration last
 [ -f "$DOTFILES_DIR/.configure_desktop.sh" ] && bash "$DOTFILES_DIR/.configure_desktop.sh"
 exit 0

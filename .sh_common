@@ -1,6 +1,9 @@
 # Common Aliases, Functions, and Exports for Bash and Zsh
 
 # --- Auto-Refresh (Once per session) ---
+# Checks for a marker file. If it doesn't exist (e.g., new login, /tmp cleared),
+# it checks if 'zoxide' is installed. If not, it assumes this is a fresh
+# setup and runs the setup script automatically.
 if [ ! -f "$HOME/.dotfiles_initialized_$(id -u)" ]; then
 	if ! command -v zoxide >/dev/null 2>&1; then
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
@@ -43,9 +46,12 @@ alias newtag='git tag -a'
 alias gl='git log --oneline --graph --decorate --all'
 
 # --- Modern Tool Aliases ---
+# Use 'bat' or 'batcat' if available
 if command -v bat > /dev/null 2>&1; then alias cat='bat --paging=never'
 elif command -v batcat > /dev/null 2>&1; then alias cat='batcat --paging=never'; fi
+# Use 'fd' if available
 if command -v fd > /dev/null 2>&1; then alias find='fd'; fi
+# Use 'ripgrep' if available
 if command -v rg > /dev/null 2>&1; then alias grep='rg'; fi
 
 # --- Functions ---
@@ -137,16 +143,25 @@ cleanup() {
 
 service_user() { echo "ervice"; }
 
-[ -d "$HOME/.local/bin" ] && export PATH="$HOME/.local/bin:$PATH"
-[ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
+# --- SECURE PATH (Appends instead of prepends) ---
+# This is more secure as system paths (/usr/bin, /bin) are checked first.
+[ -d "$HOME/.local/bin" ] && export PATH="$PATH:$HOME/.local/bin"
+[ -d "$HOME/.cargo/bin" ] && export PATH="$PATH:$HOME/.cargo/bin"
 export NAVIGATOR="brave"; export EDITOR="nvim"; export TERMINAL="kitty"
 export USER="ervice"; export MAIL="erkka@ervice.fi"
 alias code='flatpak run com.visualstudio.code'
 [ -d "/var/lib/flatpak/exports/bin" ] && export PATH="$PATH:/var/lib/flatpak/exports/bin"
 
+# --- Load Local Secrets (Ignored by Git) ---
+# Use ~/.config/shell_secrets for any private API keys or tokens.
+if [ -f "$HOME/.config/shell_secrets" ]; then
+	. "$HOME/.config/shell_secrets"
+fi
+
 if [ -f "$HOME/.ssh_agent_init" ]; then . "$HOME/.ssh_agent_init"; fi
 
 # --- Start Fresh Function ---
+# Wipes all custom configs and local apps, leaving only a recovery 'refresh'.
 alias startfresh='dotfiles_startfresh'
 dotfiles_startfresh() {
 	# Get the repo root *before* we delete the symlink
@@ -158,9 +173,11 @@ dotfiles_startfresh() {
 	
 	echo "1. Removing config links..."
 	rm -f "$HOME/.sh_common" "$HOME/.profile" "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.bash_logout"
+	rm -f "$HOME/.ssh_agent_init"
 	rm -rf "$HOME/.config/fish"
 	rm -rf "$HOME/.config/kitty"
 	rm -rf "$HOME/.config/fontconfig"
+	rm -f "$HOME/.config/shell_secrets"
 
 	echo "2. Removing local user applications..."
 	rm -rf "$HOME/.local/kitty.app"
@@ -170,6 +187,7 @@ dotfiles_startfresh() {
 	rm -f "$HOME/.dotfiles_initialized_$(id -u)"
 
 	echo "3. Creating temporary recovery files to prevent Zsh wizard..."
+	# This temporary file defines *only* the refresh command.
 	local RECOVERY_SCRIPT="
 # --- TEMPORARY RECOVERY SCRIPT ---
 echo '---------------------------------------------------'
@@ -183,7 +201,6 @@ refresh() {
 	exec \$SHELL --login
 }
 "
-	# Create the recovery files
 	echo "$RECOVERY_SCRIPT" > "$HOME/.bashrc"
 	echo "$RECOVERY_SCRIPT" > "$HOME/.zshrc"
 
@@ -192,6 +209,7 @@ refresh() {
 }
 
 # --- Dotfiles Management Function ---
+# Pulls latest changes, runs setup.sh, and reloads the shell.
 alias refresh='dotfiles_refresh'
 dotfiles_refresh() {
 	local ABSOLUTE_PATH_TO_FILE

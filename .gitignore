@@ -1,0 +1,40 @@
+# --- Dotfiles Configuration ---
+# Ignore the local secrets file
+.shell_secrets
+
+# Ignore the auto-refresh marker file
+.dotfiles_initialized_*
+
+# --- OS Junk Files ---
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+# --- Common Editor Junk ---
+# Vim
+*.swp
+*.swo
+*~
+# Emacs
+#*#
+.*.elc
+# VS Code
+.vscode/
+
+# --- Language/Tool Cache ---
+__pycache__/
+*.pyc
+*.pyo
+.python-version
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

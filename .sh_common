@@ -151,7 +151,7 @@ alias startfresh='dotfiles_startfresh'
 dotfiles_startfresh() {
 	# Get the repo root *before* we delete the symlink
 	local REPO_ROOT
-	if command -v readlink > /dev/null 2>&1; then REPO_ROOT="$(dirname "$(readlink -f "$HOME/.sh_common")")"; else REPO_ROOT="$HOME/dotfiles"; fi
+	if command -v readlink > /dev/null 2>&1; then REPO_ROOT="$(dirname "$(readlink -f "$HOME/.sh_common")")"; else REPO_ROOT="$HOME/.dotfiles"; fi
 
 	echo "--- WARNING: Starting Fresh (Removing all custom dotfile links) ---"
 	echo "This will revert your environment to the system default shell (Bash/Zsh)."
@@ -169,9 +169,7 @@ dotfiles_startfresh() {
 
 	rm -f "$HOME/.dotfiles_initialized_$(id -u)"
 
-	echo "3. Creating temporary recovery files..."
-	# We MUST create temporary .bashrc AND .zshrc files
-	# This prevents the Zsh new user wizard from running
+	echo "3. Creating temporary recovery files to prevent Zsh wizard..."
 	local RECOVERY_SCRIPT="
 # --- TEMPORARY RECOVERY SCRIPT ---
 echo '---------------------------------------------------'

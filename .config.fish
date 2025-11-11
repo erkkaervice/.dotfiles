@@ -151,9 +151,8 @@ function startfresh
 
 	rm -f "$HOME/.dotfiles_initialized_"(id -u)
 
-	echo "3. Creating temporary recovery files..."
+	echo "3. Creating temporary recovery files to prevent Zsh wizard..."
 	# We MUST create temporary .bashrc AND .zshrc files
-	# This prevents the Zsh new user wizard from running
 	bash -c "
 	RECOVERY_SCRIPT=\"
 	# --- TEMPORARY RECOVERY SCRIPT ---
@@ -180,6 +179,13 @@ end
 function refresh
 	set -l C_PATH ~/.config/fish/config.fish; set -l D_DIR (dirname (readlink -f $C_PATH))
 	echo "--- Refreshing Dotfiles ---"
-	if type -q git and test -d "$D_DIR/.git"; begin; cd "$D_DIR"; git pull origin main; end; end
+	
+	# FIX: Corrected multi-line 'if' syntax for Fish
+	if type -q git; and test -d "$D_DIR/.git"
+		begin
+			cd "$D_DIR"; git pull origin main
+		end
+	end
+	
 	bash "$D_DIR/.setup.sh"; source (status --current-filename); echo "--- Dotfiles Refreshed ---"
 end

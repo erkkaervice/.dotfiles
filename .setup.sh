@@ -51,7 +51,7 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 	case "$OS_ID" in
 		termux)
 			print_info "Installing packages for Termux..."
-			pkg update -y && pkg install -y fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg trivy gitleaks
+			pkg update -y && pkg install -y fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Termux installation failed."; fi
 			;;
 		ubuntu|debian|pop|mint|kali)
@@ -96,7 +96,7 @@ if [ "$IS_TERMUX" = false ]; then
 		if command -v curl >/dev/null 2>&1; then
 			print_info "Fallback: Installing Kitty locally..."
 			curl -fSL --proto '=https' https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n dest="$HOME/.local"
-			ln -sf "$HOME/.local/kitty.app/bin/kitty" "$HOME/.local/bin/kitty"
+			ln -sf "$HOME/.local/kitty.app/bin/ kitty" "$HOME/.local/bin/kitty"
 			ln -sf "$HOME/.local/kitty.app/bin/kitten" "$HOME/.local/bin/kitten"
 		fi
 	fi
@@ -115,17 +115,19 @@ if [ "$IS_TERMUX" = false ]; then
 	# 3. Zoxide & FZF Fallbacks
 	if ! command -v zoxide >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then print_info "Fallback: Zoxide..."; curl -sSf --proto '=https' https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash; fi
 	if ! command -v fzf >/dev/null 2>&1 && command -v git >/dev/null 2>&1; then print_info "Fallback: FZF..."; git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf; ~/.fzf/install --all --no-bash --no-zsh --no-fish; ln -sf "$HOME/.fzf/bin/fzf" "$HOME/.local/bin/fzf"; fi
+fi
 
-	# 4. Security Tool Fallbacks (Trivy & Gitleaks)
-	if command -v curl >/dev/null 2>&1; then
-		if ! command -v trivy >/dev/null 2>&1; then
-			print_info "Fallback: Installing Trivy locally..."
-			curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b "$HOME/.local/bin" 2>/dev/null
-		fi
-		if ! command -v gitleaks >/dev/null 2>&1; then
-			print_info "Fallback: Installing Gitleaks locally..."
-			curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/master/install.sh | sh -s -- -b "$HOME/.local/bin" 2>/dev/null
-		fi
+# --- Fallback: Security Tools (Always run) ---
+# These installers work on most platforms, including Termux,
+# and will install locally if the system package failed.
+if command -v curl >/dev/null 2>&1; then
+	if ! command -v trivy >/dev/null 2>&1; then
+		print_info "Fallback: Installing Trivy locally..."
+		curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b "$HOME/.local/bin" 2>/dev/null
+	fi
+	if ! command -v gitleaks >/dev/null 2>&1; then
+		print_info "Fallback: Installing Gitleaks locally..."
+		curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/main/install.sh | sh -s -- -b "$HOME/.local/bin" 2>/dev/null
 	fi
 fi
 

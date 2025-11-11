@@ -97,6 +97,7 @@ end; echo; end
 function cleanup
 	echo "--- Disk Usage Cleanup (User Directories) ---"
 	du -sh ~/.cache ~/.local/share/Trash ~/.thumbnails 2>/dev/null
+	du -sh ~/.cache.backup ~/.local.backup ~/.config.backup 2>/dev/null
 	set -l do_clean false
 	set -l deep_clean false
 
@@ -108,15 +109,36 @@ function cleanup
 	end
 
 	if not $do_clean
-		read -l -P "Clear user cache, thumbnails, and trash? [y/N] " confirm
+		read -l -P "Clear user cache, thumbnails, trash, and backups? [y/N] " confirm
 		if string match -ri "^(y|yes)\$" -- $confirm;
 		set do_clean true; end 
 	end
 	if test "$do_clean" = true
-		echo "Clearing user directories..."
+		echo "Clearing user directories (cache, trash, backups)..."
 		rm -rf ~/.local/share/Trash ~/.thumbnails
 		rm -rf ~/.cache;
 		mkdir -p ~/.cache 
+		rm -rf ~/.cache.backup ~/.local.backup ~/.config.backup
+
+		if command -v flatpak > /dev/null
+			echo "Cleaning Flatpak (unused runtimes)..."
+			flatpak uninstall --unused -y
+			if test -d "$HOME/.var/app/com.visualstudio.code/cache"
+				echo "Cleaning VS Code (Flatpak) cache..."
+				rm -rf "$HOME/.var/app/com.visualstudio.code/cache"
+			end
+		end
+		
+		if command -v docker > /dev/null
+			echo "Cleaning Docker (pruning system)..."
+			docker system prune -f
+		end
+		
+		if command -v dotnet > /dev/null
+			echo "Cleaning .NET (clearing nuget caches)..."
+			dotnet nuget locals all --clear
+		end
+
 		if command -v sudo >/dev/null 2>&1; and sudo -n true 2>/dev/null
 			echo "--- System-Wide Cleanup (Sudo) ---"
 			if command -v apt-get >/dev/null
@@ -242,5 +264,5 @@ if command -v git > /dev/null; and test -n "$GPG_SIGNING_KEY"
 	git config --global user.signingkey "$GPG_SIGNING_KEY"
 	git config --global commit.gpgsign true
 	git config --global tag.gpgSign true
-	echo "[INFO] Git GGPG signing configured."
+	echo "[INFO] Git GPG signing configured."
 end

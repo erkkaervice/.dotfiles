@@ -70,7 +70,7 @@ if [ "$IS_TERMUX" = false ]; then
 			ln -sf "$HOME/.local/kitty.app/bin/kitten" "$HOME/.local/bin/kitten"
 		fi
 	fi
-	# Kitty Desktop Integration (Always run if local kitty exists)
+	# Kitty Desktop Integration
 	if [ -d "$HOME/.local/kitty.app" ]; then
 		mkdir -p "$HOME/.local/share/applications"; DESKTOP_FILE="$HOME/.local/share/applications/kitty.desktop"
 		if [ ! -f "$DESKTOP_FILE" ] || ! grep -q "Exec=$HOME/.local/bin/kitty" "$DESKTOP_FILE"; then

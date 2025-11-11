@@ -1,7 +1,7 @@
 # Common Aliases, Functions, and Exports for Bash and Zsh
 
 # --- Auto-Refresh (Once per session) ---
-if [ ! -f "/tmp/dotfiles_initialized_$(id -u)" ]; then
+if [ ! -f "$HOME/.dotfiles_initialized_$(id -u)" ]; then
 	if ! command -v kitty >/dev/null 2>&1; then
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
 		if command -v readlink >/dev/null 2>&1; then
@@ -9,7 +9,7 @@ if [ ! -f "/tmp/dotfiles_initialized_$(id -u)" ]; then
 		else SETUP_SCRIPT="$HOME/dotfiles/.setup.sh"; fi
 		[ -f "$SETUP_SCRIPT" ] && bash "$SETUP_SCRIPT" || echo "[Auto-Setup] Error: Could not find .setup.sh"
 	fi
-	touch "/tmp/dotfiles_initialized_$(id -u)"
+	touch "$HOME/.dotfiles_initialized_$(id -u)"
 fi
 
 # --- Command Color Settings ---
@@ -100,9 +100,10 @@ cleanup() {
 	fi
 	if [ "$do_clean" = true ]; then
 		echo "Clearing..."
-		rm -rf "$HOME/.local/share/Trash/"* 2>/dev/null
-		rm -rf "$HOME/.cache/"* 2>/dev/null
-		rm -rf "$HOME/.thumbnails/"* 2>/dev/null
+		# Use specific directories (rm -rf on directory itself is safer than wildcard inside)
+		rm -rf "$HOME/.local/share/Trash" "$HOME/.thumbnails"
+		# Cache needs to be recreated immediately
+		rm -rf "$HOME/.cache"; mkdir -p "$HOME/.cache"
 		if [ "$EUID" -ne 0 ] && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
 			echo "Cleaning system package cache (sudo)..."
 			command -v apt-get >/dev/null && sudo apt-get autoremove -y && sudo apt-get clean

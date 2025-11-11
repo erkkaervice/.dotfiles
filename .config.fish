@@ -3,7 +3,7 @@
 if not status is-interactive; exit; end
 
 # --- Auto-Refresh (Once per session) ---
-set -l marker_file "/tmp/dotfiles_initialized_"(id -u)
+set -l marker_file "$HOME/.dotfiles_initialized_"(id -u)
 if not test -f "$marker_file"
 	if not command -v kitty >/dev/null 2>&1
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
@@ -92,4 +92,4 @@ function dotfiles_refresh
 	if type -q git and test -d "$D_DIR/.git"; begin; cd "$D_DIR"; git pull origin main; end; end
 	bash "$D_DIR/.setup.sh"; source (status --current-filename); echo "--- Dotfiles Refreshed ---"
 end
-alias refresh 'dotfiles_refresh'
+alias refresh 'dotfiles_refresh'you

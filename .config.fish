@@ -99,10 +99,11 @@ function cleanup
 			if command -v pacman >/dev/null
 				if test "$deep_clean" = true
 					echo "Cleaning Arch/SteamOS package cache (DEEP: -Scc)..."
-					echo -e "y\ny\n" | sudo pacman -Scc
+=					sudo pacman -Scc
 				else
 					echo "Cleaning Arch/SteamOS package cache (Standard: -Sc)..."
-					echo -e "y\n" | sudo pacman -Sc
+					echo -e "y\n" |
+					sudo pacman -Sc
 				end
 			end
 			if command -v zypper >/dev/null
@@ -118,8 +119,10 @@ function cleanup
 				sudo apk cache clean
 			end
 			if command -v journalctl >/dev/null; echo "Cleaning system logs (journald, limit to 2GB)..."; sudo journalctl --vacuum-size=2G; end
-			if test -d "/tmp"; echo "Cleaning global /tmp (files older than 7 days)..."; sudo find /tmp -type f -atime +7 -delete 2>/dev/null; end
-			if test -d "/var/tmp"; echo "Cleaning global /var/tmp (files older than 7 days)..."; sudo find /var/tmp -type f -atime +7 -delete 2>/dev/null; end
+			if test -d "/tmp"; echo "Cleaning global /tmp (files older than 7 days)..."; sudo find /tmp -type f -atime +7 -delete 2>/dev/null;
+			end
+			if test -d "/var/tmp"; echo "Cleaning global /var/tmp (files older than 7 days)...";
+			sudo find /var/tmp -type f -atime +7 -delete 2>/dev/null; end
 		end
 		echo "Cleanup finished."
 	else

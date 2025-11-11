@@ -97,7 +97,8 @@ cleanup() {
 	
 	for arg in "$@"; do
 		if [[ "$arg" == "-y" ]]; then do_clean=true; fi
-		if [[ "$arg" == "--deep" ]]; then deep_clean=true; fi
+		if [[ "$arg" == "--deep" ]];
+		then deep_clean=true; fi
 	done
 
 	if [ "$do_clean" = false ]; then
@@ -105,32 +106,40 @@ cleanup() {
 		[[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]] && do_clean=true
 	fi
 
-	if [ "$do_clean" = true ]; then
+	if [ "$do_clean" = true ];
+	then
 		echo "Clearing user directories..."
 		rm -rf "$HOME/.local/share/Trash" "$HOME/.thumbnails"
 		rm -rf "$HOME/.cache"; mkdir -p "$HOME/.cache"
 
-		if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+		if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null;
+		then
 			echo "--- System-Wide Cleanup (Sudo) ---"
 			if command -v apt-get >/dev/null; then
 				echo "Cleaning Debian/Ubuntu/Kali package cache..."; sudo apt-get autoremove -y && sudo apt-get clean
 			fi
 			if command -v pacman >/dev/null; then
-				if [ "$deep_clean" = true ]; then
-					echo "Cleaning Arch/SteamOS package cache (DEEP: -Scc)..."; echo -e "y\ny\n" | sudo pacman -Scc
+				if [ "$deep_clean" = true ];
+				then
+					echo "Cleaning Arch/SteamOS package cache (DEEP: -Scc)..."
+					sudo pacman -Scc
 				else
-					echo "Cleaning Arch/SteamOS package cache (Standard: -Sc)..."; echo -e "y\n" | sudo pacman -Sc
+					echo "Cleaning Arch/SteamOS package cache (Standard: -Sc)...";
+					echo -e "y\n" | sudo pacman -Sc
 				fi
 			fi
 			if command -v zypper >/dev/null; then 
-				echo "Cleaning OpenSUSE package cache..."; 
-				sudo zypper clean --all; 
+				echo "Cleaning OpenSUSE package cache..."; sudo zypper clean --all; 
 			fi
 			if command -v brew >/dev/null; then echo "Cleaning macOS/Homebrew cache..."; brew cleanup -s; fi
 			if command -v apk >/dev/null; then echo "Cleaning Alpine package cache..."; sudo apk cache clean; fi
-			if command -v journalctl >/dev/null; then echo "Cleaning system logs (journald, limit to 2GB)..."; sudo journalctl --vacuum-size=2G; fi
-			if [ -d "/tmp" ]; then echo "Cleaning global /tmp (files older than 7 days)..."; sudo find /tmp -type f -atime +7 -delete 2>/dev/null; fi
-			if [ -d "/var/tmp" ]; then echo "Cleaning global /var/tmp (files older than 7 days)..."; sudo find /var/tmp -type f -atime +7 -delete 2>/dev/null; fi
+			if command -v journalctl >/dev/null;
+			then echo "Cleaning system logs (journald, limit to 2GB)..."; sudo journalctl --vacuum-size=2G; fi
+			if [ -d "/tmp" ];
+			then echo "Cleaning global /tmp (files older than 7 days)..."; sudo find /tmp -type f -atime +7 -delete 2>/dev/null;
+			fi
+			if [ -d "/var/tmp" ]; then echo "Cleaning global /var/tmp (files older than 7 days)...";
+			sudo find /var/tmp -type f -atime +7 -delete 2>/dev/null; fi
 		fi
 		echo "Cleanup finished."
 	else

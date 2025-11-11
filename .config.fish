@@ -172,10 +172,9 @@ function startfresh
 	"
 
 	echo "--- ENVIRONMENT RESET. Starting fresh session. ---"
-	# FIXED: Exec the *system default shell* ($SHELL variable).
-	# This will be Zsh on the school machine (which reads ~/.zshrc)
-	# or Bash on Termux (which reads ~/.bashrc).
-	exec "$SHELL" --login
+	# FIXED: Exec into Bash, which is Termux's default POSIX shell
+	# and will read the ~/.bashrc file we just created.
+	exec /data/data/com.termux/files/usr/bin/bash --login
 end
 
 # --- Dotfiles Management Function ---

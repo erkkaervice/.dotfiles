@@ -1,6 +1,6 @@
-# --- Dotfiles Configuration ---
+# --- Dotfiles Configuration --- 
 # Ignore the local secrets file
-.shell_secrets
+.config/shell_secrets
 
 # Ignore the auto-refresh marker file
 .dotfiles_initialized_*

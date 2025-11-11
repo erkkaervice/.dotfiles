@@ -51,33 +51,33 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 	case "$OS_ID" in
 		termux)
 			print_info "Installing packages for Termux..."
-			pkg update -y && pkg install -y fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide
+			pkg update -y && pkg install -y fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg trivy gitleaks
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Termux installation failed."; fi
 			;;
 		ubuntu|debian|pop|mint|kali)
 			print_info "Installing packages for Debian/Ubuntu/Kali based system..."
-			sudo apt-get update -qq && sudo apt-get install -y fish git curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig
+			sudo apt-get update -qq && sudo apt-get install -y fish git curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig nmap gnupg trivy gitleaks
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Debian/Ubuntu/Kali installation failed."; fi
 			;;
 		arch|manjaro|steamos)
 			print_info "Installing packages for Arch/SteamOS based system..."
-			sudo pacman -Syu --noconfirm --needed fish git base-devel curl bind unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty ttf-inconsolata fontconfig
+			sudo pacman -Syu --noconfirm --needed fish git base-devel curl bind unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty ttf-inconsolata fontconfig nmap gnupg trivy gitleaks
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Arch/SteamOS installation failed."; fi
 			;;
 		opensuse*|suse)
 			print_info "Installing packages for OpenSUSE based system..."
-			sudo zypper refresh && sudo zypper install -y fish git-core curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty google-inconsolata-fonts fontconfig
+			sudo zypper refresh && sudo zypper install -y fish git-core curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty google-inconsolata-fonts fontconfig nmap gnupg trivy gitleaks
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "OpenSUSE installation failed."; fi
 			;;
 		alpine)
 			print_info "Installing packages for Alpine based system..."
-			sudo apk update && sudo apk add fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig
+			sudo apk update && sudo apk add fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig nmap gnupg trivy gitleaks
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Alpine installation failed."; fi
 			;;
 		macos)
 			if command -v brew >/dev/null; then
 				print_info "Installing packages for macOS (Homebrew)..."
-				brew install fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty
+				brew install fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty nmap gnupg trivy gitleaks
 				brew install --cask font-inconsolata 2>/dev/null || true
 			else INSTALL_FAILED=true; fi
 			[ $? -ne 0 ] && INSTALL_FAILED=true
@@ -115,6 +115,18 @@ if [ "$IS_TERMUX" = false ]; then
 	# 3. Zoxide & FZF Fallbacks
 	if ! command -v zoxide >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then print_info "Fallback: Zoxide..."; curl -sSf --proto '=https' https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash; fi
 	if ! command -v fzf >/dev/null 2>&1 && command -v git >/dev/null 2>&1; then print_info "Fallback: FZF..."; git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf; ~/.fzf/install --all --no-bash --no-zsh --no-fish; ln -sf "$HOME/.fzf/bin/fzf" "$HOME/.local/bin/fzf"; fi
+
+	# 4. Security Tool Fallbacks (Trivy & Gitleaks)
+	if command -v curl >/dev/null 2>&1; then
+		if ! command -v trivy >/dev/null 2>&1; then
+			print_info "Fallback: Installing Trivy locally..."
+			curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b "$HOME/.local/bin" 2>/dev/null
+		fi
+		if ! command -v gitleaks >/dev/null 2>&1; then
+			print_info "Fallback: Installing Gitleaks locally..."
+			curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/master/install.sh | sh -s -- -b "$HOME/.local/bin" 2>/dev/null
+		fi
+	fi
 fi
 
 # --- Custom Font Installation ---

@@ -1,15 +1,19 @@
-# Common Aliases, Functions, and Exports for Bash and Zsh
+# Common Aliases, Functions, and Exports for Bash and Zsh 
 
 # --- Auto-Refresh (Once per session) ---
-# Checks for a marker file. If it doesn't exist,
-# it checks if 'zoxide' is installed. If not, it assumes this is a fresh
+# Checks for a marker file.
+# If it doesn't exist, 
+# it checks if 'zoxide' is installed. 
+# If not, it assumes this is a fresh
 # setup and runs the setup script automatically.
-if [ ! -f "$HOME/.dotfiles_initialized_$(id -u)" ]; then
-	if ! command -v zoxide >/dev/null 2>&1; then
+if [ ! -f "$HOME/.dotfiles_initialized_$(id -u)" ]; then 
+	if ! command -v zoxide >/dev/null 2>&1;
+	then 
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
 		if command -v readlink >/dev/null 2>&1; then
 			 COMMON_PATH=$(readlink -f "$HOME/.sh_common"); REPO_ROOT=$(dirname "$COMMON_PATH"); SETUP_SCRIPT="$REPO_ROOT/.setup.sh"
-		else SETUP_SCRIPT="$HOME/dotfiles/.setup.sh"; fi
+		else SETUP_SCRIPT="$HOME/dotfiles/.setup.sh";
+		fi 
 		[ -f "$SETUP_SCRIPT" ] && bash "$SETUP_SCRIPT" || echo "[Auto-Setup] Error: Could not find .setup.sh"
 	fi
 	touch "$HOME/.dotfiles_initialized_$(id -u)"
@@ -27,13 +31,14 @@ alias free='free -m'
 # --- Processes ---
 alias psa="ps auxf"
 alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -E"
-alias psmem='ps auxf | sort -nr -k 4'
+alias psmem='ps auxf |
+	sort -nr -k 4' 
 alias pscpu='ps auxf | sort -nr -k 3'
 
 # --- Git Aliases ---
 alias addup='git add -u'
 alias addall='git add .'
-alias branch='git branch'
+alias branch='git branch' 
 alias checkout='git checkout'
 alias clone='git clone'
 alias commit='git commit -m'
@@ -46,46 +51,59 @@ alias newtag='git tag -a'
 alias gl='git log --oneline --graph --decorate --all'
 
 # --- Modern Tool Aliases ---
-if command -v bat > /dev/null 2>&1; then alias cat='bat --paging=never'
-elif command -v batcat > /dev/null 2>&1; then alias cat='batcat --paging=never'; fi
+if command -v bat > /dev/null 2>&1;
+then alias cat='bat --paging=never' 
+elif command -v batcat > /dev/null 2>&1; then alias cat='batcat --paging=never';
+fi 
 if command -v fd > /dev/null 2>&1; then alias find='fd'; fi
-if command -v rg > /dev/null 2>&1; then alias grep='rg'; fi
+if command -v rg > /dev/null 2>&1; then alias grep='rg';
+fi 
 
 # --- Functions ---
 alias compile='compiler'
 compiler() {
-	[[ $1 ]] || { echo "Missing operand" >&2; return 1; }
-	[[ -r $1 ]] || { printf "File %s does not exist or is not readable\n" "$1" >&2; return 1; }
+	[[ $1 ]] || { echo "Missing operand" >&2; return 1;
+	} 
+	[[ -r $1 ]] || { printf "File %s does not exist or is not readable\n" "$1" >&2; return 1;
+	} 
 	local output_path=${TMPDIR:-/tmp}/${1##*/};
 	gcc "$1" -Wall -Wextra -Werror -o "$output_path" && "$output_path"; rm "$output_path"; return 0;
-}
+} 
 
 alias extract='extractor'
 extractor() {
 	local c e i; (($#)) || return
 	for i; do
 		c=''; e=1
-		if [[ ! -r $i ]]; then echo "$0: file is unreadable: \`$i'" >&2; continue; fi
+		if [[ ! -r $i ]];
+		then echo "$0: file is unreadable: \`$i'" >&2; continue; fi 
 		case $i in
 			*.tar.bz2|*.tar.gz|*.tar.xz|*.tbz2|*.tgz|*.txz|*.tar) c=(bsdtar xvf);;
-			*.zip) c=(unzip);; *.rar) c=(unrar x);; *.7z) c=(7z x);; *.Z) c=(uncompress);;
+			*.zip) c=(unzip);; *.rar) c=(unrar x);; 
+			*.7z) c=(7z x);; *.Z) c=(uncompress);;
 			*.bz2) c=(bunzip2);; *.exe) c=(cabextract);; *.gz) c=(gunzip);;
-			*.xz) c=(unxz);; *.zst) c=(unzstd);;
+			*.xz) c=(unxz);; *.zst) c=(unzstd);; 
 			*) echo "$0: unrecognized file extension: \`$i'" >&2; continue;;
 		esac
-		command "${c[@]}" "$i"; ((e = e || $?))
+		command "${c[@]}" "$i";
+		((e = e || $?)) 
 	done
 	return "$e"
 }
 
 alias ipinfo='ipinformation'
 ipinformation() {
-	if [[ -z "$1" ]]; then curl ipinfo.io | grep -v '"readme":'
+	if [[ -z "$1" ]]; then curl ipinfo.io |
+	grep -v '"readme":' 
 	elif echo "$1" | grep -Pq '^(([1-9]?\d|1\d{2}|2[0-4]\d|25[0-5])\.){3}([1-9]?\d|1\d{2}|2[0-4]\d|25[0-5])$'; then curl ipinfo.io/"$1" | grep -v '"readme":'
-	elif echo "$1" | grep -Pq '^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'; then
+	elif echo "$1" |
+	grep -Pq '^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'; then 
 		ip_address=$(host "$1" | awk '/has address/ { print $NF; exit }')
-		if [[ -n "$ip_address" ]]; then curl ipinfo.io/"$ip_address" | grep -v '"readme":'; else echo "Could not resolve IP for $1" >&2; fi
-	else echo "Input does not look like an IP address or domain name: $1" >&2; return 1; fi
+		if [[ -n "$ip_address" ]];
+		then curl ipinfo.io/"$ip_address" | grep -v '"readme":'; else echo "Could not resolve IP for $1" >&2; 
+		fi 
+	else echo "Input does not look like an IP address or domain name: $1" >&2; return 1;
+	fi 
 	echo
 }
 
@@ -93,53 +111,58 @@ ipinformation() {
 cleanup() {
 	echo "--- Disk Usage Cleanup (User Directories) ---"
 	du -sh "$HOME/.cache" "$HOME/.local/share/Trash" "$HOME/.thumbnails" 2>/dev/null
-	local do_clean=false; local deep_clean=false
+	local do_clean=false;
+	local deep_clean=false 
 	
 	for arg in "$@"; do
 		if [[ "$arg" == "-y" ]]; then do_clean=true; fi
 		if [[ "$arg" == "--deep" ]];
-		then deep_clean=true; fi
+		then deep_clean=true; fi 
 	done
 
 	if [ "$do_clean" = false ]; then
-		echo -n "Clear user cache, thumbnails, and trash? [y/N] "; read -r response
+		echo -n "Clear user cache, thumbnails, and trash? [y/N] ";
+		read -r response 
 		[[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]] && do_clean=true
 	fi
 
 	if [ "$do_clean" = true ];
-	then
+	then 
 		echo "Clearing user directories..."
 		rm -rf "$HOME/.local/share/Trash" "$HOME/.thumbnails"
 		rm -rf "$HOME/.cache"; mkdir -p "$HOME/.cache"
 
 		if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null;
-		then
+		then 
 			echo "--- System-Wide Cleanup (Sudo) ---"
 			if command -v apt-get >/dev/null; then
-				echo "Cleaning Debian/Ubuntu/Kali package cache..."; sudo apt-get autoremove -y && sudo apt-get clean
+				echo "Cleaning Debian/Ubuntu/Kali package cache...";
+				sudo apt-get autoremove -y && sudo apt-get clean 
 			fi
 			if command -v pacman >/dev/null; then
 				if [ "$deep_clean" = true ];
-				then
+				then 
 					echo "Cleaning Arch/SteamOS package cache (DEEP: -Scc)..."
 					sudo pacman -Scc
 				else
 					echo "Cleaning Arch/SteamOS package cache (Standard: -Sc)...";
-					echo -e "y\n" | sudo pacman -Sc
+					echo -e "y\n" | sudo pacman -Sc 
 				fi
 			fi
 			if command -v zypper >/dev/null; then 
-				echo "Cleaning OpenSUSE package cache..."; sudo zypper clean --all; 
+				echo "Cleaning OpenSUSE package cache...";
+				sudo zypper clean --all; 
 			fi
-			if command -v brew >/dev/null; then echo "Cleaning macOS/Homebrew cache..."; brew cleanup -s; fi
+			if command -v brew >/dev/null; then echo "Cleaning macOS/Homebrew cache..."; brew cleanup -s;
+			fi 
 			if command -v apk >/dev/null; then echo "Cleaning Alpine package cache..."; sudo apk cache clean; fi
 			if command -v journalctl >/dev/null;
-			then echo "Cleaning system logs (journald, limit to 2GB)..."; sudo journalctl --vacuum-size=2G; fi
+			then echo "Cleaning system logs (journald, limit to 2GB)..."; sudo journalctl --vacuum-size=2G; fi 
 			if [ -d "/tmp" ];
-			then echo "Cleaning global /tmp (files older than 7 days)..."; sudo find /tmp -type f -atime +7 -delete 2>/dev/null;
-			fi
+			then echo "Cleaning global /tmp (files older than 7 days)..."; sudo find /tmp -type f -atime +7 -delete 2>/dev/null; 
+			fi 
 			if [ -d "/var/tmp" ]; then echo "Cleaning global /var/tmp (files older than 7 days)...";
-			sudo find /var/tmp -type f -atime +7 -delete 2>/dev/null; fi
+			sudo find /var/tmp -type f -atime +7 -delete 2>/dev/null; fi 
 		fi
 		echo "Cleanup finished."
 	else
@@ -147,18 +170,21 @@ cleanup() {
 	fi
 }
 
-service_user() { echo "ervice"; }
+service_user() { echo "ervice";
+} 
 
 # --- SECURE PATH (Appends instead of prepends) ---
 [ -d "$HOME/.local/bin" ] && export PATH="$PATH:$HOME/.local/bin"
 [ -d "$HOME/.cargo/bin" ] && export PATH="$PATH:$HOME/.cargo/bin"
-export NAVIGATOR="brave"; export EDITOR="nvim"; export TERMINAL="kitty"
+export NAVIGATOR="brave";
+export EDITOR="nvim"; export TERMINAL="kitty" 
 export USER="ervice"; export MAIL="erkka@ervice.fi"
 alias code='flatpak run com.visualstudio.code'
 [ -d "/var/lib/flatpak/exports/bin" ] && export PATH="$PATH:/var/lib/flatpak/exports/bin"
 
 # --- Load Local Secrets (Ignored by Git) ---
-if [ -f "$HOME/.config/shell_secrets" ]; then
+if [ -f "$HOME/.config/shell_secrets" ];
+then 
 	. "$HOME/.config/shell_secrets"
 fi
 
@@ -167,12 +193,12 @@ alias startfresh='dotfiles_startfresh'
 dotfiles_startfresh() {
 	# Get the repo root *before* we delete the symlink
 	local REPO_ROOT
-	if command -v readlink > /dev/null 2>&1; then REPO_ROOT="$(dirname "$(readlink -f "$HOME/.sh_common")")"; else REPO_ROOT="$HOME/.dotfiles"; fi
+	if command -v readlink > /dev/null 2>&1;
+	then REPO_ROOT="$(dirname "$(readlink -f "$HOME/.sh_common")")"; else REPO_ROOT="$HOME/.dotfiles"; fi 
 
 	echo "--- WARNING: Starting Fresh (Removing all custom dotfile links) ---"
 	echo "This will revert your environment to the system default shell (Bash/Zsh)."
-	
-	echo "1. Removing config links..."
+	echo "1. Removing config links..." 
 	rm -f "$HOME/.sh_common" "$HOME/.profile" "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.bash_logout"
 	rm -f "$HOME/.ssh_agent_init"
 	rm -rf "$HOME/.config/fish"
@@ -204,7 +230,8 @@ refresh() {
 	echo "$RECOVERY_SCRIPT" > "$HOME/.bashrc"
 	echo "$RECOVERY_SCRIPT" > "$HOME/.zshrc"
 
-	echo "--- ENVIRONMENT RESET. Starting fresh session. ---"
+	echo "--- ENVIRONMENT RESET.
+Starting fresh session. ---" 
 	exec "$SHELL" --login
 }
 
@@ -220,5 +247,14 @@ dotfiles_refresh() {
 	if command -v git > /dev/null 2>&1 && [ -d "$DOTFILES_DIR/.git" ]; then (cd "$DOTFILES_DIR" && git pull origin main) || return 1; fi
 	bash "$DOTFILES_DIR/.setup.sh" || return 1
 	if [ -n "$BASH_VERSION" ]; then source "$HOME/.bashrc"; elif [ -n "$ZSH_VERSION" ]; then source "$HOME/.zshrc"; fi
-	echo "--- Dotfiles Refreshed ---"
+	echo 
+	"--- Dotfiles Refreshed ---" 
 }
+
+# --- Auto-configure Git GPG Signing ---
+if command -v git > /dev/null 2>&1 && [ -n "$GPG_SIGNING_KEY" ]; then
+	git config --global user.signingkey "$GPG_SIGNING_KEY"
+	git config --global commit.gpgsign true
+	git config --global tag.gpgSign true
+	echo "[INFO] Git GPG signing configured."
+fi

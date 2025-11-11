@@ -57,24 +57,79 @@ function extract; for i in $argv; switch "$i"; case '*.tar.bz2' '*.tar.gz' '*.ta
 alias ipinfo='ipinformation'
 function ipinformation; if test -z "$argv[1]"; curl ipinfo.io | grep -v '"readme":'; else; curl "ipinfo.io/$argv[1]" | grep -v '"readme":'; end; echo; end
 
+# --- Cleanup Function ---
 function cleanup
-	echo "--- Disk Usage Cleanup ---"
+	echo "--- Disk Usage Cleanup (User Directories) ---"
 	du -sh ~/.cache ~/.local/share/Trash ~/.thumbnails 2>/dev/null
+
 	set -l do_clean false
+	set -l deep_clean false
+
 	if contains -- -y $argv
 		set do_clean true
-	else
+	end
+	if contains -- --deep $argv
+		set deep_clean true
+	end
+
+	if not $do_clean
 		read -l -P "Clear user cache, thumbnails, and trash? [y/N] " confirm
 		if string match -ri "^(y|yes)\$" -- $confirm; set do_clean true; end
 	end
+
 	if test "$do_clean" = true
-		echo "Clearing..."
+		echo "Clearing user directories..."
+		# User cleanup
 		rm -rf ~/.local/share/Trash ~/.thumbnails
 		rm -rf ~/.cache; mkdir -p ~/.cache
+
+		# --- System-Wide Cleanup (Requires Sudo) ---
 		if command -v sudo >/dev/null 2>&1; and sudo -n true 2>/dev/null
-			echo "Cleaning system package cache (sudo)..."
-			if command -v apt-get >/dev/null; sudo apt-get autoremove -y; and sudo apt-get clean; end
-			if command -v pacman >/dev/null; echo -e "y\ny\n" | sudo pacman -Sc; end
+			echo ""
+			echo "--- System-Wide Cleanup (Sudo) ---"
+			
+			# 1. Package Cache Cleanup
+			if command -v apt-get >/dev/null
+				echo "Cleaning Debian/Ubuntu package cache..."
+				sudo apt-get autoremove -y; and sudo apt-get clean
+			end
+			if command -v pacman >/dev/null
+				if test "$deep_clean" = true
+					echo "Cleaning Arch/SteamOS package cache (DEEP: -Scc)..."
+					echo -e "y\ny\n" | sudo pacman -Scc
+				else
+					echo "Cleaning Arch/SteamOS package cache (Standard: -Sc)..."
+					echo -e "y\n" | sudo pacman -Sc
+				end
+			end
+			if command -v zypper >/dev/null
+				echo "Cleaning OpenSUSE package cache..."
+				sudo zypper clean --all
+			end
+			if command -v brew >/dev/null
+				echo "Cleaning macOS/Homebrew cache..."
+				brew cleanup -s
+			end
+			if command -v apk >/dev/null
+				echo "Cleaning Alpine package cache..."
+				sudo apk cache clean
+			end
+
+			# 2. System Log Cleanup (Journald) - Limit logs to 2GB (Linux-only)
+			if command -v journalctl >/dev/null
+				echo "Cleaning system logs (journald, limit to 2GB)..."
+				sudo journalctl --vacuum-size=2G
+			end
+
+			# 3. Global Temporary Directory Cleanup
+			if test -d "/tmp"
+				echo "Cleaning global /tmp (files older than 7 days)..."
+				sudo find /tmp -type f -atime +7 -delete 2>/dev/null
+			end
+			if test -d "/var/tmp"
+				echo "Cleaning global /var/tmp (files older than 7 days)..."
+				sudo find /var/tmp -type f -atime +7 -delete 2>/dev/null
+			end
 		end
 		echo "Cleanup finished."
 	else

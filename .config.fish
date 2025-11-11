@@ -86,10 +86,10 @@ if test -f "$HOME/.ssh_agent_init"; source "$HOME/.ssh_agent_init"; end
 if command -v zoxide > /dev/null; zoxide init fish | source; end
 if command -v fzf > /dev/null; fzf --fish | source; end
 
-function dotfiles_refresh
+# --- FUNCTION RENAMED TO PREVENT LOOP ERROR ---
+function refresh
 	set -l C_PATH ~/.config/fish/config.fish; set -l D_DIR (dirname (readlink -f $C_PATH))
 	echo "--- Refreshing Dotfiles ---"
 	if type -q git and test -d "$D_DIR/.git"; begin; cd "$D_DIR"; git pull origin main; end; end
 	bash "$D_DIR/.setup.sh"; source (status --current-filename); echo "--- Dotfiles Refreshed ---"
 end
-alias refresh 'dotfiles_refresh'you

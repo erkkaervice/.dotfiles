@@ -23,7 +23,6 @@ function fish_greeting; end
 # --- PATH Modifications (Secure Append) ---
 if test -d "$HOME/.cargo/bin"; fish_add_path --append "$HOME/.cargo/bin"; end
 if test -d "/var/lib/flatpak/exports/bin"; fish_add_path --append "/var/lib/flatpak/exports/bin"; end
-# Note: ~/.local/bin is automatically added to the path by Fish if it exists
 
 # --- Command Color Settings ---
 alias ls='ls --color=auto'; alias grep='grep --color=auto'; alias ip='ip -color=auto'
@@ -51,7 +50,8 @@ alias code='flatpak run com.visualstudio.code'
 
 # --- Functions ---
 function fish_prompt
-	set -l user_name ""; if test -f "$HOME/.sh_common"; set user_name (bash -c 'source ~/.sh_common && service_user'); else; set user_name (whoami); end
+	# FIXED: Hardcode username to "ervice" to prevent sourcing .sh_common
+	set -l user_name "ervice"
 	set -l c_cyan (set_color cyan); set -l c_magenta (set_color magenta); set -l c_norm (set_color normal)
 	echo -n $c_cyan"["$user_name"@"(prompt_hostname)(prompt_pwd)"]"$c_norm
 	set -l g_branch (git symbolic-ref --short HEAD 2> /dev/null)
@@ -134,7 +134,6 @@ end
 
 # --- Init Integrations ---
 # FIXED: Removed incompatible .ssh_agent_init script.
-# if test -f "$HOME/.ssh_agent_init"; source "$HOME/.ssh_agent_init"; end
 if command -v zoxide > /dev/null; zoxide init fish | source; end
 if command -v fzf > /dev/null; fzf --fish | source; end
 
@@ -180,7 +179,7 @@ function startfresh
 	"
 
 	echo "--- ENVIRONMENT RESET. Starting fresh session. ---"
-	# Exec into Bash, which is Termux's default POSIX shell
+	# FIXED: Exec into Bash, which is Termux's default POSIX shell
 	set -l BASH_PATH /bin/bash
 	if test -f /data/data/com.termux/files/usr/bin/bash
 		set BASH_PATH /data/data/com.termux/files/usr/bin/bash

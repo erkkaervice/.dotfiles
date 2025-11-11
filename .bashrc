@@ -15,7 +15,6 @@ fi
 
 # --- Fish Shell Auto-Switch ---
 # This block is commented out by default.
-# Uncomment it if you want Bash/Zsh to *always* try to switch to Fish.
 # if [[ $DISPLAY ]]; then
 # 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
 # 		if command -v fish > /dev/null 2>&1; then
@@ -32,7 +31,6 @@ _bash_abbreviate_path() {
 	local full_path="${PWD/#$HOME/\~}"
 	if [[ "$full_path" == "/" ]]; then echo "/"; return; fi
 	if [[ "$full_path" == "~" ]]; then echo "~"; return; fi
-
 	local prefix=""; local path_to_process=""
 	if [[ "$full_path" == \~* ]]; then
 		prefix="~/"
@@ -43,11 +41,9 @@ _bash_abbreviate_path() {
 	else
 		 echo "$full_path"; return;
 	fi
-
 	local IFS='/'; local -a path_parts
 	read -ra path_parts <<< "$path_to_process"
 	local result="$prefix"; local num_parts=${#path_parts[@]}; local i
-
 	for (( i=0; i < num_parts; i++ )); do
 		if (( i < num_parts - 1 )); then # Intermediate directory
 			if [[ "${path_parts[i]}" == .* ]]; then
@@ -59,7 +55,6 @@ _bash_abbreviate_path() {
 			result+="${path_parts[i]}"
 		fi
 	done
-
 	if [[ "$result" == */ ]] && [[ "$num_parts" -gt 0 ]]; then
 		 result="${result%/}"
 	fi
@@ -72,11 +67,9 @@ _bash_custom_git_prompt() {
 	if [[ -n "$git_branch" ]]; then
 		local git_status=$(git status --porcelain 2>/dev/null)
 		local unstaged=""; local staged=""
-		# Check for unstaged/modified/deleted/untracked
 		if [[ "$git_status" =~ ( M | \?\? | D ) ]]; then
 			unstaged="U"
 		fi
-		# Check for staged adds/mods/deletes
 		if [[ "$git_status" =~ ^(M |A |D) ]]; then
 			staged="+"
 		fi
@@ -86,7 +79,6 @@ _bash_custom_git_prompt() {
 
 
 # --- Bash Git-Aware Prompt ---
-# Format: [user@host abbr_dir](git-info)>
 PS1='\[\e[0;36m\][$(service_user)@\h$(_bash_abbreviate_path)]\[\e[0m\]\[\e[0;35m\]$(_bash_custom_git_prompt)\[\e[0m\]> '
 
 # --- Initialize Modern Tools ---

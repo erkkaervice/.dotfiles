@@ -15,7 +15,6 @@ fi
 
 # --- Fish Shell Auto-Switch ---
 # This block is commented out by default.
-# Uncomment it if you want Bash/Zsh to *always* try to switch to Fish.
 # if [[ $DISPLAY ]]; then
 # 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
 # 		if command -v fish > /dev/null 2>&1; then
@@ -72,29 +71,18 @@ _zsh_abbreviate_path_manual() {
 
 
 # --- Zsh Git-Aware Prompt ---
-
 autoload -U promptinit
 promptinit
-# Allow substitutions (like function calls) in the prompt
 setopt PROMPT_SUBST
-
-# Load version control info
 autoload -Uz vcs_info
-# Enable Git backend and check for changes
 zstyle ':vcs_info:*' enable git
 zstyle ':vcs_info:*' check-for-changes true
-
-# Set formats:
-# %b = branch, %u = unstaged, %c = staged
-# 'formats' is for when inside a repo, 'actionformats' is for during actions (e.g., rebase)
 zstyle ':vcs_info:git:*' formats '%F{magenta}(%b%u%c)%f'
 zstyle ':vcs_info:git:*' actionformats '%F{magenta}(%b|%a%u%c)%f'
 
-# This function runs *before* every prompt is drawn
 precmd() {
 	vcs_info
 	local abbreviated_wd=$(_zsh_abbreviate_path_manual)
-	# Build the prompt with colors and function calls
 	PROMPT="%F{cyan}[$(service_user)@%m${abbreviated_wd}]%f${vcs_info_msg_0_}> "
 }
 

@@ -5,7 +5,6 @@ if not status is-interactive; exit; end
 # --- Auto-Refresh (Once per session) ---
 set -l marker_file "$HOME/.dotfiles_initialized_"(id -u)
 if not test -f "$marker_file"
-	# Check for zoxide (universal) instead of kitty (desktop-only)
 	if not command -v zoxide >/dev/null 2>&1
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
 		set -l C_PATH ~/.config/fish/config.fish; set -l D_DIR (dirname (readlink -f $C_PATH)); set -l S_SCRIPT "$D_DIR/.setup.sh"
@@ -24,7 +23,7 @@ function fish_greeting; end
 # --- PATH Modifications (Secure Append) ---
 if test -d "$HOME/.cargo/bin"; fish_add_path --append "$HOME/.cargo/bin"; end
 if test -d "/var/lib/flatpak/exports/bin"; fish_add_path --append "/var/lib/flatpak/exports/bin"; end
-# Note: ~/.local/bin is automatically appended by Fish if it exists
+# Note: ~/.local/bin is automatically added to the path by Fish if it exists
 
 # --- Command Color Settings ---
 alias ls='ls --color=auto'; alias grep='grep --color=auto'; alias ip='ip -color=auto'
@@ -51,8 +50,6 @@ if command -v rg > /dev/null; alias grep='rg'; end
 alias code='flatpak run com.visualstudio.code'
 
 # --- Functions ---
-
-# Custom Prompt
 function fish_prompt
 	set -l user_name ""; if test -f "$HOME/.sh_common"; set user_name (bash -c 'source ~/.sh_common && service_user'); else; set user_name (whoami); end
 	set -l c_cyan (set_color cyan); set -l c_magenta (set_color magenta); set -l c_norm (set_color normal)
@@ -67,15 +64,11 @@ function fish_prompt
 	if fish_is_root_user; echo -n "# "; else; echo -n "> "; end
 end
 
-# Compile C/C++
 function compile; if test -z "$argv[1]"; return 1; end; set -l f (basename "$argv[1]"); set -l o "/tmp/$f.out"; if gcc "$argv[1]" -Wall -Wextra -Werror -o "$o"; "$o"; else; return 1; end; rm -f "$o"; end
-# Universal Extractor
 function extract; for i in $argv; switch "$i"; case '*.tar.bz2' '*.tar.gz' '*.tar.xz' '*.tbz2' '*.tgz' '*.txz' '*.tar'; bsdtar xvf "$i"; case '*.zip'; unzip "$i"; case '*.rar'; unrar x "$i"; case '*.7z'; 7z x "$i"; case '*.gz'; gunzip "$i"; case '*.xz'; unxz "$i"; case '*.zst'; unzstd "$i"; end; end; end
-# IP Info
 alias ipinfo='ipinformation'
 function ipinformation; if test -z "$argv[1]"; curl ipinfo.io | grep -v '"readme":'; else; curl "ipinfo.io/$argv[1]" | grep -v '"readme":'; end; echo; end
 
-# Cleanup Function
 function cleanup
 	echo "--- Disk Usage Cleanup (User Directories) ---"
 	du -sh ~/.cache ~/.local/share/Trash ~/.thumbnails 2>/dev/null
@@ -140,13 +133,15 @@ if test -f "$HOME/.config/shell_secrets"
 end
 
 # --- Init Integrations ---
-if test -f "$HOME/.ssh_agent_init"; source "$HOME/.ssh_agent_init"; end
+# NOTE: Removed incompatible .ssh_agent_init script.
+# Fish will use its own agent management.
 if command -v zoxide > /dev/null; zoxide init fish | source; end
 if command -v fzf > /dev/null; fzf --fish | source; end
 
 # --- Start Fresh Function ---
 function startfresh
 	set -l REPO_ROOT (dirname (readlink -f ~/.config/fish/config.fish))
+
 	echo "--- WARNING: Starting Fresh (Removing all custom dotfile links) ---"
 	echo "This will revert your environment to the system default shell."
 	
@@ -185,13 +180,12 @@ function startfresh
 	"
 
 	echo "--- ENVIRONMENT RESET. Starting fresh session. ---"
-	# Exec into the default system shell ($SHELL) on desktop,
-	# or force Bash on Termux (which reads .bashrc).
-	set -l RESET_SHELL $SHELL
+	# Exec into Bash, which is Termux's default POSIX shell
+	set -l BASH_PATH /bin/bash
 	if test -f /data/data/com.termux/files/usr/bin/bash
-		set RESET_SHELL /data/data/com.termux/files/usr/bin/bash
+		set BASH_PATH /data/data/com.termux/files/usr/bin/bash
 	end
-	exec $RESET_SHELL --login
+	exec $BASH_PATH --login
 end
 
 # --- Dotfiles Management Function ---

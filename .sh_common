@@ -158,8 +158,6 @@ if [ -f "$HOME/.config/shell_secrets" ]; then
 	. "$HOME/.config/shell_secrets"
 fi
 
-if [ -f "$HOME/.ssh_agent_init" ]; then . "$HOME/.ssh_agent_init"; fi
-
 # --- Start Fresh Function ---
 # Wipes all custom configs and local apps, leaving only a recovery 'refresh'.
 alias startfresh='dotfiles_startfresh'

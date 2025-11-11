@@ -133,8 +133,8 @@ if test -f "$HOME/.config/shell_secrets"
 end
 
 # --- Init Integrations ---
-# NOTE: Removed incompatible .ssh_agent_init script.
-# Fish will use its own agent management.
+# FIXED: Removed incompatible .ssh_agent_init script.
+# if test -f "$HOME/.ssh_agent_init"; source "$HOME/.ssh_agent_init"; end
 if command -v zoxide > /dev/null; zoxide init fish | source; end
 if command -v fzf > /dev/null; fzf --fish | source; end
 

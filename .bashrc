@@ -4,9 +4,13 @@
 [[ $- != *i* ]] && return
 
 # --- Source Common Settings ---
-# Load all shared aliases, functions, PATH, and exports
 if [ -f "$HOME/.sh_common" ]; then
 	. "$HOME/.sh_common"
+fi
+
+# --- Source SSH Agent (Interactive Only) ---
+if [ -f "$HOME/.ssh_agent_init" ]; then
+	. "$HOME/.ssh_agent_init"
 fi
 
 # --- Fish Shell Auto-Switch ---

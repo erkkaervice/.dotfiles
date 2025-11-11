@@ -2,7 +2,8 @@
 
 # --- Auto-Refresh (Once per session) ---
 if [ ! -f "$HOME/.dotfiles_initialized_$(id -u)" ]; then
-	if ! command -v kitty >/dev/null 2>&1; then
+	# CRITICAL FIX: Check for Zoxide instead of Kitty to ensure Termux compatibility.
+	if ! command -v zoxide >/dev/null 2>&1; then 
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
 		if command -v readlink >/dev/null 2>&1; then
 			 COMMON_PATH=$(readlink -f "$HOME/.sh_common"); REPO_ROOT=$(dirname "$COMMON_PATH"); SETUP_SCRIPT="$REPO_ROOT/.setup.sh"
@@ -151,6 +152,22 @@ if [ -f "$HOME/.ssh_agent_init" ]; then . "$HOME/.ssh_agent_init"; fi
 # --- Start Fresh Function ---
 alias startfresh='dotfiles_startfresh'
 dotfiles_startfresh() {
+	# DEFINE REFRESH FUNCTION TEMPORARILY HERE
+	local DOTFILES_DIR
+	local ABSOLUTE_PATH_TO_FILE
+	
+	dotfiles_refresh() {
+		if command -v readlink > /dev/null 2>&1; then ABSOLUTE_PATH_TO_FILE="$(readlink -f "$HOME/.sh_common")"
+		else ABSOLUTE_PATH_TO_FILE="$(python3 -c "import os; print(os.path.realpath('$HOME/.sh_common'))" 2>/dev/null)"; fi
+		DOTFILES_DIR="$(dirname "$ABSOLUTE_PATH_TO_FILE")"
+		if [ -z "$DOTFILES_DIR" ] || [ ! -d "$DOTFILES_DIR" ]; then echo "ERROR: Could not find repo." >&2; return 1; fi
+		echo "--- Refreshing Dotfiles ---"
+		if command -v git > /dev/null 2>&1 && [ -d "$DOTFILES_DIR/.git" ]; then (cd "$DOTFILES_DIR" && git pull origin main) || return 1; fi
+		bash "$DOTFILES_DIR/.setup.sh" || return 1
+		if [ -n "$BASH_VERSION" ]; then source "$HOME/.bashrc"; elif [ -n "$ZSH_VERSION" ]; then source "$HOME/.zshrc"; fi
+		echo "--- Dotfiles Refreshed ---"
+	}
+	
 	echo "--- WARNING: Starting Fresh (Removing all custom dotfile links) ---"
 	echo "This will revert your environment to the system default shell (Bash/Zsh)."
 	
@@ -169,8 +186,12 @@ dotfiles_startfresh() {
 
 	echo "--- ENVIRONMENT RESET. Starting fresh session. ---"
 	if [ -n "$BASH_VERSION" ]; then
+		export -f dotfiles_refresh 
+		export -f cleanup
 		exec /bin/bash --login
 	elif [ -n "$ZSH_VERSION" ]; then
+		export -f dotfiles_refresh 
+		export -f cleanup
 		exec /bin/zsh --login
 	else
 		exec "$SHELL" --login

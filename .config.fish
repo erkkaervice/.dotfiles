@@ -5,7 +5,8 @@ if not status is-interactive; exit; end
 # --- Auto-Refresh (Once per session) ---
 set -l marker_file "$HOME/.dotfiles_initialized_"(id -u)
 if not test -f "$marker_file"
-	if not command -v kitty >/dev/null 2>&1
+	# CRITICAL FIX: Check for Zoxide instead of Kitty to ensure Termux compatibility.
+	if not command -v zoxide >/dev/null 2>&1
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
 		set -l C_PATH ~/.config/fish/config.fish; set -l D_DIR (dirname (readlink -f $C_PATH)); set -l S_SCRIPT "$D_DIR/.setup.sh"
 		if test -f "$S_SCRIPT"; bash "$S_SCRIPT"; else; bash "$HOME/dotfiles/.setup.sh"; end
@@ -37,7 +38,7 @@ alias psmem='ps auxf | sort -nr -k 4'; alias pscpu='ps auxf | sort -nr -k 3'
 # --- Git Aliases ---
 alias addup='git add -u'; alias addall='git add .'; alias branch='git branch'
 alias checkout='git checkout'; alias clone='git clone'; alias commit='git commit -m'
-alias fetch='git fetch'; alias pull='git pull origin'; alias push='git push origin'
+alias fetch='git fetch'; alias pull='git pull origin'; alias push='git pull origin'
 alias stat='git status'; alias tag='git tag'; alias newtag='git tag -a'
 alias gl='git log --oneline --graph --decorate --all'
 
@@ -104,18 +105,9 @@ function cleanup
 					echo -e "y\n" | sudo pacman -Sc
 				end
 			end
-			if command -v zypper >/dev/null
-				echo "Cleaning OpenSUSE package cache..."
-				sudo zypper clean --all
-			end
-			if command -v brew >/dev/null
-				echo "Cleaning macOS/Homebrew cache..."
-				brew cleanup -s
-			end
-			if command -v apk >/dev/null
-				echo "Cleaning Alpine package cache..."
-				sudo apk cache clean
-			end
+			if command -v zypper >/dev/null; sudo zypper clean --all; end
+			if command -v brew >/dev/null; brew cleanup -s; end
+			if command -v apk >/dev/null; sudo apk cache clean; end
 			if command -v journalctl >/dev/null; echo "Cleaning system logs (journald, limit to 2GB)..."; sudo journalctl --vacuum-size=2G; end
 			if test -d "/tmp"; echo "Cleaning global /tmp (files older than 7 days)..."; sudo find /tmp -type f -atime +7 -delete 2>/dev/null; end
 			if test -d "/var/tmp"; echo "Cleaning global /var/tmp (files older than 7 days)..."; sudo find /var/tmp -type f -atime +7 -delete 2>/dev/null; end
@@ -132,6 +124,14 @@ if command -v fzf > /dev/null; fzf --fish | source; end
 
 # --- Start Fresh Function ---
 function startfresh
+	# DEFINE REFRESH FUNCTION BODY TEMPORARILY
+	function refresh
+		set -l C_PATH ~/.config/fish/config.fish; set -l D_DIR (dirname (readlink -f $C_PATH))
+		echo "--- Refreshing Dotfiles ---"
+		if type -q git and test -d "$D_DIR/.git"; begin; cd "$D_DIR"; git pull origin main; end; end
+		bash "$D_DIR/.setup.sh"; source (status --current-filename); echo "--- Dotfiles Refreshed ---"
+	end
+
 	echo "--- WARNING: Starting Fresh (Removing all custom dotfile links) ---"
 	echo "This will revert your environment to the system default shell."
 	
@@ -149,7 +149,13 @@ function startfresh
 	rm -f "$HOME/.dotfiles_initialized_"(id -u)
 
 	echo "--- ENVIRONMENT RESET. Starting fresh session. ---"
-	exec $SHELL --login
+	# Fish Fix: We execute a clean shell while preserving the refresh function via bash_c
+	exec bash -c "
+	  functions -c refresh;
+	  functions -c cleanup;
+	  echo 'Run \\'refresh\\' to rebuild your custom setup.'
+	  exec '$SHELL' --login
+	"
 end
 
 # --- Dotfiles Management Function ---

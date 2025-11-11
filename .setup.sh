@@ -96,7 +96,7 @@ if [ "$IS_TERMUX" = false ]; then
 		if command -v curl >/dev/null 2>&1; then
 			print_info "Fallback: Installing Kitty locally..."
 			curl -fSL --proto '=https' https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n dest="$HOME/.local"
-			ln -sf "$HOME/.local/kitty.app/bin/ kitty" "$HOME/.local/bin/kitty"
+			ln -sf "$HOME/.local/kitty.app/bin/kitty" "$HOME/.local/bin/kitty"
 			ln -sf "$HOME/.local/kitty.app/bin/kitten" "$HOME/.local/bin/kitten"
 		fi
 	fi
@@ -127,7 +127,8 @@ if command -v curl >/dev/null 2>&1; then
 	fi
 	if ! command -v gitleaks >/dev/null 2>&1; then
 		print_info "Fallback: Installing Gitleaks locally..."
-		curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/main/install.sh | sh -s -- -b "$HOME/.local/bin" 2>/dev/null
+		# FIXED: Corrected installer repo URL
+		curl -sSfL https://raw.githubusercontent.com/gitleaks/go-gitleaks/main/install.sh | sh -s -- -b "$HOME/.local/bin" 2>/dev/null
 	fi
 fi
 

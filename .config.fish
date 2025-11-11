@@ -5,7 +5,6 @@ if not status is-interactive; exit; end
 # --- Auto-Refresh (Once per session) ---
 set -l marker_file "$HOME/.dotfiles_initialized_"(id -u)
 if not test -f "$marker_file"
-	# CRITICAL FIX: Check for Zoxide instead of Kitty to ensure Termux compatibility.
 	if not command -v zoxide >/dev/null 2>&1
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
 		set -l C_PATH ~/.config/fish/config.fish; set -l D_DIR (dirname (readlink -f $C_PATH)); set -l S_SCRIPT "$D_DIR/.setup.sh"
@@ -92,10 +91,7 @@ function cleanup
 		rm -rf ~/.cache; mkdir -p ~/.cache
 		if command -v sudo >/dev/null 2>&1; and sudo -n true 2>/dev/null
 			echo "--- System-Wide Cleanup (Sudo) ---"
-			if command -v apt-get >/dev/null
-				echo "Cleaning Debian/Ubuntu/Kali package cache..."
-				sudo apt-get autoremove -y; and sudo apt-get clean
-			end
+			if command -v apt-get >/dev/null; sudo apt-get autoremove -y; and sudo apt-get clean; end
 			if command -v pacman >/dev/null
 				if test "$deep_clean" = true
 					echo "Cleaning Arch/SteamOS package cache (DEEP: -Scc)..."

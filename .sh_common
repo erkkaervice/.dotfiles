@@ -2,8 +2,7 @@
 
 # --- Auto-Refresh (Once per session) ---
 if [ ! -f "$HOME/.dotfiles_initialized_$(id -u)" ]; then
-	# CRITICAL FIX: Check for Zoxide instead of Kitty to ensure Termux compatibility.
-	if ! command -v zoxide >/dev/null 2>&1; then 
+	if ! command -v zoxide >/dev/null 2>&1; then
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
 		if command -v readlink >/dev/null 2>&1; then
 			 COMMON_PATH=$(readlink -f "$HOME/.sh_common"); REPO_ROOT=$(dirname "$COMMON_PATH"); SETUP_SCRIPT="$REPO_ROOT/.setup.sh"
@@ -37,7 +36,7 @@ alias clone='git clone'
 alias commit='git commit -m'
 alias fetch='git fetch'
 alias pull='git pull origin'
-alias push='git push origin'
+alias push='git pull origin'
 alias stat='git status'
 alias tag='git tag'
 alias newtag='git tag -a'
@@ -152,20 +151,31 @@ if [ -f "$HOME/.ssh_agent_init" ]; then . "$HOME/.ssh_agent_init"; fi
 # --- Start Fresh Function ---
 alias startfresh='dotfiles_startfresh'
 dotfiles_startfresh() {
-	# DEFINE REFRESH FUNCTION TEMPORARILY HERE
-	local DOTFILES_DIR
-	local ABSOLUTE_PATH_TO_FILE
-	
-	dotfiles_refresh() {
+	# Define the recovery function here so it can be exported and used in the fresh session
+	dotfiles_refresh_recovery() {
+		local ABSOLUTE_PATH_TO_FILE
 		if command -v readlink > /dev/null 2>&1; then ABSOLUTE_PATH_TO_FILE="$(readlink -f "$HOME/.sh_common")"
 		else ABSOLUTE_PATH_TO_FILE="$(python3 -c "import os; print(os.path.realpath('$HOME/.sh_common'))" 2>/dev/null)"; fi
 		DOTFILES_DIR="$(dirname "$ABSOLUTE_PATH_TO_FILE")"
-		if [ -z "$DOTFILES_DIR" ] || [ ! -d "$DOTFILES_DIR" ]; then echo "ERROR: Could not find repo." >&2; return 1; fi
-		echo "--- Refreshing Dotfiles ---"
-		if command -v git > /dev/null 2>&1 && [ -d "$DOTFILES_DIR/.git" ]; then (cd "$DOTFILES_DIR" && git pull origin main) || return 1; fi
+		
+		# Attempt to clone the repo back if it's completely gone (safety measure)
+		if [ ! -d "$DOTFILES_DIR" ]; then
+			echo "ERROR: Dotfiles repository not found. Attempting to clone back..." >&2
+			if command -v git >/dev/null 2>&1; then
+				# Assumes repo was cloned to ~/dotfiles, which is the standard
+				git clone git@github.com:erkkaervice/.dotfiles.git "$HOME/.dotfiles"
+				DOTFILES_DIR="$HOME/.dotfiles"
+			else
+				echo "FATAL ERROR: Git not found. Cannot reclone or refresh." >&2
+				return 1
+			fi
+		fi
+		
+		echo "--- REFRESHING ENVIRONMENT ---"
 		bash "$DOTFILES_DIR/.setup.sh" || return 1
+		# Source the new .zshrc/.bashrc to reload all functions
 		if [ -n "$BASH_VERSION" ]; then source "$HOME/.bashrc"; elif [ -n "$ZSH_VERSION" ]; then source "$HOME/.zshrc"; fi
-		echo "--- Dotfiles Refreshed ---"
+		echo "--- Environment restored. ---"
 	}
 	
 	echo "--- WARNING: Starting Fresh (Removing all custom dotfile links) ---"
@@ -185,14 +195,15 @@ dotfiles_startfresh() {
 	rm -f "$HOME/.dotfiles_initialized_$(id -u)"
 
 	echo "--- ENVIRONMENT RESET. Starting fresh session. ---"
+	# Bash/Zsh Fix: Export the recovery functions to the new shell session
 	if [ -n "$BASH_VERSION" ]; then
-		export -f dotfiles_refresh 
-		export -f cleanup
-		exec /bin/bash --login
+		export -f dotfiles_refresh_recovery 
+		export -f cleanup # Keep cleanup available as well
+		exec /bin/bash --login -c "echo 'Run dotfiles_refresh_recovery to rebuild.' ; exec '$SHELL' --login"
 	elif [ -n "$ZSH_VERSION" ]; then
-		export -f dotfiles_refresh 
+		export -f dotfiles_refresh_recovery 
 		export -f cleanup
-		exec /bin/zsh --login
+		exec /bin/zsh --login -c 'echo "Run dotfiles_refresh_recovery to rebuild."; exec "$SHELL" --login'
 	else
 		exec "$SHELL" --login
 	fi

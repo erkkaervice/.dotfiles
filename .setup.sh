@@ -47,15 +47,43 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 	print_info "Detected OS: $OS_ID. Attempting system package installation..."
 	INSTALL_FAILED=false
 	case "$OS_ID" in
-		termux) pkg update -y && pkg install -y fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide || INSTALL_FAILED=true ;;
-		ubuntu|debian|pop|mint) sudo apt-get update -qq && sudo apt-get install -y fish git curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig || INSTALL_FAILED=true ;;
-		arch|manjaro|steamos) sudo pacman -Syu --noconfirm --needed fish git base-devel curl bind unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty ttf-inconsolata fontconfig || INSTALL_FAILED=true ;;
-		opensuse*|suse) sudo zypper refresh && sudo zypper install -y fish git-core curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty google-inconsolata-fonts fontconfig || INSTALL_FAILED=true ;;
-		alpine) sudo apk update && sudo apk add fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig || INSTALL_FAILED=true ;;
-		macos) if command -v brew >/dev/null; then brew install fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty; brew install --cask font-inconsolata 2>/dev/null || true; else INSTALL_FAILED=true; fi ;;
+		termux)
+			print_info "Installing packages for Termux..."
+			pkg update -y && pkg install -y fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide
+			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Termux installation failed."; fi
+			;;
+		ubuntu|debian|pop|mint|kali)
+			print_info "Installing packages for Debian/Ubuntu/Kali based system..."
+			sudo apt-get update -qq && sudo apt-get install -y fish git curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig
+			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Debian/Ubuntu/Kali installation failed."; fi
+			;;
+		arch|manjaro|steamos)
+			print_info "Installing packages for Arch/SteamOS based system..."
+			sudo pacman -Syu --noconfirm --needed fish git base-devel curl bind unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty ttf-inconsolata fontconfig
+			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Arch/SteamOS installation failed."; fi
+			;;
+		opensuse*|suse)
+			print_info "Installing packages for OpenSUSE based system..."
+			sudo zypper refresh && sudo zypper install -y fish git-core curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty google-inconsolata-fonts fontconfig
+			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "OpenSUSE installation failed."; fi
+			;;
+		alpine)
+			print_info "Installing packages for Alpine based system..."
+			sudo apk update && sudo apk add fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig
+			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Alpine installation failed."; fi
+			;;
+		macos)
+			if command -v brew >/dev/null; then
+				print_info "Installing packages for macOS (Homebrew)..."
+				brew install fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty
+				brew install --cask font-inconsolata 2>/dev/null || true
+			else INSTALL_FAILED=true; fi
+			[ $? -ne 0 ] && INSTALL_FAILED=true
+			[ "$INSTALL_FAILED" = true ] && print_error "Homebrew installation failed or skipped." || print_info "Homebrew installation successful."
+			;;
 		*) print_error "Unsupported OS: $OS_ID"; INSTALL_FAILED=true ;;
 	esac
-	[ "$INSTALL_FAILED" = true ] && print_error "System package installation failed." || print_info "System packages installed."
+	[ "$INSTALL_FAILED" = true ] && print_error "System package installation failed."
 else print_info "Skipping system packages (no sudo)."; fi
 
 # --- Fallback: Local Tool Installation (No Sudo Required) ---

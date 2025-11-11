@@ -89,80 +89,47 @@ ipinformation() {
 # --- Cleanup Function ---
 cleanup() {
 	echo "--- Disk Usage Cleanup (User Directories) ---"
-	# Show current usage of target folders
 	du -sh "$HOME/.cache" "$HOME/.local/share/Trash" "$HOME/.thumbnails" 2>/dev/null
-
-	local do_clean=false
-	local deep_clean=false
-
+	local do_clean=false; local deep_clean=false
+	
 	for arg in "$@"; do
 		if [[ "$arg" == "-y" ]]; then do_clean=true; fi
 		if [[ "$arg" == "--deep" ]]; then deep_clean=true; fi
 	done
 
 	if [ "$do_clean" = false ]; then
-		echo -n "Clear user cache, thumbnails, and trash? [y/N] "
-		read -r response
+		echo -n "Clear user cache, thumbnails, and trash? [y/N] "; read -r response
 		[[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]] && do_clean=true
 	fi
 
 	if [ "$do_clean" = true ]; then
 		echo "Clearing user directories..."
-		# User cleanup
-		rm -rf "$HOME/.local/share/Trash"
-		rm -rf "$HOME/.thumbnails"
+		rm -rf "$HOME/.local/share/Trash" "$HOME/.thumbnails"
 		rm -rf "$HOME/.cache"; mkdir -p "$HOME/.cache"
 
-		# --- System-Wide Cleanup (Requires Sudo) ---
 		if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
-			echo ""
 			echo "--- System-Wide Cleanup (Sudo) ---"
 			
-			# 1. Package Cache Cleanup
 			if command -v apt-get >/dev/null; then
-				echo "Cleaning Debian/Ubuntu package cache..."
-				sudo apt-get autoremove -y && sudo apt-get clean
+				echo "Cleaning Debian/Ubuntu/Kali package cache..."; sudo apt-get autoremove -y && sudo apt-get clean
 			fi
 			if command -v pacman >/dev/null; then
 				if [ "$deep_clean" = true ]; then
-					echo "Cleaning Arch/SteamOS package cache (DEEP: -Scc)..."
-					# -Scc is deep cleanup; requires 'y' twice for confirmation
-					echo -e "y\ny\n" | sudo pacman -Scc
+					echo "Cleaning Arch/SteamOS package cache (DEEP: -Scc)..."; echo -e "y\ny\n" | sudo pacman -Scc
 				else
-					echo "Cleaning Arch/SteamOS package cache (Standard: -Sc)..."
-					# -Sc is standard cleanup; only requires 'y' once
-					echo -e "y\n" | sudo pacman -Sc
+					echo "Cleaning Arch/SteamOS package cache (Standard: -Sc)..."; echo -e "y\n" | sudo pacman -Sc
 				fi
 			fi
-			if command -v zypper >/dev/null; then
-				echo "Cleaning OpenSUSE package cache..."
-				sudo zypper clean --all
+			if command -v zypper >/dev/null; then 
+				echo "Cleaning OpenSUSE package cache..."; 
+				sudo zypper clean --all; 
 			fi
-			if command -v brew >/dev/null; then
-				echo "Cleaning macOS/Homebrew cache..."
-				brew cleanup -s
-			fi
-			if command -v apk >/dev/null; then
-				echo "Cleaning Alpine package cache..."
-				sudo apk cache clean
-			fi
+			if command -v brew >/dev/null; then echo "Cleaning macOS/Homebrew cache..."; brew cleanup -s; fi
+			if command -v apk >/dev/null; then echo "Cleaning Alpine package cache..."; sudo apk cache clean; fi
 
-			# 2. System Log Cleanup (Journald) - Limit logs to 2GB (Linux-only)
-			if command -v journalctl >/dev/null; then
-				echo "Cleaning system logs (journald, limit to 2GB)..."
-				sudo journalctl --vacuum-size=2G
-			fi
-
-			# 3. Global Temporary Directory Cleanup
-			if [ -d "/tmp" ]; then
-				echo "Cleaning global /tmp (files older than 7 days)..."
-				sudo find /tmp -type f -atime +7 -delete 2>/dev/null
-			fi
-			if [ -d "/var/tmp" ]; then
-				echo "Cleaning global /var/tmp (files older than 7 days)..."
-				sudo find /var/tmp -type f -atime +7 -delete 2>/dev/null
-			fi
-
+			if command -v journalctl >/dev/null; then echo "Cleaning system logs (journald, limit to 2GB)..."; sudo journalctl --vacuum-size=2G; fi
+			if [ -d "/tmp" ]; then echo "Cleaning global /tmp (files older than 7 days)..."; sudo find /tmp -type f -atime +7 -delete 2>/dev/null; fi
+			if [ -d "/var/tmp" ]; then echo "Cleaning global /var/tmp (files older than 7 days)..."; sudo find /var/tmp -type f -atime +7 -delete 2>/dev/null; fi
 		fi
 		echo "Cleanup finished."
 	else
@@ -180,6 +147,35 @@ alias code='flatpak run com.visualstudio.code'
 [ -d "/var/lib/flatpak/exports/bin" ] && export PATH="$PATH:/var/lib/flatpak/exports/bin"
 
 if [ -f "$HOME/.ssh_agent_init" ]; then . "$HOME/.ssh_agent_init"; fi
+
+# --- Start Fresh Function ---
+alias startfresh='dotfiles_startfresh'
+dotfiles_startfresh() {
+	echo "--- WARNING: Starting Fresh (Removing all custom dotfile links) ---"
+	echo "This will revert your environment to the system default shell (Bash/Zsh)."
+	
+	echo "1. Removing config links..."
+	rm -f "$HOME/.sh_common" "$HOME/.profile" "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.bash_logout"
+	rm -rf "$HOME/.config/fish"
+	rm -rf "$HOME/.config/kitty"
+	rm -rf "$HOME/.config/fontconfig"
+
+	echo "2. Removing local user applications..."
+	rm -rf "$HOME/.local/kitty.app"
+	rm -rf "$HOME/.fzf"
+	rm -rf "$HOME/.local/share/applications/kitty.desktop"
+
+	rm -f "$HOME/.dotfiles_initialized_$(id -u)"
+
+	echo "--- ENVIRONMENT RESET. Starting fresh session. ---"
+	if [ -n "$BASH_VERSION" ]; then
+		exec /bin/bash --login
+	elif [ -n "$ZSH_VERSION" ]; then
+		exec /bin/zsh --login
+	else
+		exec "$SHELL" --login
+	fi
+}
 
 alias refresh='dotfiles_refresh'
 dotfiles_refresh() {

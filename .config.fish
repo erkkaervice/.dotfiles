@@ -26,6 +26,8 @@ function fish_greeting;
 end 
 
 # --- PATH Modifications (Secure Append) ---
+# FIXED: Added .local/bin to the PATH for fallback scripts like Trivy
+if test -d "$HOME/.local/bin"; fish_add_path --append "$HOME/.local/bin"; end
 if test -d "$HOME/.cargo/bin"; fish_add_path --append "$HOME/.cargo/bin"; end
 if test -d "/var/lib/flatpak/exports/bin"; fish_add_path --append "/var/lib/flatpak/exports/bin";
 end 
@@ -121,8 +123,8 @@ function cleanup
 		rm -rf ~/.cache.backup ~/.local.backup ~/.config.backup
 
 		if command -v flatpak > /dev/null
-			echo "Cleaning Flatpak (unused runtimes)..."
-			flatpak uninstall --unused -y
+			echo "Cleaning Flatpak (unused user runtimes)..."
+			flatpak uninstall --user --unused -y
 			if test -d "$HOME/.var/app/com.visualstudio.code/cache"
 				echo "Cleaning VS Code (Flatpak) cache..."
 				rm -rf "$HOME/.var/app/com.visualstudio.code/cache"
@@ -264,5 +266,5 @@ if command -v git > /dev/null; and test -n "$GPG_SIGNING_KEY"
 	git config --global user.signingkey "$GPG_SIGNING_KEY"
 	git config --global commit.gpgsign true
 	git config --global tag.gpgSign true
-	echo "[INFO] Git GPG signing configured."
+	echo "[INFO] Git GGPG signing configured."
 end

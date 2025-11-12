@@ -127,8 +127,8 @@ if command -v curl >/dev/null 2>&1; then
 	fi
 	if ! command -v gitleaks >/dev/null 2>&1; then
 		print_info "Fallback: Installing Gitleaks locally..."
-		# FIXED: Corrected installer repo URL
-		curl -sSfL https://raw.githubusercontent.com/gitleaks/go-gitleaks/main/install.sh | sh -s -- -b "$HOME/.local/bin" 2>/dev/null
+		# FIXED: Corrected installer URL to point to the /scripts directory
+		curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/main/scripts/install.sh | sh -s -- -b "$HOME/.local/bin" 2>/dev/null
 	fi
 fi
 

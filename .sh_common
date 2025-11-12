@@ -23,6 +23,7 @@ fi
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
 alias ip='ip -color=auto'
+alias rm='rm -I'
 
 # --- Disk Usage ---
 alias df='df -h'
@@ -135,8 +136,8 @@ cleanup() {
 		rm -rf "$HOME/.cache.backup" "$HOME/.local.backup" "$HOME/.config.backup"
 
 		if command -v flatpak >/dev/null; then
-			echo "Cleaning Flatpak (unused runtimes)..."
-			flatpak uninstall --unused -y
+			echo "Cleaning Flatpak (unused user runtimes)..."
+			flatpak uninstall --user --unused -y
 			if [ -d "$HOME/.var/app/com.visualstudio.code/cache" ]; then
 				echo "Cleaning VS Code (Flatpak) cache..."
 				rm -rf "$HOME/.var/app/com.visualstudio.code/cache"
@@ -193,6 +194,19 @@ cleanup() {
 
 service_user() { echo "ervice";
 } 
+
+# --- Security Aliases & Functions ---
+networkscan() {
+	# Safe, non-sudo scan. -T4 for speed, -F for top 100 ports.
+	nmap -T4 -F "$@"
+}
+# Smart alias for lynis: uses sudo if available, otherwise runs unprivileged.
+if command -v sudo > /dev/null 2>&1; then
+	alias audit='sudo lynis audit system'
+else
+	alias audit='lynis audit system'
+fi
+
 
 # --- SECURE PATH (Appends instead of prepends) ---
 [ -d "$HOME/.local/bin" ] && export PATH="$PATH:$HOME/.local/bin"

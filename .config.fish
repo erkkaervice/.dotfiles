@@ -33,6 +33,7 @@ end
 
 # --- Command Color Settings ---
 alias ls='ls --color=auto'; alias grep='grep --color=auto'; alias ip='ip -color=auto'
+alias rm='rm -I'
 
 # --- Disk Usage ---
 alias df='df -h';
@@ -64,7 +65,6 @@ alias code='flatpak run com.visualstudio.code'
 
 # --- Functions ---
 function fish_prompt
-	# FIXED: Hardcode username to "ervice" to prevent sourcing .sh_common
 	set -l user_name "ervice"
 	set -l c_cyan (set_color cyan);
 	set -l c_magenta (set_color magenta); set -l c_norm (set_color normal) 
@@ -183,13 +183,24 @@ function cleanup
 	end 
 end
 
+# --- Security Aliases & Functions ---
+function networkscan
+	# Safe, non-sudo scan. -T4 for speed, -F for top 100 ports.
+	nmap -T4 -F $argv
+end
+# Smart alias for lynis: uses sudo if available, otherwise runs unprivileged.
+if command -v sudo > /dev/null
+	alias audit='sudo lynis audit system'
+else
+	alias audit='lynis audit system'
+end
+
 # --- Load Local Secrets (Ignored by Git) ---
 if test -f "$HOME/.config/shell_secrets"
 	source "$HOME/.config/shell_secrets"
 end
 
 # --- Init Integrations ---
-# FIXED: Removed incompatible .ssh_agent_init script. 
 if command -v zoxide > /dev/null; zoxide init fish | source; end
 if command -v fzf > /dev/null; fzf --fish |
 source; end 
@@ -236,7 +247,6 @@ function startfresh
 	"
 
 	echo "--- ENVIRONMENT RESET. Starting fresh session. ---"
-	# FIXED: Exec into Bash, which is Termux's default POSIX shell
 	set -l BASH_PATH /bin/bash
 	if test -f /data/data/com.termux/files/usr/bin/bash
 		set BASH_PATH /data/data/com.termux/files/usr/bin/bash
@@ -251,7 +261,6 @@ function refresh
 	echo "--- Refreshing Dotfiles ---"
 	
 	if type -q git; and test -d "$D_DIR/.git"
-		# FIXED: Use pushd/popd to avoid changing directory
 		pushd "$D_DIR"
 		git pull origin main
 		popd

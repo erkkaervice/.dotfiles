@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# setup.sh - Installs dependencies, fonts, and links dotfiles.
+# setup.sh - Installs dependencies, fonts, and links dotfile.
 #
 
 # --- Helper Functions ---
@@ -125,11 +125,6 @@ if command -v curl >/dev/null 2>&1; then
 		print_info "Fallback: Installing Trivy locally..."
 		curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b "$HOME/.local/bin" 2>/dev/null
 	fi
-	if ! command -v gitleaks >/dev/null 2>&1; then
-		print_info "Fallback: Installing Gitleaks locally..."
-		# FIXED: Corrected installer URL to point to the /scripts directory
-		curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/main/scripts/install.sh | sh -s -- -b "$HOME/.local/bin" 2>/dev/null
-	fi
 fi
 
 # --- Custom Font Installation ---
@@ -161,7 +156,7 @@ mkdir -p "$HOME/.config/fish"; ln -sf "$DOTFILES_DIR/.config.fish" "$HOME/.confi
 if [ "$IS_TERMUX" = false ]; then
 	mkdir -p "$HOME/.config/kitty" "$HOME/.config/fontconfig"
 	ln -sf "$DOTFILES_DIR/.kitty.conf" "$HOME/.config/kitty/kitty.conf"
-	ln -sf "$DOTFILES_DIR/.fonts.conf" "$HOME/.config/fontconfig/fonts.conf"
+	ln -sf "$DOTFILES_DIP/.fonts.conf" "$HOME/.config/fontconfig/fonts.conf"
 fi
 print_info "Dotfiles linked. Setup finished!"
 

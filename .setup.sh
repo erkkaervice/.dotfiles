@@ -51,7 +51,8 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 	case "$OS_ID" in
 		termux)
 			print_info "Installing packages for Termux..."
-			pkg update -y && pkg install -y fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg lynis tcpdump
+			# FIXED: Removed lynis and tcpdump as they are not in the main repo
+			pkg update -y && pkg install -y fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Termux installation failed."; fi
 			;;
 		ubuntu|debian|pop|mint|kali)
@@ -118,6 +119,7 @@ if [ "$IS_TERMUX" = false ]; then
 fi
 
 # --- Fallback: Security Tools (Always run) ---
+# FIXED: Removed the Trivy fallback, as it downloads a binary
 # incompatible with Termux (non-PIE executable).
 if command -v curl >/dev/null 2>&1; then
 	: # All fallbacks removed

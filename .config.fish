@@ -10,7 +10,7 @@ if not test -f "$marker_file"
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
 		set -l C_PATH ~/.config/fish/config.fish;
 		set -l D_DIR (dirname (readlink -f $C_PATH)); set -l S_SCRIPT "$D_DIR/.setup.sh" 
-		if test -f "$S_SCRIPT"; bash "$S_SCRIPT"; else; bash "$HOME/dotfiles/.setup.sh";
+		if test -f "$S_SCRIPT"; bash "$S_SCRIPT"; else; bash "$HOME/.dotfiles/.setup.sh";
 		end 
 	end
 	touch "$marker_file"
@@ -188,8 +188,8 @@ function networkscan
 	# Safe, non-sudo scan. -T4 for speed, -F for top 100 ports.
 	nmap -T4 -F $argv
 end
-# Smart alias for lynis: uses sudo if available, otherwise runs unprivileged.
-if command -v sudo > /dev/null
+# Smart alias for lynis: uses sudo if non-interactive sudo is available, otherwise runs unprivileged.
+if command -v sudo > /dev/null; and sudo -n true > /dev/null 2>&1
 	alias audit='sudo lynis audit system'
 else
 	alias audit='lynis audit system'

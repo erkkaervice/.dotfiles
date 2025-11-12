@@ -12,7 +12,7 @@ if [ ! -f "$HOME/.dotfiles_initialized_$(id -u)" ]; then
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
 		if command -v readlink >/dev/null 2>&1; then
 			 COMMON_PATH=$(readlink -f "$HOME/.sh_common"); REPO_ROOT=$(dirname "$COMMON_PATH"); SETUP_SCRIPT="$REPO_ROOT/.setup.sh"
-		else SETUP_SCRIPT="$HOME/dotfiles/.setup.sh";
+		else SETUP_SCRIPT="$HOME/.dotfiles/.setup.sh";
 		fi 
 		[ -f "$SETUP_SCRIPT" ] && bash "$SETUP_SCRIPT" || echo "[Auto-Setup] Error: Could not find .setup.sh"
 	fi
@@ -200,8 +200,8 @@ networkscan() {
 	# Safe, non-sudo scan. -T4 for speed, -F for top 100 ports.
 	nmap -T4 -F "$@"
 }
-# Smart alias for lynis: uses sudo if available, otherwise runs unprivileged.
-if command -v sudo > /dev/null 2>&1; then
+# Smart alias for lynis: uses sudo if non-interactive sudo is available, otherwise runs unprivileged.
+if command -v sudo > /dev/null 2>&1 && sudo -n true > /dev/null 2>&1; then
 	alias audit='sudo lynis audit system'
 else
 	alias audit='lynis audit system'

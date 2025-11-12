@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# setup.sh - Installs dependencies, fonts, and links dotfile.
+# setup.sh - Installs dependencies, fonts, and links dotfiles.
 #
 
 # --- Helper Functions ---
@@ -118,13 +118,9 @@ if [ "$IS_TERMUX" = false ]; then
 fi
 
 # --- Fallback: Security Tools (Always run) ---
-# These installers work on most platforms, including Termux,
-# and will install locally if the system package failed.
+# incompatible with Termux (non-PIE executable).
 if command -v curl >/dev/null 2>&1; then
-	if ! command -v trivy >/dev/null 2>&1; then
-		print_info "Fallback: Installing Trivy locally..."
-		curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b "$HOME/.local/bin" 2>/dev/null
-	fi
+	: # All fallbacks removed
 fi
 
 # --- Custom Font Installation ---
@@ -156,7 +152,7 @@ mkdir -p "$HOME/.config/fish"; ln -sf "$DOTFILES_DIR/.config.fish" "$HOME/.confi
 if [ "$IS_TERMUX" = false ]; then
 	mkdir -p "$HOME/.config/kitty" "$HOME/.config/fontconfig"
 	ln -sf "$DOTFILES_DIR/.kitty.conf" "$HOME/.config/kitty/kitty.conf"
-	ln -sf "$DOTFILES_DIP/.fonts.conf" "$HOME/.config/fontconfig/fonts.conf"
+	ln -sf "$DOTFILES_DIR/.fonts.conf" "$HOME/.config/fontconfig/fonts.conf"
 fi
 print_info "Dotfiles linked. Setup finished!"
 

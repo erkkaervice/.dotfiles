@@ -26,7 +26,6 @@ function fish_greeting;
 end 
 
 # --- PATH Modifications (Secure Append) ---
-# FIXED: Added .local/bin to the PATH for fallback scripts like Trivy
 if test -d "$HOME/.local/bin"; fish_add_path --append "$HOME/.local/bin"; end
 if test -d "$HOME/.cargo/bin"; fish_add_path --append "$HOME/.cargo/bin"; end
 if test -d "/var/lib/flatpak/exports/bin"; fish_add_path --append "/var/lib/flatpak/exports/bin";
@@ -65,7 +64,6 @@ alias code='flatpak run com.visualstudio.code'
 
 # --- Functions ---
 function fish_prompt
-	# FIXED: Hardcode username to "ervice" to prevent sourcing .sh_common
 	set -l user_name "ervice"
 	set -l c_cyan (set_color cyan);
 	set -l c_magenta (set_color magenta); set -l c_norm (set_color normal) 
@@ -190,7 +188,6 @@ if test -f "$HOME/.config/shell_secrets"
 end
 
 # --- Init Integrations ---
-# FIXED: Removed incompatible .ssh_agent_init script. 
 if command -v zoxide > /dev/null; zoxide init fish | source; end
 if command -v fzf > /dev/null; fzf --fish |
 source; end 
@@ -237,7 +234,6 @@ function startfresh
 	"
 
 	echo "--- ENVIRONMENT RESET. Starting fresh session. ---"
-	# FIXED: Exec into Bash, which is Termux's default POSIX shell
 	set -l BASH_PATH /bin/bash
 	if test -f /data/data/com.termux/files/usr/bin/bash
 		set BASH_PATH /data/data/com.termux/files/usr/bin/bash
@@ -252,10 +248,7 @@ function refresh
 	echo "--- Refreshing Dotfiles ---"
 	
 	if type -q git; and test -d "$D_DIR/.git"
-		begin
-			cd "$D_DIR";
-			git pull origin main 
-		end
+		(cd "$D_DIR"; and git pull origin main)
 	end
 	
 	bash "$D_DIR/.setup.sh"; source (status --current-filename); echo "--- Dotfiles Refreshed ---"
@@ -266,5 +259,5 @@ if command -v git > /dev/null; and test -n "$GPG_SIGNING_KEY"
 	git config --global user.signingkey "$GPG_SIGNING_KEY"
 	git config --global commit.gpgsign true
 	git config --global tag.gpgSign true
-	echo "[INFO] Git GGPG signing configured."
+	echo "[INFO] Git GPG signing configured."
 end

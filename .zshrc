@@ -33,44 +33,9 @@ fi
 autoload -Uz compinit
 compinit -u
 
-# --- Path Abbreviation Function (NO LONGER NEEDED: Starship handles this) ---
+# --- Path Abbreviation Function (REPLACED BY STARSHIP) ---
 # _zsh_abbreviate_path_manual() {
-# 	local pwd_relative_to_home=${PWD/#$HOME/\~}
-# 	[[ "$pwd_relative_to_home" == "/" ]] && { echo "/"; return }
-# 	[[ "$pwd_relative_to_home" == "~" ]] && { echo "~"; return }
-
-# 	local prefix=""; local path_to_process=""
-# 	if [[ "$pwd_relative_to_home" == \~* ]];
-# 	then
-# 		prefix="~/"
-# 		path_to_process="${pwd_relative_to_home#\~/}"
-# 	elif [[ "$pwd_relative_to_home" == /* ]]; then
-# 		prefix="/"
-# 		path_to_process="${pwd_relative_to_home#/}"
-# 	fi
-
-# 	local path_parts=( ${(s:/:)path_to_process} )
-# 	local result="$prefix"; local num_parts=${#path_parts[@]}; local i
-
-# 	for (( i=1; i <= num_parts; i++ )); do
-# 		if (( i < num_parts ));
-# 		then # Intermediate directory
-# 			if [[ "${path_parts[i]}" == .* ]]; then
-# 				 result+=".${path_parts[i][2]}/"
-# 			 elif [[ -n "${path_parts[i]}" ]];
-# 			 then
-# 				result+="${path_parts[i][1]}/"
-# 			fi
-# 		elif [[ -n "${path_parts[i]}" ]]; then # Last directory
-# 			result+="${path_parts[i]}"
-# 		fi
-# 	done
-
-# 	if [[ "$result" == */ ]] && [[ "$num_parts" -gt 0 && "$prefix" != "/" ]];
-# 	then
-# 		result="${result%/}"
-# 	fi
-# 	echo "$result"
+# ... (removed function body) ...
 # }
 
 

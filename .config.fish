@@ -267,7 +267,7 @@ function refresh
 	echo "--- Environment updated. Please restart your shell. ---"
 	
 	echo "--- Dotfiles Refreshed ---"
-end # <--- ADDED MISSING 'end' STATEMENT HERE
+end
 
 # --- Auto-configure Git GPG Signing ---
 if command -v git > /dev/null; and test -n "$GPG_SIGNING_KEY"
@@ -275,7 +275,7 @@ if command -v git > /dev/null; and test -n "$GPG_SIGNING_KEY"
 	git config --global commit.gpgsign true
 	git config --global tag.gpgSign true
 	echo "[INFO] Git GGPG signing configured."
-end 
+end # <--- ADDED MISSING 'end' STATEMENT HERE
 
 # -------------------- STARSHIP INTEGRATION --------------------
 # Initialize Starship prompt if the binary is installed.

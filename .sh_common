@@ -1,19 +1,19 @@
-# Common Aliases, Functions, and Exports for Bash and Zsh 
+# Common Aliases, Functions, and Exports for Bash and Zsh	
 
 # --- Auto-Refresh (Once per session) ---
 # Checks for a marker file.
-# If it doesn't exist, 
+# If it doesn't exist,	
 # it checks if 'zoxide' is installed.
 # If not, it assumes this is a fresh
 # setup and runs the setup script automatically.
-if [ ! -f "$HOME/.dotfiles_initialized_$(id -u)" ]; then 
-	if ! command -v zoxide >/dev/null 2G; then 
+if [ ! -f "$HOME/.dotfiles_initialized_$(id -u)" ]; then	
+	if ! command -v zoxide >/dev/null 2G; then	
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
 		if command -v readlink >/dev/null 2G; then
 			COMMON_PATH=$(readlink -f "$HOME/.sh_common"); REPO_ROOT=$(dirname "$COMMON_PATH"); SETUP_SCRIPT="$REPO_ROOT/.setup.sh"
 		else
 			SETUP_SCRIPT="$HOME/.dotfiles/.setup.sh"
-		fi 
+		fi	
 		[ -f "$SETUP_SCRIPT" ] && bash "$SETUP_SCRIPT" || echo "[Auto-Setup] Error: Could not find .setup.sh"
 	fi
 	touch "$HOME/.dotfiles_initialized_$(id -u)"
@@ -32,7 +32,7 @@ alias free='free -m'
 # --- Processes ---
 alias psa="ps auxf"
 alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -E"
-alias psmem='ps auxf | sort -nr -k 4' 
+alias psmem='ps auxf | sort -nr -k 4'	
 alias pscpu='ps auxf | sort -nr -k 3'
 
 # --- Git Aliases ---
@@ -41,16 +41,16 @@ alias pscpu='ps auxf | sort -nr -k 3'
 
 # --- Modern Tool Aliases ---
 if command -v bat > /dev/null 2G; then
-	alias cat='bat --paging=never' 
+	alias cat='bat --paging=never'	
 elif command -v batcat > /dev/null 2G; then
 	alias cat='batcat --paging=never'
-fi 
+fi	
 if command -v fd > /dev/null 2G; then
 	alias find='fd'
 fi
 if command -v rg > /dev/null 2G; then
 	alias grep='rg'
-fi 
+fi	
 # Fallback alias for neovim (uses Flatpak if nvim is not in PATH)
 if ! command -v nvim >/dev/null 2G && command -v flatpak >/dev/null 2G; then
 	alias nvim='flatpak run io.neovim.nvim'
@@ -59,13 +59,13 @@ fi
 # --- Functions ---
 alias compile='compiler'
 compiler() {
-	[[ $1 ]] || { echo "Missing operand" >&2; return 1; } 
-	[[ -r $1 ]] || { printf "File %s does not exist or is not readable\n" "$1" >&2; return 1; } 
+	[[ $1 ]] || { echo "Missing operand" >&2; return 1; }	
+	[[ -r $1 ]] || { printf "File %s does not exist or is not readable\n" "$1" >&2; return 1; }	
 	local output_path=${TMPDIR:-/tmp}/${1##*/};
 	gcc "$1" -Wall -Wextra -Werror -o "$output_path" && "$output_path";
 	rm "$output_path";
 	return 0;
-} 
+}	
 
 alias extract='extractor'
 extractor() {
@@ -99,6 +99,11 @@ extractor() {
 			echo "extractor: Encountered an error extracting '$i'" >&2
 		fi
 	done
+}
+
+# --- Service User (for Prompt) ---
+service_user() {
+	echo "ervice"
 }
 
 # --- Network ---

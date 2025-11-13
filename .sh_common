@@ -108,14 +108,20 @@ service_user() {
 
 # --- Dotfiles Management Function ---
 refresh() {
-	# Find the dotfiles directory, assuming this file is in it
+	local REPO_ROOT=""
+	local SETUP_SCRIPT=""
+
+	# Try to find repo root using readlink on the symlink
 	if command -v readlink >/dev/null 2G; then
 		local COMMON_PATH=$(readlink -f "$HOME/.sh_common")
+		REPO_ROOT=$(dirname "$COMMON_PATH")
+		SETUP_SCRIPT="$REPO_ROOT/.setup.sh"
 	else
-		local COMMON_PATH="$HOME/.sh_common" 
+		# Fallback: Assume standard path
+		REPO_ROOT="$HOME/.dotfiles"
+		SETUP_SCRIPT="$REPO_ROOT/.setup.sh"
 	fi
-	
-	local REPO_ROOT=$(dirname "$COMMON_PATH")
+
 	echo "--- Refreshing Dotfiles ---"
 
 	if command -v git >/dev/null 2G && [ -d "$REPO_ROOT/.git" ]; then
@@ -126,10 +132,10 @@ refresh() {
 	fi
 	
 	# Run setup script
-	if [ -f "$REPO_ROOT/.setup.sh" ]; then
-		bash "$REPO_ROOT/.setup.sh"
+	if [ -f "$SETUP_SCRIPT" ]; then
+		bash "$SETUP_SCRIPT"
 	else
-		echo "[Refresh] Error: Could not find .setup.sh" >&2
+		echo "[Refresh] Error: Could not find setup script at $SETUP_SCRIPT" >&2
 		return 1
 	fi
 	

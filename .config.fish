@@ -7,7 +7,7 @@ set -l marker_file "$HOME/.dotfiles_initialized_"(id -u)
 if not test -f "$marker_file"
 	if not command -v zoxide >/dev/null 2>&1
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
-		set -l C_PATH ~/.config.fish/config.fish; set -l D_DIR (dirname (readlink -f $C_PATH)); set -l S_SCRIPT "$D_DIR/.setup.sh"
+		set -l C_PATH ~/.config.fish/config.fish; set -l D_DIR (dirname (readlink -f $C_PATH 2>/dev/null)); set -l S_SCRIPT "$D_DIR/.setup.sh"
 		if test -f "$S_SCRIPT"; bash "$S_SCRIPT"; else; bash "$HOME/.dotfiles/.setup.sh"; end
 	end
 	touch "$marker_file"
@@ -178,7 +178,11 @@ if command -v direnv > /dev/null; direnv hook fish | source; end
 
 # --- Start Fresh Function ---
 function startfresh
-	set -l REPO_ROOT (dirname (readlink -f ~/.config.fish/config.fish))
+	set -l REPO_ROOT (dirname (readlink -f ~/.config.fish/config.fish 2>/dev/null))
+	# Fallback if readlink fails
+	if test -z "$REPO_ROOT"; or test "$REPO_ROOT" = "."
+		set REPO_ROOT "$HOME/.dotfiles"
+	end
 
 	echo "--- WARNING: Starting Fresh (Removing all custom dotfile links) ---"
 	echo "This will revert your environment to the system default shell."
@@ -231,16 +235,46 @@ end
 
 # --- Dotfiles Management Function ---
 function refresh
-	set -l C_PATH ~/.config.fish/config.fish; set -l D_DIR (dirname (readlink -f $C_PATH))
-	echo "--- Refreshing Dotfiles ---"
+	# --- [FIXED] Robust path detection for Termux ---
+	set -l REPO_ROOT ""
+	set -l SETUP_SCRIPT ""
+
+	# Try to find the repo root using readlink
+	set -l C_PATH ~/.config.fish/config.fish
+	if command -v readlink > /dev/null
+		set -l D_DIR (dirname (readlink -f $C_PATH 2>/dev/null))
+		if test -n "$D_DIR"; and test -f "$D_DIR/.setup.sh"
+			set REPO_ROOT "$D_DIR"
+			set SETUP_SCRIPT "$D_DIR/.setup.sh"
+		end
+	end
+
+	# Fallback: If readlink fails or script not found, use default path
+	if test -z "$SETUP_SCRIPT"
+		set REPO_ROOT "$HOME/.dotfiles"
+		set SETUP_SCRIPT "$HOME/.dotfiles/.setup.sh"
+	end
+	# --- [END FIX] ---
+
+	echo "--- Refreshing Dotfiles (from $REPO_ROOT) ---"
 	
-	if type -q git; and test -d "$D_DIR/.git"
-		pushd "$D_DIR"
+	if type -q git; and test -d "$REPO_ROOT/.git"
+		pushd "$REPO_ROOT"
 		git pull origin main
 		popd
 	end
 	
-	bash "$D_DIR/.setup.sh"; source (status --current-filename); echo "--- Dotfiles Refreshed ---"
+	# Run setup script
+	if test -f "$SETUP_SCRIPT"
+		bash "$SETUP_SCRIPT"
+	else
+		echo "[Refresh] Error: Could not find .setup.sh" >&2
+		return 1
+	end
+	
+	# Reload fish config
+	source (status --current-filename)
+	echo "--- Dotfiles Refreshed ---"
 end
 
 # --- Auto-configure Git GPG Signing ---

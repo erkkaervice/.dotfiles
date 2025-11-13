@@ -38,25 +38,24 @@ _bash_abbreviate_path() {
 	elif [[ "$full_path" == /* ]]; then
 		prefix="/"
 		path_to_process="${full_path#/}"
-	else
-		 echo "$full_path"; return;
 	fi
-	local IFS='/'; local -a path_parts
-	read -ra path_parts <<< "$path_to_process"
+
+	IFS='/' read -r -a path_parts <<< "$path_to_process"
 	local result="$prefix"; local num_parts=${#path_parts[@]}; local i
+
 	for (( i=0; i < num_parts; i++ )); do
 		if (( i < num_parts - 1 )); then # Intermediate directory
 			if [[ "${path_parts[i]}" == .* ]]; then
 				result+=".${path_parts[i]:1:1}/"
 			elif [ -n "${path_parts[i]}" ]; then
-				 result+="${path_parts[i]:0:1}/"
+				result+="${path_parts[i]:0:1}/"
 			fi
 		elif [ -n "${path_parts[i]}" ]; then # Last directory
 			result+="${path_parts[i]}"
 		fi
 	done
 	if [[ "$result" == */ ]] && [[ "$num_parts" -gt 0 ]]; then
-		 result="${result%/}"
+		result="${result%/}"
 	fi
 	echo "$result"
 }
@@ -79,29 +78,11 @@ _bash_custom_git_prompt() {
 
 
 # --- Bash Git-Aware Prompt ---
-PS1='\[\e[0;36m\][$(service_user)@\h$(_bash_abbreviate_path)]\[\e[0m\]\[\e[0;35m\]$(_bash_custom_git_prompt)\[\e[0m\]> '
+PS1='\\[\\e[0;36m\\][$(service_user)@\\h$(_bash_abbreviate_path)]\\[\\e[0m\\]\\[\\e[0;35m\\]$(_bash_custom_git_prompt)\\[\\e[0m\\]> '
 
 # --- Initialize Modern Tools ---
-if command -v zoxide > /dev/null 2>&1; then
-	eval "$(zoxide init bash)"
-fi
-if [ -f ~/.fzf.bash ]; then
-	. ~/.fzf.bash
-fi
 
-# --- Bash Specific Options ---
-shopt -s extglob
-shopt -s histappend
-shopt -s checkwinsize
-export HISTCONTROL=ignoreboth
-
-# --- Bash Completion ---
-if ! shopt -oq posix; then
-	if [ -f /usr/share/bash-completion/bash_completion ]; then
-		. /usr/share/bash-completion/bash_completion
-	elif [ -f /etc/bash_completion ]; then
-		. /etc/bash_completion
-	fi
+# --- Tmux Auto-Attach Logic ---
+if command -v tmux &> /dev/null && [ -z "$TMUX" ]; then
+    tmux attach-session -t main || tmux new-session -s main
 fi
-complete -c man which
-complete -cf sudo

@@ -39,16 +39,13 @@ _zsh_abbreviate_path_manual() {
 	local prefix=""; local path_to_process=""
 	if [[ "$pwd_relative_to_home" == \~* ]]; then
 		prefix="~/"
-		path_to_process=${pwd_relative_to_home#\~/}
+		path_to_process="${pwd_relative_to_home#\~/}"
 	elif [[ "$pwd_relative_to_home" == /* ]]; then
 		prefix="/"
-		path_to_process=${pwd_relative_to_home#/}
-	else
-		echo "$pwd_relative_to_home"; return
+		path_to_process="${pwd_relative_to_home#/}"
 	fi
 
-	local -a path_parts
-	path_parts=( ${(s:/:)path_to_process} )
+	local path_parts=( ${(s:/:)path_to_process} )
 	local result="$prefix"; local num_parts=${#path_parts[@]}; local i
 
 	for (( i=1; i <= num_parts; i++ )); do
@@ -63,7 +60,7 @@ _zsh_abbreviate_path_manual() {
 		fi
 	done
 
-	if [[ "$result" == */ ]] && [[ "$num_parts" -eq 0 && "$prefix" != "/" ]]; then
+	if [[ "$result" == */ ]] && [[ "$num_parts" -gt 0 && "$prefix" != "/" ]]; then
 		result="${result%/}"
 	fi
 	echo "$result"
@@ -86,27 +83,7 @@ precmd() {
 	PROMPT="%F{cyan}[$(service_user)@%m${abbreviated_wd}]%f${vcs_info_msg_0_}> "
 }
 
-# --- Initialize Modern Tools ---
-if command -v zoxide > /dev/null 2>&1; then
-	eval "$(zoxide init zsh)"
+# --- Tmux Auto-Attach Logic ---
+if command -v tmux &> /dev/null && [ -z "$TMUX" ]; then
+    tmux attach-session -t main || tmux new-session -s main
 fi
-if [ -f ~/.fzf.zsh ]; then
-	. ~/.fzf.zsh
-fi
-
-# --- Zsh Specific Options ---
-setopt EXTENDED_GLOB
-setopt HIST_IGNORE_DUPS
-setopt HIST_IGNORE_SPACE
-setopt APPEND_HISTORY
-setopt SHARE_HISTORY
-setopt INC_APPEND_HISTORY
-setopt CORRECT
-setopt COMPLETE_IN_WORD
-# setopt NO_BEEP
-
-HISTFILE=~/.zsh_history
-HISTSIZE=10000
-SAVEHIST=10000
-
-bindkey -e

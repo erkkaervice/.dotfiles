@@ -139,10 +139,50 @@ fi
 
 # --- Custom Font Installation ---
 if [ "$IS_TERMUX" = false ]; then
-	FONTS_DIR="$DOTFILES_DIR/.fonts"; [ "$OS_ID" == "macos" ] && UFD="$HOME/Library/Fonts" || UFD="$HOME/.local/share/fonts"
+	# Define user font directory
+	[ "$OS_ID" == "macos" ] && UFD="$HOME/Library/Fonts" || UFD="$HOME/.local/share/fonts"
+	mkdir -p "$UFD" # Ensure directory exists
+	
+	if command -v curl >/dev/null 2>&1; then
+		# Download Inconsolata Nerd Font if it doesn't exist
+		if [ ! -f "$UFD/InconsolataNerdFont-Regular.ttf" ]; then
+			print_info "Downloading Inconsolata Nerd Font..."
+			curl -fLo "$UFD/InconsolataNerdFont-Regular.ttf" "https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/Inconsolata/InconsolataNerdFont-Regular.ttf"
+		fi
+		
+		# Download Merriweather Regular if it doesn't exist
+		if [ ! -f "$UFD/Merriweather-Regular.ttf" ]; then
+			print_info "Downloading Merriweather-Regular Font..."
+			curl -fLo "$UFD/Merriweather-Regular.ttf" "https://github.com/google/fonts/raw/main/ofl/merriweather/Merriweather-Regular.ttf"
+		fi
+	else
+		print_error "curl not found. Cannot download fonts."
+	fi
+
+	# Install any other custom fonts from the repo's .fonts directory
+	FONTS_DIR="$DOTFILES_DIR/.fonts"
 	if [ -d "$FONTS_DIR" ] && [ "$(ls -A "$FONTS_DIR"/*.ttf 2>/dev/null)" ]; then
-		print_info "Installing custom fonts..."; mkdir -p "$UFD"; cp -n "$FONTS_DIR"/*.ttf "$UFD"/ 2>/dev/null
-		[ "$OS_ID" != "macos" ] && command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$UFD"
+		print_info "Installing custom fonts from .fonts/ directory...";
+		cp -n "$FONTS_DIR"/*.ttf "$UFD"/ 2>/dev/null
+	fi
+	
+	# Update font cache on Linux
+	[ "$OS_ID" != "macos" ] && command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$UFD"
+
+elif [ "$IS_TERMUX" = true ]; then
+	# Handle Termux font installation
+	print_info "Installing Inconsolata Nerd Font (Termux)..."
+	mkdir -p "$HOME/.termux"
+	if [ ! -f "$HOME/.termux/font.ttf" ]; then
+		if command -v curl >/dev/null 2>&1; then
+			curl -fLo "$HOME/.termux/font.ttf" "https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/Inconsolata/InconsolataNerdFont-Regular.ttf"
+			print_info "Reloading Termux settings to apply font..."
+			command -v termux-reload-settings >/dev/null 2>&1 && termux-reload-settings
+		else
+			print_error "curl not found. Cannot download Nerd Font."
+		fi
+	else
+		print_info "Termux font.ttf already exists. Skipping download."
 	fi
 fi
 

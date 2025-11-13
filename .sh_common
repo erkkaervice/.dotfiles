@@ -106,6 +106,43 @@ service_user() {
 	echo "ervice"
 }
 
+# --- Dotfiles Management Function ---
+refresh() {
+	# Find the dotfiles directory, assuming this file is in it
+	if command -v readlink >/dev/null 2G; then
+		local COMMON_PATH=$(readlink -f "$HOME/.sh_common")
+	else
+		local COMMON_PATH="$HOME/.sh_common" 
+	fi
+	
+	local REPO_ROOT=$(dirname "$COMMON_PATH")
+	echo "--- Refreshing Dotfiles ---"
+
+	if command -v git >/dev/null 2G && [ -d "$REPO_ROOT/.git" ]; then
+		(
+			echo "Pulling updates from Git..."
+			cd "$REPO_ROOT" && git pull origin main
+		)
+	fi
+	
+	# Run setup script
+	if [ -f "$REPO_ROOT/.setup.sh" ]; then
+		bash "$REPO_ROOT/.setup.sh"
+	else
+		echo "[Refresh] Error: Could not find .setup.sh" >&2
+		return 1
+	fi
+	
+	# Reload the current shell's config
+	if [ -n "$BASH_VERSION" ]; then
+		[ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"
+	elif [ -n "$ZSH_VERSION" ]; then
+		[ -f "$HOME/.zshrc" ] && . "$HOME/.zshrc"
+	fi
+	
+	echo "--- Dotfiles Refreshed ---"
+}
+
 # --- Network ---
 alias ipinfo='ipinformation'
 ipinformation() {
@@ -171,9 +208,9 @@ cleanup() {
 		command -v flatpak >/dev/null 2G && {
 			echo "Cleaning Flatpak (unused user runtimes)..."
 			flatpak uninstall --user --unused -y
-			[ -d "$HOME/.var/app/com.visualstudio.code/cache" ] && {
+			[ -d "$HOME/.var_app/com.visualstudio.code/cache" ] && {
 				echo "Cleaning VS Code (Flatpak) cache..."
-				rm -rf "$HOME/.var/app/com.visualstudio.code/cache"
+				rm -rf "$HOME/.var_app/com.visualstudio.code/cache"
 			}
 		}
 		

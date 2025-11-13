@@ -1,6 +1,6 @@
 # ~/.config.fish/config.fish - Fish shell configuration
 
-if not status is-interactive; exit; end
+if not status is-interactive; end
 
 # --- Auto-Refresh (Once per session) ---
 set -l marker_file "$HOME/.dotfiles_initialized_"(id -u)
@@ -160,23 +160,27 @@ function startfresh
 	rm -f "$HOME/.dotfiles_initialized_"(id -u)
 
 	echo "3. Creating temporary recovery files to prevent Zsh wizard..."
-	bash -c "
-	RECOVERY_SCRIPT=\"
+	# FIXED: Using a separate file for RECOVERY_SCRIPT definition to avoid Fish syntax errors
+	set -l RECOVERY_SCRIPT_FILE (mktemp)
+	echo '
+	RECOVERY_SCRIPT="
 	# --- TEMPORARY RECOVERY SCRIPT ---
-	echo '---------------------------------------------------'
-	echo 'RUN: refresh (to rebuild your custom setup)'
-	echo '---------------------------------------------------'
+	echo ''---------------------------------------------------''
+	echo ''RUN: refresh (to rebuild your custom setup)''
+	echo ''---------------------------------------------------''
 
 	refresh() {
-		echo '--- REFRESHING ENVIRONMENT ---'
-		bash \\\"$REPO_ROOT/.setup.sh\\\" || return 1
-		echo '--- Environment restored. Please restart your terminal. ---'
+		echo ''--- REFRESHING ENVIRONMENT ---''
+		bash \"'$REPO_ROOT/.setup.sh'\" || return 1
+		echo ''--- Environment restored. Please restart your terminal. ---''
 		exec \$SHELL --login
 	}
-	\"
-	echo \"\$RECOVERY_SCRIPT\" > \"$HOME/.bashrc\"
-	echo \"\$RECOVERY_SCRIPT\" > \"$HOME/.zshrc\"
 	"
+	echo "$RECOVERY_SCRIPT" > "$HOME/.bashrc"
+	echo "$RECOVERY_SCRIPT" > "$HOME/.zshrc"
+	' > $RECOVERY_SCRIPT_FILE
+	bash $RECOVERY_SCRIPT_FILE
+	rm $RECOVERY_SCRIPT_FILE
 
 	echo "--- ENVIRONMENT RESET. Starting fresh session. ---"
 	# FIXED: Exec into Bash, which is Termux's default POSIX shell
@@ -201,4 +205,10 @@ function refresh
 	bash "$D_DIR/.setup.sh"; source (status --current-filename); echo "--- Dotfiles Refreshed ---"
 end
 
-# --- Auto-configure Git GPG Signing ---\nif command -v git > /dev/null; and test -n "$GPG_SIGNING_KEY"\n\tgit config --global user.signingkey "$GPG_SIGNING_KEY"\n\tgit config --global commit.gpgsign true\n\tgit config --global tag.gpgSign true\n\techo "[INFO] Git GPG signing configured."\nend\n
+# --- Auto-configure Git GPG Signing ---
+if command -v git > /dev/null; and test -n "$GPG_SIGNING_KEY"
+	git config --global user.signingkey "$GPG_SIGNING_KEY"
+	git config --global commit.gpgsign true
+	git config --global tag.gpgSign true
+	echo "[INFO] Git GPG signing configured."
+end

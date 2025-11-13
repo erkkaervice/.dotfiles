@@ -154,7 +154,7 @@ if [ "$IS_TERMUX" = false ]; then
 		if [ ! -f "$UFD/Merriweather-Regular.ttf" ]; then
 			print_info "Downloading Merriweather-Regular Font..."
 			# [FIXED] Using the official SorkinType source repository path for the raw file.
-			curl -fLo "$UFD/Merriweather-Regular.ttf" "https://raw.githubusercontent.com/SorkinType/Merriweather/master/fonts/Merriweather-Regular.ttf"
+			curl -fLo "$UFD/Merriweather-Regular.ttf" "https://raw.githubusercontent.com/SorkinType/Merriweather/master/fonts/static/Merriweather-Regular.ttf"
 		fi
 	else
 		print_error "curl not found. Cannot download fonts."

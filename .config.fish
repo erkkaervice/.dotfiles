@@ -273,7 +273,10 @@ function refresh
 	end
 	
 	# Reload fish config
-	source (status --current-filename)
+	# [FIXED] Removed the recursive source command to prevent looping.
+	echo "--- Environment updated. Please restart your shell. ---"
+	# source (status --current-filename) <--- REMOVED
+	
 	echo "--- Dotfiles Refreshed ---"
 end
 

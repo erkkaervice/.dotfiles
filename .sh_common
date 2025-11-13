@@ -131,19 +131,22 @@ refresh() {
 		)
 	fi
 	
-	# Run setup script
+	# [FIXED] Force shell reload *before* running setup, to ensure the *new* setup script is sourced by the shell.
+	# The setup script itself might have new functions/logic.
+	# This avoids the issue where the old script is run just after a pull.
+	
+	if [ -n "$BASH_VERSION" ]; then
+		[ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"
+	elif [ -n "$ZSH_VERSION" ]; then
+		[ -f "$HOME/.zshrc" ] && . "$HOME/.zshrc"
+	fi
+	
+	# Run setup script using the latest sourced version
 	if [ -f "$SETUP_SCRIPT" ]; then
 		bash "$SETUP_SCRIPT"
 	else
 		echo "[Refresh] Error: Could not find setup script at $SETUP_SCRIPT" >&2
 		return 1
-	fi
-	
-	# Reload the current shell's config
-	if [ -n "$BASH_VERSION" ]; then
-		[ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"
-	elif [ -n "$ZSH_VERSION" ]; then
-		[ -f "$HOME/.zshrc" ] && . "$HOME/.zshrc"
 	fi
 	
 	echo "--- Dotfiles Refreshed ---"
@@ -214,9 +217,9 @@ cleanup() {
 		command -v flatpak >/dev/null 2G && {
 			echo "Cleaning Flatpak (unused user runtimes)..."
 			flatpak uninstall --user --unused -y
-			[ -d "$HOME/.var_app/com.visualstudio.code/cache" ] && {
+			[ -d "$HOME/.var/app/com.visualstudio.code/cache" ] && {
 				echo "Cleaning VS Code (Flatpak) cache..."
-				rm -rf "$HOME/.var_app/com.visualstudio.code/cache"
+				rm -rf "$HOME/.var/app/com.visualstudio.code/cache"
 			}
 		}
 		

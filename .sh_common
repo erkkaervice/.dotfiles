@@ -124,17 +124,17 @@ refresh() {
 
 	echo "--- Refreshing Dotfiles ---"
 
-	if command -v git >/dev/null 2G && [ -d "$REPO_ROOT/.git" ]; then
+	# [FIXED] Removed the failing directory check and simplified the block.
+	if command -v git >/dev/null 2G; then
 		(
 			echo "Pulling updates from Git..."
-			cd "$REPO_ROOT" && git pull origin main
+			# We CD to the repo root and pull. This will fail gracefully if it's not a git repo.
+			cd "$REPO_ROOT" 2>/dev/null && git pull origin main
 		)
 	fi
 	
-	# [FIXED] Force shell reload *before* running setup, to ensure the *new* setup script is sourced by the shell.
-	# The setup script itself might have new functions/logic.
-	# This avoids the issue where the old script is run just after a pull.
-	
+	# [FIXED] Force shell reload before running setup and again at the end.
+	# This ensures the script is running the latest definitions.
 	if [ -n "$BASH_VERSION" ]; then
 		[ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"
 	elif [ -n "$ZSH_VERSION" ]; then

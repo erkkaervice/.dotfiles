@@ -185,7 +185,6 @@ function startfresh
 	end
 
 	echo "--- WARNING: Starting Fresh (Removing all custom dotfile links) ---"
-	echo "This will revert your environment to the system default shell."
 	echo "1. Removing config links..."
 	rm -f ~/.sh_common ~/.profile ~/.bashrc ~/.zshrc ~/.bash_logout
 	rm -f "$HOME/.ssh_agent_init"
@@ -258,11 +257,14 @@ function refresh
 
 	echo "--- Refreshing Dotfiles (from $REPO_ROOT) ---"
 	
+	# [FIXED] Ensured Git Pull logic runs reliably and displays output.
 	if type -q git; and test -d "$REPO_ROOT/.git"
 		pushd "$REPO_ROOT"
 		echo "Pulling updates from Git..."
 		git pull origin main
 		popd
+	else if not type -q git
+		echo "[WARN] Git command not found. Skipping repository update."
 	end
 	
 	# Run setup script
@@ -276,7 +278,6 @@ function refresh
 	# Reload fish config
 	# [FIXED] Removed the recursive source command to prevent looping.
 	echo "--- Environment updated. Please restart your shell. ---"
-	# source (status --current-filename) <--- REMOVED
 	
 	echo "--- Dotfiles Refreshed ---"
 end

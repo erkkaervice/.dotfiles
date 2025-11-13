@@ -51,8 +51,8 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 	case "$OS_ID" in
 		termux)
 			print_info "Installing packages for Termux..."
-			# Core Fixes: clang (for gcc), bind-utils (for host), jq. ADDED tmux, nvim.
-			pkg update -y && pkg install -y fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg clang bind-utils jq tmux nvim
+			# Core Fixes: clang (for gcc), bind-tools (for host), jq. ADDED tmux, neovim.
+			pkg update -y && pkg install -y fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg clang bind-tools jq tmux neovim
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Termux installation failed."; fi
 			;;
 		ubuntu|debian|pop|mint|kali)

@@ -8,7 +8,7 @@ if not test -f "$marker_file"
 	if not command -v zoxide >/dev/null 2>&1
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
 		set -l C_PATH ~/.config/fish/config.fish; set -l D_DIR (dirname (readlink -f $C_PATH)); set -l S_SCRIPT "$D_DIR/.setup.sh"
-		if test -f "$S_SCRIPT"; bash "$S_SCRIPT"; else; bash "$HOME/dotfiles/.setup.sh"; end
+		if test -f "$S_SCRIPT"; bash "$S_SCRIPT"; else; bash "$HOME/.dotfiles/.setup.sh"; end
 	end
 	touch "$marker_file"
 end
@@ -142,8 +142,7 @@ if command -v fzf > /dev/ null; fzf --fish | source; end
 function startfresh
 	set -l REPO_ROOT (dirname (readlink -f ~/.config/fish/config.fish))
 
-	echo "--- WARNING: Starting Fresh (Removing all custom dotfile links) ---"
-	echo "This will revert your environment to the system default shell."
+	echo "--- WARNING: Starting Fresh (Removing all custom dotfile links) ---\n\techo "This will revert your environment to the system default shell."
 	echo "1. Removing config links..."
 	rm -f ~/.sh_common ~/.profile ~/.bashrc ~/.zshrc ~/.bash_logout
 	rm -f "$HOME/.ssh_agent_init"

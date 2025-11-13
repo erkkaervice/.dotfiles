@@ -143,9 +143,10 @@ set -g SSH_ENV_POSIX "$HOME/.ssh/agent-info-"(hostname)".posix"
 function __start_agent_fish
 	echo "Initializing new SSH agent (Fish)..."
 	
-	# [FIXED] Use full path to match .ssh_agent_init
-	/usr/bin/ssh-agent -c | sed 's/^echo/#echo/' > "$SSH_ENV_FISH"
-	/usr/bin/ssh-agent -s | sed 's/^echo/#echo/' > "$SSH_ENV_POSIX"
+	# [FIXED] Reverted to use 'ssh-agent' from PATH (for Termux)
+	# This matches the user's original, working file.
+	ssh-agent -c | sed 's/^echo/#echo/' > "$SSH_ENV_FISH"
+	ssh-agent -s | sed 's/^echo/#echo/' > "$SSH_ENV_POSIX"
 	
 	chmod 600 "$SSH_ENV_FISH"
 	chmod 600 "$SSH_ENV_POSIX"

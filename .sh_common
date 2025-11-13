@@ -7,8 +7,7 @@
 # If not, it assumes this is a fresh
 # setup and runs the setup script automatically.
 if [ ! -f "$HOME/.dotfiles_initialized_$(id -u)" ]; then 
-	if ! command -v zoxide >/dev/null 2>&1;
-	then 
+	if ! command -v zoxide >/dev/null 2>&1; then 
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
 		if command -v readlink >/dev/null 2>&1; then
 			 COMMON_PATH=$(readlink -f "$HOME/.sh_common"); REPO_ROOT=$(dirname "$COMMON_PATH"); SETUP_SCRIPT="$REPO_ROOT/.setup.sh"
@@ -32,8 +31,7 @@ alias free='free -m'
 # --- Processes ---
 alias psa="ps auxf"
 alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -E"
-alias psmem='ps auxf |
-	sort -nr -k 4' 
+alias psmem='ps auxf | sort -nr -k 4' 
 alias pscpu='ps auxf | sort -nr -k 3'
 
 # --- Git Aliases ---
@@ -57,16 +55,19 @@ then alias cat='bat --paging=never'
 elif command -v batcat > /dev/null 2>&1; then alias cat='batcat --paging=never';
 fi 
 if command -v fd > /dev/null 2>&1; then alias find='fd'; fi
-if command -v rg > /dev/null 2>&1; then alias grep='rg';
+if command -v rg > /dev/null 2>&1;
+then alias grep='rg';
 fi 
+# Fallback alias for neovim (uses Flatpak if nvim is not in PATH)
+if ! command -v nvim >/dev/null 2>&1 && command -v flatpak >/dev/null 2>&1; then
+    alias nvim='flatpak run io.neovim.nvim'
+fi
 
 # --- Functions ---
 alias compile='compiler'
 compiler() {
-	[[ $1 ]] || { echo "Missing operand" >&2; return 1;
-	} 
-	[[ -r $1 ]] || { printf "File %s does not exist or is not readable\n" "$1" >&2; return 1;
-	} 
+	[[ $1 ]] || { echo "Missing operand" >&2; return 1; } 
+	[[ -r $1 ]] || { printf "File %s does not exist or is not readable\n" "$1" >&2; return 1; } 
 	local output_path=${TMPDIR:-/tmp}/${1##*/};
 	gcc "$1" -Wall -Wextra -Werror -o "$output_path" && "$output_path"; rm "$output_path"; return 0;
 } 
@@ -80,10 +81,10 @@ extractor() {
 		then echo "$0: file is unreadable: \`$i'" >&2; continue; fi 
 		case $i in
 			*.tar.bz2|*.tar.gz|*.tar.xz|*.tbz2|*.tgz|*.txz|*.tar) c=(bsdtar xvf);;
-			*.zip) c=(unzip);; *.rar) c=(unrar x);; 
+			*.zip) c=(unzip);; *.rar) c=(unrar x);;
 			*.7z) c=(7z x);; *.Z) c=(uncompress);;
 			*.bz2) c=(bunzip2);; *.exe) c=(cabextract);; *.gz) c=(gunzip);;
-			*.xz) c=(unxz);; *.zst) c=(unzstd);; 
+			*.xz) c=(unxz);; *.zst) c=(unzstd);;
 			*) echo "$0: unrecognized file extension: \`$i'" >&2; continue;;
 		esac
 		command "${c[@]}" "$i";
@@ -94,14 +95,13 @@ extractor() {
 
 alias ipinfo='ipinformation'
 ipinformation() {
-	if [[ -z "$1" ]]; then curl ipinfo.io |
-	grep -v '"readme":' 
+	if [[ -z "$1" ]]; then curl ipinfo.io | grep -v '"readme":' 
 	elif echo "$1" | grep -Pq '^(([1-9]?\d|1\d{2}|2[0-4]\d|25[0-5])\.){3}([1-9]?\d|1\d{2}|2[0-4]\d|25[0-5])$'; then curl ipinfo.io/"$1" | grep -v '"readme":'
 	elif echo "$1" |
 	grep -Pq '^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'; then 
 		ip_address=$(host "$1" | awk '/has address/ { print $NF; exit }')
 		if [[ -n "$ip_address" ]];
-		then curl ipinfo.io/"$ip_address" | grep -v '"readme":'; else echo "Could not resolve IP for $1" >&2; 
+		then curl ipinfo.io/"$ip_address" | grep -v '"readme":'; else echo "Could not resolve IP for $1" >&2;
 		fi 
 	else echo "Input does not look like an IP address or domain name: $1" >&2; return 1;
 	fi 
@@ -178,13 +178,10 @@ cleanup() {
 			if command -v brew >/dev/null; then echo "Cleaning macOS/Homebrew cache..."; brew cleanup -s;
 			fi 
 			if command -v apk >/dev/null; then echo "Cleaning Alpine package cache..."; sudo apk cache clean; fi
-			if command -v journalctl >/dev/null;
-			then echo "Cleaning system logs (journald, limit to 2GB)..."; sudo journalctl --vacuum-size=2G; fi 
-			if [ -d "/tmp" ];
-			then echo "Cleaning global /tmp (files older than 7 days)..."; sudo find /tmp -type f -atime +7 -delete 2>/dev/null; 
+			if command -v journalctl >/dev/null; then echo "Cleaning system logs (journald, limit to 2GB)..."; sudo journalctl --vacuum-size=2G; fi 
+			if [ -d "/tmp" ]; then echo "Cleaning global /tmp (files older than 7 days)..."; sudo find /tmp -type f -atime +7 -delete 2>/dev/null;
 			fi 
-			if [ -d "/var/tmp" ]; then echo "Cleaning global /var/tmp (files older than 7 days)...";
-			sudo find /var/tmp -type f -atime +7 -delete 2>/dev/null; fi 
+			if [ -d "/var/tmp" ]; then echo "Cleaning global /var/tmp (files older than 7 days)..."; sudo find /var/tmp -type f -atime +7 -delete 2>/dev/null; fi 
 		fi
 		echo "Cleanup finished."
 	else
@@ -192,8 +189,7 @@ cleanup() {
 	fi
 }
 
-service_user() { echo "ervice";
-} 
+service_user() { echo "ervice"; } 
 
 # --- Security Aliases & Functions ---
 networkscan() {
@@ -286,7 +282,8 @@ dotfiles_refresh() {
 }
 
 # --- Auto-configure Git GPG Signing ---
-if command -v git > /dev/null 2>&1 && [ -n "$GPG_SIGNING_KEY" ]; then
+if command -v git > /dev/null 2>&1 && [ -n "$GPG_SIGNING_KEY" ];
+then
 	git config --global user.signingkey "$GPG_SIGNING_KEY"
 	git config --global commit.gpgsign true
 	git config --global tag.gpgSign true

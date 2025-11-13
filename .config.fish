@@ -50,6 +50,10 @@ else if command -v batcat > /dev/null; alias cat='batcat --paging=never'; end
 if command -v fd > /dev/null; alias find='fd'; end
 if command -v rg > /dev/null; alias grep='rg'; end
 alias code='flatpak run com.visualstudio.code'
+# Fallback alias for neovim (uses Flatpak if nvim is not in PATH)
+if not command -v nvim > /dev/null; and command -v flatpak > /dev/null
+    alias nvim='flatpak run io.neovim.nvim'
+end
 
 # --- Functions ---
 function fish_prompt
@@ -132,6 +136,46 @@ end
 
 # FIXED: Removed incompatible .ssh_agent_init script.
 if command -v zoxide > /dev/null; zoxide init fish | source; end
-if command -v fzf > /dev/null; fzf --fish | source; end
+if command -v fzf > /dev/ null; fzf --fish | source; end
 
-# --- Start Fresh Function ---\nfunction startfresh\n\tset -l REPO_ROOT (dirname (readlink -f ~/.config/fish/config.fish))\n\n\techo "--- WARNING: Starting Fresh (Removing all custom dotfile links) ---\n\techo "This will revert your environment to the system default shell."\n\techo "1. Removing config links..."\n\trm -f ~/.sh_common ~/.profile ~/.bashrc ~/.zshrc ~/.bash_logout\n\trm -f "$HOME/.ssh_agent_init"\n\trm -rf ~/.config/fish\n\trm -rf ~/.config/kitty\n\trm -rf ~/.config/fontconfig\n\trm -f "$HOME/.config/shell_secrets"\n\n\techo "2. Removing local user applications..."\n\trm -rf ~/.local/kitty.app\n\trm -rf ~/.fzf\n\trm -rf ~/.local/share/applications/kitty.desktop\n\n\trm -f "$HOME/.dotfiles_initialized_"(id -u)\n\n\techo "3. Creating temporary recovery files to prevent Zsh wizard..."\n\tbash -c "\n\tRECOVERY_SCRIPT=\\\"\n\t# --- TEMPORARY RECOVERY SCRIPT ---\n\techo '---------------------------------------------------'\n\techo 'RUN: refresh (to rebuild your custom setup)'\n\techo '---------------------------------------------------'\n\n\trefresh() {\n\t\techo '--- REFRESHING ENVIRONMENT ---'\n\t\tbash \\\\\\\"$REPO_ROOT/.setup.sh\\\\\\\" || return 1\n\t\techo '--- Environment restored. Please restart your terminal. ---'\n\t\texec \\$SHELL --login\n\t}\n\t\\\"\n\techo \\\"\\$RECOVERY_SCRIPT\\\" > \\\"$HOME/.bashrc\\\"\n\techo \\\"\\$RECOVERY_SCRIPT\\\" > \\\"$HOME/.zshrc\\\"\n\t\"\n\n\techo "--- ENVIRONMENT RESET. Starting fresh session. ---\n\t# FIXED: Exec into Bash, which is Termux's default POSIX shell\n\tset -l BASH_PATH /bin/bash\n\tif test -f /data/data/com.termux/files/usr/bin/bash\n\t\tset BASH_PATH /data/data/com.termux/files/usr/bin/bash\n\tend\n\texec $BASH_PATH --login\nend\n\n# --- Dotfiles Management Function ---\nfunction refresh\n\tset -l C_PATH ~/.config/fish/config.fish; set -l D_DIR (dirname (readlink -f $C_PATH))\n\techo "--- Refreshing Dotfiles ---"\n\t\n\tif type -q git; and test -d "$D_DIR/.git"\n\t\tpushd "$D_DIR"\n\t\tgit pull origin main\n\t\tpopd\n\tend\n\t\n\tbash "$D_DIR/.setup.sh"; source (status --current-filename); echo "--- Dotfiles Refreshed ---"\nend\n\n# --- Auto-configure Git GPG Signing ---\nif command -v git > /dev/null; and test -n "$GPG_SIGNING_KEY"\n\tgit config --global user.signingkey "$GPG_SIGNING_KEY"\n\tgit config --global commit.gpgsign true\n\tgit config --global tag.gpgSign true\n\techo "[INFO] Git GPG signing configured."\nend\n
+# --- Start Fresh Function ---
+function startfresh
+	set -l REPO_ROOT (dirname (readlink -f ~/.config/fish/config.fish))
+
+	echo "--- WARNING: Starting Fresh (Removing all custom dotfile links) ---"
+	echo "This will revert your environment to the system default shell."
+	echo "1. Removing config links..."
+	rm -f ~/.sh_common ~/.profile ~/.bashrc ~/.zshrc ~/.bash_logout
+	rm -f "$HOME/.ssh_agent_init"
+	rm -rf ~/.config/fish
+	rm -rf ~/.config/kitty
+	rm -rf ~/.config/fontconfig
+	rm -f "$HOME/.config/shell_secrets"
+
+	echo "2. Removing local user applications..."
+	rm -rf ~/.local/kitty.app
+	rm -rf ~/.fzf
+	rm -rf ~/.local/share/applications/kitty.desktop
+
+	rm -f "$HOME/.dotfiles_initialized_"(id -u)
+
+	echo "3. Creating temporary recovery files to prevent Zsh wizard..."
+	bash -c "
+	RECOVERY_SCRIPT=\"
+	# --- TEMPORARY RECOVERY SCRIPT ---
+	echo '---------------------------------------------------'
+	echo 'RUN: refresh (to rebuild your custom setup)'
+	echo '---------------------------------------------------'
+
+	refresh() {
+		echo '--- REFRESHING ENVIRONMENT ---'
+		bash \\\"$REPO_ROOT/.setup.sh\\\" || return 1
+		echo '--- Environment restored. Please restart your terminal. ---'
+		exec \$SHELL --login
+	}
+	\"
+	echo \"\$RECOVERY_SCRIPT\" > \"$HOME/.bashrc\"
+	echo \"\$RECOVERY_SCRIPT\" > \"$HOME/.zshrc\"
+	"
+
+	echo "--- ENVIRONMENT RESET. Starting fresh session. ---\n\t# FIXED: Exec into Bash, which is Termux's default POSIX shell\n\tset -l BASH_PATH /bin/bash\n\tif test -f /data/data/com.termux/files/usr/bin/bash\n\t\tset BASH_PATH /data/data/com.termux/files/usr/bin/bash\n\tend\n\texec $BASH_PATH --login\nend\n\n# --- Dotfiles Management Function ---\nfunction refresh\n\tset -l C_PATH ~/.config/fish/config.fish; set -l D_DIR (dirname (readlink -f $C_PATH))\n\techo "--- Refreshing Dotfiles ---\"\n\t\n\tif type -q git; and test -d "$D_DIR/.git"\n\t\tpushd "$D_DIR"\n\t\tgit pull origin main\n\t\tpopd\n\tend\n\t\n\tbash "$D_DIR/.setup.sh"; source (status --current-filename); echo "--- Dotfiles Refreshed ---\"\nend\n\n# --- Auto-configure Git GPG Signing ---\nif command -v git > /dev/null; and test -n "$GPG_SIGNING_KEY"\n\tgit config --global user.signingkey "$GPG_SIGNING_KEY"\n\tgit config --global commit.gpgsign true\n\tgit config --global tag.gpgSign true\n\techo "[INFO] Git GPG signing configured."\nend\n

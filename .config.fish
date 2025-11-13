@@ -132,55 +132,50 @@ if command -v tmux > /dev/null; and not set -q TMUX
 	tmux attach-session -t main; or tmux new-session -s main
 end
 
-# --- [THE REAL FIX] Fish SSH Agent ---
-# This block uses the POSIX output from ssh-agent and parses it manually,
-# avoiding the broken 'ssh-agent -c' and 'source' method.
+# --- [FIXED] Fish SSH Agent (Native Implementation) ---
+# This is the original, working logic from your file.
+# It uses ssh-agent -c and the 'ps' check.
+set -l SSH_ENV_FISH "$HOME/.ssh/agent-info-"(hostname)".fish"
 
-set -g SSH_ENV_POSIX "$HOME/.ssh/agent-info-"(hostname)".posix"
-
-# Function to start a new agent and parse its output
-function __start_agent_fish_posix
-	echo "Initializing new SSH agent (Fish/POSIX)..."
-	# Run the POSIX agent and capture its output
-	set -l agent_output (ssh-agent -s)
+# Function to start a new agent and create both Fish and POSIX files
+function __start_agent_fish # Renamed to avoid conflict, just in case
+	echo "Initializing new SSH agent (Fish)..."
+	set -l SSH_ENV_POSIX "$HOME/.ssh/agent-info-"(hostname)".posix"
 	
-	# Write the raw output to the POSIX file for Bash/Zsh to use
-	echo "$agent_output" | sed 's/^echo/#echo/' > "$SSH_ENV_POSIX"
+	# Create Fish (csh-style) agent file (for Termux)
+	ssh-agent -c | sed 's/^echo/#echo/' > "$SSH_ENV_FISH"
+	# Create POSIX (sh/bash/zsh) agent file
+	ssh-agent -s | sed 's/^echo/#echo/' > "$SSH_ENV_POSIX"
+	
+	chmod 600 "$SSH_ENV_FISH"
 	chmod 600 "$SSH_ENV_POSIX"
 	
-	# Parse the output for Fish
-	for line in (string split ';' $agent_output)
-		if string match -q "SSH_AUTH_SOCK=*" $line
-			set -gx SSH_AUTH_SOCK (string split '=' $line)[2]
-		end
-		if string match -q "SSH_AGENT_PID=*" $line
-			set -gx SSH_AGENT_PID (string split '=' $line)[2]
-		end
-	end
-	
+	# Source the new Fish file
+	source "$SSH_ENV_FISH"
 	ssh-add
 end
 
 # Main agent check logic for Fish
-if test -f "$SSH_ENV_POSIX"
-	# Source the *existing* POSIX file variables manually
-	# We read the file, remove 'export', and eval it
-	eval (cat "$SSH_ENV_POSIX" | grep -v '^#' | sed 's/export /set -gx /' | string join '; ')
-	
-	# Check if agent process is actually running
-	if not kill -0 $SSH_AGENT_PID > /dev/null 2>&1
+if test -f "$SSH_ENV_FISH"
+	source "$SSH_ENV_FISH"
+	# Check if the agent process is actually running
+	if ps -p $SSH_AGENT_PID | grep ssh-agent > /dev/null
+		# Agent is running, good.
+	else
 		# Agent died, start a new one.
-		__start_agent_fish_posix
+		__start_agent_fish
 	end
 else
 	# Environment file doesn't exist yet, start agent for the first time.
-	__start_agent_fish_posix
+	__start_agent_fish
 end
 # --- [END FIX] ---
 
 if command -v zoxide > /dev/null; zoxide init fish | source; end
-if command -v fzf > /dev/ null; fzf --fish | source; end
-if command -v direnv > /dev/null; direnv hook fish | source; end
+if command -v fzf > /dev/ null;
+	fzf --fish | source; end
+if command -v direnv > /dev/null;
+	direnv hook fish | source; end
 
 # --- Start Fresh Function ---
 function startfresh
@@ -285,8 +280,9 @@ function refresh
 end
 
 # --- Auto-configure Git GPG Signing ---
-if command -v git > /dev/null; and test -n "$GPG_SIGN_KEY"
-	git config --global user.signingkey "$GPG_SIGN_PARAM"
+if command -v git > /dev/null; and test -n "$GPG_SIGNING_KEY"
+	# [FIXED] Reverted my typo of GPG_SIGN_PARAM
+	git config --global user.signingkey "$GPG_SIGNING_KEY"
 	git config --global commit.gpgsign true
 	git config --global tag.gpgSign true
 	echo "[INFO] Git GGPG signing configured."

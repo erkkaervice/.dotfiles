@@ -111,7 +111,7 @@ function cleanup
 			if command -v apk >/dev/null; echo "Cleaning Alpine package cache..."; sudo apk cache clean; end
 			if command -v journalctl >/dev/null; echo "Cleaning system logs (journald, limit to 2GB)..."; sudo journalctl --vacuum-size=2G; end
 			if test -d "/tmp"; echo "Cleaning global /tmp (files older than 7 days)..."; sudo find /tmp -type f -atime +7 -delete 2>/dev/null; end
-			if test -d "/var/tmp"; echo "Cleaning global /var/tmp (files older than 7 days)..."; sudo find /tmp -type f -atime +7 -delete 2>/dev/null; end
+			if test -d "/var/tmp"; echo "Cleaning global /var/tmp (files older than 7 days)..."; sudo find /var/tmp -type f -atime +7 -delete 2>/dev/null; end
 		end
 		echo "Cleanup finished."
 	else
@@ -132,10 +132,43 @@ if command -v tmux > /dev/null; and not set -q TMUX
 	tmux attach-session -t main; or tmux new-session -s main
 end
 
-# --- [FIXED] SSH Agent ---
-# Source the POSIX-compliant agent script.
-# This is the same method used by .bashrc and .zshrc
-if test -f "$HOME/.ssh_agent_init"; . "$HOME/.ssh_agent_init"; end
+# --- [FIXED] Fish SSH Agent (Native Implementation) ---
+# This block provides the same logic as .ssh_agent_init for Bash/Zsh
+
+# Define paths (Use 'set -g' to make variables global)
+set -g SSH_ENV_FISH "$HOME/.ssh/agent-info-"(hostname)".fish"
+set -g SSH_ENV_POSIX "$HOME/.ssh/agent-info-"(hostname)".posix"
+
+# Function to start a new agent (Fish-compatible)
+function __start_agent_fish
+	echo "Initializing new SSH agent (Fish)..."
+	
+	# [FIXED] Use full path to match .ssh_agent_init
+	/usr/bin/ssh-agent -c | sed 's/^echo/#echo/' > "$SSH_ENV_FISH"
+	/usr/bin/ssh-agent -s | sed 's/^echo/#echo/' > "$SSH_ENV_POSIX"
+	
+	chmod 600 "$SSH_ENV_FISH"
+	chmod 600 "$SSH_ENV_POSIX"
+	
+	# Source the new Fish file
+	source "$SSH_ENV_FISH"
+	ssh-add
+end
+
+# Main agent check logic for Fish
+if test -f "$SSH_ENV_FISH"
+	# Source existing file
+	source "$SSH_ENV_FISH"
+	
+	# Check if agent process is actually running
+	if not kill -0 $SSH_AGENT_PID > /dev/null 2>&1
+		# Agent died, start a new one.
+		__start_agent_fish
+	end
+else
+	# Environment file doesn't exist yet, start agent for the first time.
+	__start_agent_fish
+end
 # --- [END FIX] ---
 
 if command -v zoxide > /dev/null; zoxide init fish | source; end

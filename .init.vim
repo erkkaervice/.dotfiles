@@ -1,6 +1,4 @@
 " --- Basic UI Settings ---
-set number                  " Show line numbers
-set relativenumber          " Show relative line numbers
 syntax on                   " Enable syntax highlighting
 set t_Co=256                " Enable 256 colors
 set noshowmode              " Don't show mode command
@@ -23,3 +21,7 @@ set incsearch               " Highlight search results as you type
 set hidden                  " Allow buffer switching without saving
 set encoding=utf-8          " Use UTF-8 for encoding
 set nowrap                  " Don't wrap lines
+
+" --- FORCE Visual Settings (Must be at the bottom) ---
+set number                  " Show line numbers (Force load)
+set relativenumber          " Show relative line numbers (Force load)

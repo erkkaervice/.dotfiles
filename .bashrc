@@ -35,6 +35,7 @@ _bash_abbreviate_path() {
 	local full_path="${PWD/#$HOME/\~}"
 	if [[ "$full_path" == "/" ]]; then echo "/"; return;
 	fi
+	# [FIXED] Corrected syntax error: removed the } and added a semicolon.
 	if [[ "$full_path" == "~" ]]; then echo "~"; return; fi
 	local prefix=""; local path_to_process=""
 	if [[ "$full_path" == \~* ]];
@@ -88,6 +89,18 @@ _bash_custom_git_prompt() {
 	fi
 }
 
+
+# --- Bash Git-Aware Prompt ---
+
+# 1. Function that runs before every prompt displays.
+_update_ps1() {
+	# [FIXED] Using ASCII codes \001 and \002 for non-printing characters for maximum compatibility.
+	PS1="\001\e[0;36m\002[$(service_user)@\h$(_bash_abbreviate_path)]\001\e[0m\002\001\e[0;35m\002$(_bash_custom_git_prompt)\001\e[0m\002> "
+}
+
+# 2. PROMPT_COMMAND calls the update function before every new command line.
+PROMPT_COMMAND=_update_ps1
+
 # --- Initialize Modern Tools ---
 
 # --- Tmux Auto-Attach Logic ---
@@ -95,16 +108,3 @@ if command -v tmux &> /dev/null && [ -z "$TMUX" ];
 then
     tmux attach-session -t main || tmux new-session -s main
 fi
-
-
-# --- Bash Git-Aware Prompt (FINAL POSITION) ---
-
-# 1. Function that runs before every prompt displays.
-_update_ps1() {
-	# PS1 is defined using ASCII codes for color for maximum compatibility.
-	PS1="\001\e[0;36m\002[$(service_user)@\h$(_bash_abbreviate_path)]\001\e[0m\002\001\e[0;35m\002$(_bash_custom_git_prompt)\001\e[0m\002> "
-}
-
-# 2. PROMPT_COMMAND calls the update function before every new command line.
-# This must be the absolute last command in the file to prevent system overrides.
-PROMPT_COMMAND=_update_ps1

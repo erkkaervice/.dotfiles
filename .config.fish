@@ -228,7 +228,7 @@ function startfresh
 	if test -f /data/data/com.termux/files/usr/bin/bash
 		set BASH_PATH /data/data/com.termux/files/usr/bin/bash
 	end
-	exec $B_PATH --login
+	exec $BASH_PATH --login
 end
 
 # --- Dotfiles Management Function ---
@@ -258,13 +258,11 @@ function refresh
 	echo "--- Refreshing Dotfiles (from $REPO_ROOT) ---"
 	
 	# [FIXED] Ensured Git Pull logic runs reliably and displays output.
-	if type -q git; and test -d "$REPO_ROOT/.git"
+	if type -q git # Rely only on 'type -q git' for the check.
 		pushd "$REPO_ROOT"
 		echo "Pulling updates from Git..."
 		git pull origin main
 		popd
-	else if not type -q git
-		echo "[WARN] Git command not found. Skipping repository update."
 	end
 	
 	# Run setup script

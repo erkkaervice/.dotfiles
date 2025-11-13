@@ -124,9 +124,10 @@ if [ "$IS_TERMUX" = false ]; then
 			command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$HOME/.local/share/applications"
 		fi
 	fi
-	# 3. Zoxide & FZF Fallbacks
-	if ! command -v zoxide >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then print_info "Fallback: Zoxide..."; curl -sSf --proto '=httpsc' https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash; fi
+	# 3. Zoxide, FZF, and Direnv Fallbacks
+	if ! command -v zoxide >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then print_info "Fallback: Zoxide..."; curl -sSf --proto '=https' https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash; fi
 	if ! command -v fzf >/dev/null 2>&1 && command -v git >/dev/null 2>&1; then print_info "Fallback: FZF..."; git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf; ~/.fzf/install --all --no-bash --no-zsh --no-fish; ln -sf "$HOME/.fzf/bin/fzf" "$HOME/.local/bin/fzf"; fi
+	if ! command -v direnv >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then print_info "Fallback: direnv..."; curl -sfL https://direnv.net/install.sh | bash; fi
 fi
 
 # --- Fallback: Security Tools (Always run) ---

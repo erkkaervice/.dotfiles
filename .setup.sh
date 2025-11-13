@@ -52,8 +52,8 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 	case "$OS_ID" in
 		termux)
 			print_info "Installing packages for Termux..."
-			# 1. Install core tools (STARSHIP ADDED HERE)
-			pkg update -y && pkg install -y fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg clang dnsutils jq tmux neovim direnv **starship**
+			# 1. Install core tools
+			pkg update -y && pkg install -y fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg clang dnsutils jq tmux neovim direnv
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Termux core package installation failed."; fi
 
 			# 2. Install optional security tools (|| true ensures continuation)
@@ -72,8 +72,8 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 			sudo apt-get update -qq || INSTALL_FAILED=true
 			# ----------------------------
 
-			# 2. Install CORE dependencies (STARSHIP ADDED HERE)
-			sudo apt-get install -y fish git unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig nmap tcpdump build-essential dnsutils libarchive-tools jq tmux neovim direnv **starship**
+			# 2. Install CORE dependencies
+			sudo apt-get install -y fish git unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig nmap tcpdump build-essential dnsutils libarchive-tools jq tmux neovim direnv
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Debian/Ubuntu/Kali core package installation failed."; fi
 			
 			# 3. Install optional external security tools (|| true ensures continuation)
@@ -84,8 +84,8 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 		arch|manjaro|steamos)
 			print_info "Installing packages for Arch/SteamOS based system..."
 			
-			# 1. Install core packages (STARSHIP ADDED HERE)
-			sudo pacman -Syu --noconfirm --needed fish git base-devel curl bind unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty ttf-inconsolata fontconfig nmap gnupg tcpdump bind jq tmux neovim direnv **starship**
+			# 1. Install core packages
+			sudo pacman -Syu --noconfirm --needed fish git base-devel curl bind unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty ttf-inconsolata fontconfig nmap gnupg tcpdump bind jq tmux neovim direnv
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Arch/SteamOS core package installation failed."; fi
 
 			# 2. Install optional security tools (|| true ensures continuation)
@@ -94,8 +94,8 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 		opensuse*|suse)
 			print_info "Installing packages for OpenSUSE based system..."
 			
-			# 1. Install core packages (STARSHIP ADDED HERE)
-			sudo zypper refresh && sudo zypper install -y fish git-core curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty google-inconsolata-fonts fontconfig nmap gnupg tcpdump gcc bind-utils libarchive-tools jq tmux neovim direnv **starship**
+			# 1. Install core packages
+			sudo zypper refresh && sudo zypper install -y fish git-core curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty google-inconsolata-fonts fontconfig nmap gnupg tcpdump gcc bind-utils libarchive-tools jq tmux neovim direnv
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "OpenSUSE core package installation failed."; fi
 
 			# 2. Install optional security tools (|| true ensures continuation)
@@ -104,8 +104,8 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 		alpine)
 			print_info "Installing packages for Alpine based system..."
 			
-			# 1. Install core packages (STARSHIP ADDED HERE)
-			sudo apk update && sudo apk add fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig nmap gnupg tcpdump gcc bind-tools libarchive jq tmux neovim direnv **starship**
+			# 1. Install core packages
+			sudo apk update && sudo apk add fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig nmap gnupg tcpdump gcc bind-tools libarchive jq tmux neovim direnv
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Alpine core package installation failed."; fi
 
 			# 2. Install optional security tools (|| true ensures continuation)
@@ -115,9 +115,9 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 			if command -v brew >/dev/null; then
 				print_info "Installing packages for macOS (Homebrew)..."
 				
-				# 1. Install core packages (STARSHIP ADDED HERE)
+				# 1. Install core packages
 				brew update
-				brew install fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty nmap gnupg tcpdump gcc bind libarchive jq tmux neovim direnv **starship**
+				brew install fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty nmap gnupg tcpdump gcc bind libarchive jq tmux neovim direnv
 				if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "macOS core package installation failed."; fi
 				
 				# 2. Install optional security tools (|| true ensures continuation)

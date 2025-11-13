@@ -115,7 +115,7 @@ if [ "$IS_TERMUX" = false ]; then
 	# 2. Kitty Desktop Integration (Always check, even if installed)
 	if [ -d "$HOME/.local/kitty.app" ]; then
 		mkdir -p "$HOME/.local/share/applications"; DESKTOP_FILE="$HOME/.local/share/applications/kitty.desktop"
-		if [ ! -f "$DESKTOP_FILE" ] || ! grep -q "Exec=$HOME/.local/bin/kitty" "$DESKETOP_FILE"; then
+		if [ ! -f "$DESKTOP_FILE" ] || ! grep -q "Exec=$HOME/.local/bin/kitty" "$DESKTOP_FILE"; then
 			print_info "Updating local Kitty desktop integration..."
 			cp "$HOME/.local/kitty.app/share/applications/kitty.desktop" "$DESKTOP_FILE"
 			sed -i "s|^Exec=kitty|Exec=$HOME/.local/bin/kitty|g" "$DESKTOP_FILE"
@@ -125,7 +125,7 @@ if [ "$IS_TERMUX" = false ]; then
 		fi
 	fi
 	# 3. Zoxide, FZF, and Direnv Fallbacks
-	if ! command -v zoxide >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then print_info "Fallback: Zoxide..."; curl -sSf --proto '=https' httpss://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash; fi
+	if ! command -v zoxide >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then print_info "Fallback: Zoxide..."; curl -sSf --proto '=https' https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash; fi
 	if ! command -v fzf >/dev/null 2>&1 && command -v git >/dev/null 2>&1; then print_info "Fallback: FZF..."; git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf; ~/.fzf/install --all --no-bash --no-zsh --no-fish; ln -sf "$HOME/.fzf/bin/fzf" "$HOME/.local/bin/fzf"; fi
 	if ! command -v direnv >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then print_info "Fallback: direnv..."; curl -sfL https://direnv.net/install.sh | bash; fi
 fi
@@ -155,7 +155,7 @@ if [ "$IS_TERMUX" = false ]; then
 	[ "$OS_ID" != "macos" ] && command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$UFD"
 
 elif [ "$IS_TERMUX" = true ]; then
-	# [FIXED] Restoring automated font setup for Termux
+	# [FIXED] Termux: Now relies solely on the local .fonts directory as the source of truth.
 	print_info "Installing Inconsolata Nerd Font (Termux)..."
 	mkdir -p "$HOME/.termux"
 	
@@ -166,14 +166,15 @@ elif [ "$IS_TERMUX" = true ]; then
 	if [ -f "$LOCAL_FONT" ]; then
 		print_info "Copying local Inconsolata Nerd Font to ~/.termux/font.ttf"
 		cp "$LOCAL_FONT" "$TERMUX_FONT"
+		
+		# Apply changes only if the file was copied
+		if [ -f "$TERMUX_FONT" ]; then
+			print_info "Applying font changes..."
+			command -v termux-reload-settings >/dev/null 2>&1 && termux-reload-settings
+		fi
 	else
-		print_error "Could not find InconsolataNerdFont-Regular.ttf in .fonts/. Please download it manually and place it there."
-	fi
-	
-	# Apply changes
-	if [ -f "$TERMUX_FONT" ]; then
-		print_info "Applying font changes..."
-		command -v termux-reload-settings >/dev/null 2>&1 && termux-reload-settings
+		# This will only happen if the user hasn't placed the file locally.
+		print_error "Could not find InconsolataNerdFont-Regular.ttf in .fonts/. Please ensure it is downloaded and placed there."
 	fi
 fi
 

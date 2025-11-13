@@ -142,7 +142,8 @@ if command -v fzf > /dev/ null; fzf --fish | source; end
 function startfresh
 	set -l REPO_ROOT (dirname (readlink -f ~/.config/fish/config.fish))
 
-	echo "--- WARNING: Starting Fresh (Removing all custom dotfile links) ---\n\techo "This will revert your environment to the system default shell."
+	echo "--- WARNING: Starting Fresh (Removing all custom dotfile links) ---"
+	echo "This will revert your environment to the system default shell."
 	echo "1. Removing config links..."
 	rm -f ~/.sh_common ~/.profile ~/.bashrc ~/.zshrc ~/.bash_logout
 	rm -f "$HOME/.ssh_agent_init"
@@ -177,4 +178,27 @@ function startfresh
 	echo \"\$RECOVERY_SCRIPT\" > \"$HOME/.zshrc\"
 	"
 
-	echo "--- ENVIRONMENT RESET. Starting fresh session. ---\n\t# FIXED: Exec into Bash, which is Termux's default POSIX shell\n\tset -l BASH_PATH /bin/bash\n\tif test -f /data/data/com.termux/files/usr/bin/bash\n\t\tset BASH_PATH /data/data/com.termux/files/usr/bin/bash\n\tend\n\texec $BASH_PATH --login\nend\n\n# --- Dotfiles Management Function ---\nfunction refresh\n\tset -l C_PATH ~/.config/fish/config.fish; set -l D_DIR (dirname (readlink -f $C_PATH))\n\techo "--- Refreshing Dotfiles ---\"\n\t\n\tif type -q git; and test -d "$D_DIR/.git"\n\t\tpushd "$D_DIR"\n\t\tgit pull origin main\n\t\tpopd\n\tend\n\t\n\tbash "$D_DIR/.setup.sh"; source (status --current-filename); echo "--- Dotfiles Refreshed ---\"\nend\n\n# --- Auto-configure Git GPG Signing ---\nif command -v git > /dev/null; and test -n "$GPG_SIGNING_KEY"\n\tgit config --global user.signingkey "$GPG_SIGNING_KEY"\n\tgit config --global commit.gpgsign true\n\tgit config --global tag.gpgSign true\n\techo "[INFO] Git GPG signing configured."\nend\n
+	echo "--- ENVIRONMENT RESET. Starting fresh session. ---"
+	# FIXED: Exec into Bash, which is Termux's default POSIX shell
+	set -l BASH_PATH /bin/bash
+	if test -f /data/data/com.termux/files/usr/bin/bash
+		set BASH_PATH /data/data/com.termux/files/usr/bin/bash
+	end
+	exec $BASH_PATH --login
+end
+
+# --- Dotfiles Management Function ---
+function refresh
+	set -l C_PATH ~/.config/fish/config.fish; set -l D_DIR (dirname (readlink -f $C_PATH))
+	echo "--- Refreshing Dotfiles ---"
+	
+	if type -q git; and test -d "$D_DIR/.git"
+		pushd "$D_DIR"
+		git pull origin main
+		popd
+	end
+	
+	bash "$D_DIR/.setup.sh"; source (status --current-filename); echo "--- Dotfiles Refreshed ---"
+end
+
+# --- Auto-configure Git GPG Signing ---\nif command -v git > /dev/null; and test -n "$GPG_SIGNING_KEY"\n\tgit config --global user.signingkey "$GPG_SIGNING_KEY"\n\tgit config --global commit.gpgsign true\n\tgit config --global tag.gpgSign true\n\techo "[INFO] Git GPG signing configured."\nend\n

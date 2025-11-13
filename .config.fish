@@ -131,12 +131,12 @@ if command -v tmux > /dev/null; and not set -q TMUX
 	tmux attach-session -t main; or tmux new-session -s main
 end
 
-# --- [NEW] Fish SSH Agent (Native Implementation) ---
+# --- [FIXED] Fish SSH Agent (Native Implementation) ---
 # This block provides the same logic as .ssh_agent_init for Bash/Zsh
 
-# Define paths
-set -l SSH_ENV_FISH "$HOME/.ssh/agent-info-(hostname).fish"
-set -l SSH_ENV_POSIX "$HOME/.ssh/agent-info-(hostname).posix"
+# Define paths (FIX: Removed -l to make variables available in function scope)
+set SSH_ENV_FISH "$HOME/.ssh/agent-info-(hostname).fish"
+set SSH_ENV_POSIX "$HOME/.ssh/agent-info-(hostname).posix"
 
 # Function to start a new agent (Fish-compatible)
 function __start_agent_fish
@@ -169,7 +169,7 @@ else
 	# Environment file doesn't exist yet, start agent for the first time.
 	__start_agent_fish
 end
-# --- [END NEW] ---
+# --- [END FIX] ---
 
 if command -v zoxide > /dev/null; zoxide init fish | source; end
 if command -v fzf > /dev/ null; fzf --fish | source; end

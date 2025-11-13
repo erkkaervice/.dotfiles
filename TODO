@@ -82,3 +82,99 @@ Implement cross-platform clipboard function (c).
 Implement "Hard-Mode" Subsystem (for maximum system hardening).
 
 (I've marked the items we've completed or deferred based on our conversation.)
+
+
+
+
+The Final, Definitive To-Do List
+Core Setup (Foundational Scripts):
+
+[CRITICAL PREREQUISITE] Document SELinux/AppArmor permissive mode check in README.md.
+
+Implement Core Dependency Installation (gcc, host, jq, libarchive in .setup.sh).
+
+Add Flatpak/Snap update logic to .setup.sh.
+
+Provision Core Workstation (Install Docker Engine, Brave, VS Code, Spotify, Tor Browser, and Discord).
+
+Core Application Configs:
+
+Configure Neovim (init.vim).
+
+Install & Configure tmux (Terminal Multiplexer).
+
+Create a global .gitconfig (for aliases & settings).
+
+Install direnv (Automatic Environment Switching).
+
+Install atuin (Encrypted Shell History Sync).
+
+Install lazygit (TUI Git Client).
+
+Install mosh (Mobile Shell).
+
+Install navi (Interactive Cheatsheet).
+
+Install lazydocker (TUI Docker Client).
+
+Install btop (TUI System Monitor).
+
+Security Hardening & Tools:
+
+Create a secure ~/.ssh/config.
+
+Install exiftool (metadata stripper).
+
+Install mitmproxy (intercepting proxy).
+
+Install mtr (network diagnostics).
+
+Install john (John the Ripper, password auditor).
+
+Install rkhunter and chkrootkit (threat scanners).
+
+Investigate pass (the GPG-based Password Manager).
+
+Create a 'sec-scan' master script (to intelligently run all available scanners).
+
+Implement git-clean-blobs function (for safe, local history rewriting).
+
+Shell & Font Upgrades:
+
+Add Shell Plugin Managers (like Fisher for Fish).
+
+Add Inconsolata Nerd Font (prerequisite for icons) to .fonts/ and .kitty.conf.
+
+Add a Serif Font (e.g., Merriweather) to .fonts/ and .fonts.conf.
+
+Implement Termux-specific font installation (for Inconsolata Nerd Font).
+
+Install eza (modern ls replacement with icons).
+
+Install starship (cross-shell prompt).
+
+Visual & GUI Themes:
+
+Add a full Kitty color scheme (e.g., Dracula, Gruvbox).
+
+Add Custom Linux Cursors.
+
+Master "Subsystem" Scripts:
+
+Create a comprehensive info dashboard).
+
+Create a hub TUI-like menu (to tie all other scripts together).
+
+Create a Maintenance Subsystem (to check for missing features/updates).
+
+Implement done_notify (Cross-platform completion function).
+
+Implement cross-platform clipboard function (c).
+
+Implement "Hard-Mode" Subsystem (for maximum system hardening).
+
+We have two tasks that require updating the README.md immediately. Let's tackle them simultaneously for efficiency.
+
+Task A: Document the SELinux/AppArmor check. Task B: Implement the Core Dependency Installation fixes we just made.
+
+Are you ready to proceed with these two foundational updates to your system?

@@ -153,7 +153,8 @@ if [ "$IS_TERMUX" = false ]; then
 		# Download Merriweather Regular if it doesn't exist
 		if [ ! -f "$UFD/Merriweather-Regular.ttf" ]; then
 			print_info "Downloading Merriweather-Regular Font..."
-			curl -fLo "$UFD/Merriweather-Regular.ttf" "https://github.com/google/fonts/raw/main/ofl/merriweather/Merriweather-Regular.ttf"
+			# [FIXED] This is the corrected URL
+			curl -fLo "$UFD/Merriweather-Regular.ttf" "https://raw.githubusercontent.com/google/fonts/main/ofl/merriweather/Merriweather-Regular.ttf"
 		fi
 	else
 		print_error "curl not found. Cannot download fonts."

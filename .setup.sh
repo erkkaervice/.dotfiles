@@ -166,7 +166,7 @@ if [ "$IS_TERMUX" = false ]; then
     if ! command -v direnv >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then print_info "Fallback: direnv..."; curl -sfL https://direnv.net/install.sh | bash; fi
 fi
 
-# --- Starship Fallback ---
+# --- Starship Fallback (NEW ADDITION) ---
 if ! command -v starship >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
 	print_info "Fallback: Installing Starship locally via official installer script..."
 	# Downloads the pre-compiled binary and places it in ~/.local/bin
@@ -241,11 +241,6 @@ mkdir -p "$HOME/.config/nvim"; ln -sf "$DOTFILES_DIR/.init.vim" "$HOME/.config/n
 # [FIXED] Add a second link for the Flatpak sandbox location
 mkdir -p "$HOME/.var/app/io.neovim.nvim/config/nvim"; ln -sf "$DOTFILES_DIR/.init.vim" "$HOME/.var/app/io.neovim.nvim/config/nvim/init.vim"
 ln -sf "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
-
-# --- NEW STARSHIP CONFIG LINK ---
-mkdir -p "$HOME/.config"
-ln -sf "$DOTFILES_DIR/.starship.toml" "$HOME/.config/starship.toml"
-# --------------------------------
 
 if [ "$IS_TERMUX" = false ]; then
     mkdir -p "$HOME/.config/kitty" "$HOME/.config/fontconfig"

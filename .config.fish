@@ -7,7 +7,8 @@ set -l marker_file "$HOME/.dotfiles_initialized_"(id -u)
 if not test -f "$marker_file"
 	if not command -v zoxide >/dev/null 2>&1
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
-		set -l C_PATH ~/.config.fish/config.fish; set -l D_DIR (dirname (readlink -f $C_PATH 2>/dev/null)); set -l S_SCRIPT "$D_DIR/.setup.sh"
+		# [FIXED] Use $HOME instead of ~ for path expansion
+		set -l C_PATH "$HOME/.config.fish/config.fish"; set -l D_DIR (dirname (readlink -f $C_PATH 2>/dev/null)); set -l S_SCRIPT "$D_DIR/.setup.sh"
 		if test -f "$S_SCRIPT"; bash "$S_SCRIPT"; else; bash "$HOME/.dotfiles/.setup.sh"; end
 	end
 	touch "$marker_file"
@@ -178,7 +179,8 @@ if command -v direnv > /dev/null; direnv hook fish | source; end
 
 # --- Start Fresh Function ---
 function startfresh
-	set -l REPO_ROOT (dirname (readlink -f ~/.config.fish/config.fish 2>/dev/null))
+	# [FIXED] Use $HOME instead of ~ for path expansion
+	set -l REPO_ROOT (dirname (readlink -f "$HOME/.config.fish/config.fish" 2>/dev/null))
 	# Fallback if readlink fails
 	if test -z "$REPO_ROOT"; or test "$REPO_ROOT" = "."
 		set REPO_ROOT "$HOME/.dotfiles"
@@ -203,7 +205,7 @@ function startfresh
 
 	echo "3. Creating temporary recovery files to prevent Zsh wizard..."
 	# FIXED: Using a separate file for RECOVERY_SCRIPT definition to avoid Fish syntax errors
-	set -l RECOVERY_SCRIPT_FILE (mktemp)
+	set -l REPO_SCRIPT_FILE (mktemp)
 	echo '
 	RECOVERY_SCRIPT="
 	# --- TEMPORARY RECOVERY SCRIPT ---
@@ -220,9 +222,9 @@ function startfresh
 	"
 	echo "$RECOVERY_SCRIPT" > "$HOME/.bashrc"
 	echo "$RECOVERY_SCRIPT" > "$HOME/.zshrc"
-	' > $RECOVERY_SCRIPT_FILE
-	bash $RECOVERY_SCRIPT_FILE
-	rm $RECOVERY_SCRIPT_FILE
+	' > $REPO_SCRIPT_FILE
+	bash $REPO_SCRIPT_FILE
+	rm $REPO_SCRIPT_FILE
 
 	echo "--- ENVIRONMENT RESET. Starting fresh session. ---"
 	# FIXED: Exec into Bash, which is Termux's default POSIX shell
@@ -240,10 +242,11 @@ function refresh
 	set -l SETUP_SCRIPT ""
 
 	# Try to find the repo root using readlink
-	set -l C_PATH ~/.config.fish/config.fish
+	# [FIXED] Use $HOME instead of ~ for path expansion
+	set -l C_PATH "$HOME/.config.fish/config.fish"
 	if command -v readlink > /dev/null
 		set -l D_DIR (dirname (readlink -f $C_PATH 2>/dev/null))
-		if test -n "$D_DIR"; and test -f "$D_DIR/.setup.sh"
+		if test -n "$D_DIR"; and test "$D_DIR" != "/"; and test -f "$D_DIR/.setup.sh"
 			set REPO_ROOT "$D_DIR"
 			set SETUP_SCRIPT "$D_DIR/.setup.sh"
 		end
@@ -268,7 +271,7 @@ function refresh
 	if test -f "$SETUP_SCRIPT"
 		bash "$SETUP_SCRIPT"
 	else
-		echo "[Refresh] Error: Could not find .setup.sh" >&2
+		echo "[Refresh] Error: Could not find .setup.sh at $SETUP_SCRIPT" >&2
 		return 1
 	end
 	

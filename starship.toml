@@ -1,0 +1,76 @@
+# ====================================================================
+# Starship Configuration File
+# Designed for Cross-Platform, Security-Focused Dotfiles System
+# ====================================================================
+
+# 1. Primary Prompt Format (Minimal and Clear)
+format = """
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_status\
+$python\
+$jobs\
+$time\
+$cmd_duration\
+$line_break\
+$character
+"""
+
+# 2. Custom User Configuration (Focus on Security and Consistency)
+# This module only appears if the current user is NOT 'ervice'
+[username]
+show_always = true
+style_user = "bold yellow"
+style_root = "bold red"
+# Use a custom logic to match the hardcoded user name in your Fish shell
+# IF the current user is not "ervice", display the actual user name.
+# OTHERWISE, we rely on the host/directory to identify the "ervice" environment.
+# Note: For now, we rely on the host name block below.
+
+# 3. Hostname (Critical for identifying the machine)
+[hostname]
+ssh_only = false
+format = "[$hostname] "
+style = "bold blue"
+disabled = false
+
+# 4. Directory Module (Abbreviated Path)
+[directory]
+# Use the short format (e.g., ~/d/p for ~/documents/project)
+truncation_length = 3
+truncation_symbol = "..."
+fish_style_abbreviation = true
+format = "[ $path ]"
+style = "cyan"
+# Abbreviate $HOME to ~
+home_symbol = "~"
+
+# 5. Git Status and Branch
+[git_branch]
+symbol = " "
+format = "[$symbol$branch]($style)"
+style = "bold magenta"
+
+[git_status]
+format = '[[($all_status$ahead_behind)]($style)]'
+style = "bold red"
+# Match the symbols from your previous scripts:
+modified = "U" # Unstaged Changes (like your 'U' for unstaged)
+staged = "+"    # Staged Changes (like your '+')
+untracked = "?"
+deleted = "D"
+renamed = "R"
+stashed = "$"
+
+# 6. Command Duration (A useful tool for long-running commands)
+[cmd_duration]
+min_time = 500 # Show duration only if it takes longer than 500ms
+format = "took [$duration]($style) "
+style = "bold yellow"
+
+# 7. Final Prompt Character
+[character]
+success_symbol = "[>](bold green)"
+error_symbol = "[>](bold red)"

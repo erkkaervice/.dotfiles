@@ -6,6 +6,7 @@
 # --- Helper Functions ---
 print_info() { echo "[INFO] $1"; }
 print_error() { echo "[ERROR] $1" >&2; }
+print_warning() { echo "[WARN] $1" >&2; }
 
 # --- Global Variables ---
 CAN_INSTALL_PACKAGES=true # Assume yes initially
@@ -51,45 +52,80 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 	case "$OS_ID" in
 		termux)
 			print_info "Installing packages for Termux..."
-			# FIXED: Using dnsutils (for host) and neovim (for nvim)
+			# 1. Install core tools
 			pkg update -y && pkg install -y fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg clang dnsutils jq tmux neovim direnv
-			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Termux installation failed."; fi
+			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Termux core package installation failed."; fi
+
+			# 2. Install optional security tools (|| true ensures continuation)
+			pkg install -y gitleaks lynis || print_warning "Termux optional package installation skipped/failed. Continuing."
 			;;
 		ubuntu|debian|pop|mint|kali)
 			print_info "Installing packages for Debian/Ubuntu/Kali based system..."
-			# Core Fixes: build-essential (for gcc), dnsutils (for host), libarchive-tools (for bsdtar), jq. ADDED tmux, nvim.
-			sudo apt-get update -qq && sudo apt-get install -y fish git curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump build-essential dnsutils libarchive-tools jq tmux neovim direnv
 			
-			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Debian/Ubuntu/Kali installation failed."; fi
+			# 1. Install utilities and setup Trivy repo
+			sudo apt-get update -qq || INSTALL_FAILED=true
+			sudo apt-get install -y gnupg curl apt-transport-https || INSTALL_FAILED=true
+			
+			# --- TRIVY REPOSITORY SETUP ---
+			curl -sfL https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+			echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/trivy.list > /dev/null
+			sudo apt-get update -qq || INSTALL_FAILED=true
+			# ----------------------------
+
+			# 2. Install CORE dependencies
+			sudo apt-get install -y fish git unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig nmap tcpdump build-essential dnsutils libarchive-tools jq tmux neovim direnv
+			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Debian/Ubuntu/Kali core package installation failed."; fi
+			
+			# 3. Install optional external security tools (|| true ensures continuation)
+			sudo apt-get install -y trivy gitleaks lynis || print_warning "Optional security package installation skipped/failed. Continuing."
+			
+			if [ "$INSTALL_FAILED" = true ]; then print_error "Debian/Ubuntu/Kali installation encountered errors but continued."; fi
 			;;
 		arch|manjaro|steamos)
 			print_info "Installing packages for Arch/SteamOS based system..."
-			# Core Fixes: bind (for host), jq. base-devel handles gcc and libarchive. ADDED tmux, nvim.
-			sudo pacman -Syu --noconfirm --needed fish git base-devel curl bind unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty ttf-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump bind jq tmux neovim direnv
-			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Arch/SteamOS installation failed."; fi
+			
+			# 1. Install core packages
+			sudo pacman -Syu --noconfirm --needed fish git base-devel curl bind unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty ttf-inconsolata fontconfig nmap gnupg tcpdump bind jq tmux neovim direnv
+			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Arch/SteamOS core package installation failed."; fi
+
+			# 2. Install optional security tools (|| true ensures continuation)
+			sudo pacman -S --noconfirm --needed trivy gitleaks lynis || print_warning "Optional security package installation skipped/failed. Continuing."
 			;;
 		opensuse*|suse)
 			print_info "Installing packages for OpenSUSE based system..."
-			# Core Fixes: gcc, bind-utils (for host), libarchive-tools (for bsdtar), jq. ADDED tmux, nvim.
-			sudo zypper refresh && sudo zypper install -y fish git-core curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty google-inconsolata-fonts fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-utils libarchive-tools jq tmux neovim direnv
-			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "OpenSUSE installation failed."; fi
+			
+			# 1. Install core packages
+			sudo zypper refresh && sudo zypper install -y fish git-core curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty google-inconsolata-fonts fontconfig nmap gnupg tcpdump gcc bind-utils libarchive-tools jq tmux neovim direnv
+			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "OpenSUSE core package installation failed."; fi
+
+			# 2. Install optional security tools (|| true ensures continuation)
+			sudo zypper install -y trivy gitleaks lynis || print_warning "Optional security package installation skipped/failed. Continuing."
 			;;
 		alpine)
 			print_info "Installing packages for Alpine based system..."
-			# Core Fixes: gcc, bind-tools (for host), libarchive (for bsdtar), jq. ADDED tmux, nvim.
-			sudo apk update && sudo apk add fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-tools libarchive jq tmux neovim direnv
-			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Alpine installation failed."; fi
+			
+			# 1. Install core packages
+			sudo apk update && sudo apk add fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig nmap gnupg tcpdump gcc bind-tools libarchive jq tmux neovim direnv
+			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Alpine core package installation failed."; fi
+
+			# 2. Install optional security tools (|| true ensures continuation)
+			sudo apk add trivy gitleaks lynis || print_warning "Optional security package installation skipped/failed. Continuing."
 			;;
 		macos)
 			if command -v brew >/dev/null; then
 				print_info "Installing packages for macOS (Homebrew)..."
-				# Core Fixes: gcc, bind, libarchive, jq. ADDED tmux, nvim.
+				
+				# 1. Install core packages
 				brew update
-				brew install fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty nmap gnupg trivy gitleaks lynis tcpdump gcc bind libarchive jq tmux neovim direnv
+				brew install fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty nmap gnupg tcpdump gcc bind libarchive jq tmux neovim direnv
+				if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "macOS core package installation failed."; fi
+				
+				# 2. Install optional security tools (|| true ensures continuation)
+				brew install trivy gitleaks lynis || print_warning "Optional security package installation skipped/failed. Continuing."
+				
 				brew install --cask font-inconsolata 2>/dev/null || true
 			else INSTALL_FAILED=true; fi
-			[ $? -ne 0 ] && INSTALL_FAILED=true
-			[ "$INSTALL_FAILED" = true ] && print_error "Homebrew installation failed or skipped." || print_info "Homebrew installation successful."
+			[ "$INSTALL_FAILED" = true ] && print_error "System package installation failed."
 			;;
 		*) print_error "Unsupported OS: $OS_ID"; INSTALL_FAILED=true ;;
 	esac
@@ -155,7 +191,7 @@ if [ "$IS_TERMUX" = false ]; then
 	[ "$OS_ID" != "macos" ] && command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$UFD"
 
 elif [ "$IS_TERMUX" = true ]; then
-	# [FIXED] Termux: Now relies solely on the local .fonts directory as the source of truth.
+	# Handle Termux font installation (Copying the local file to the Termux path)
 	print_info "Installing Inconsolata Nerd Font (Termux)..."
 	mkdir -p "$HOME/.termux"
 	
@@ -173,7 +209,6 @@ elif [ "$IS_TERMUX" = true ]; then
 			command -v termux-reload-settings >/dev/null 2>&1 && termux-reload-settings
 		fi
 	else
-		# This will only happen if the user hasn't placed the file locally.
 		print_error "Could not find InconsolataNerdFont-Regular.ttf in .fonts/. Please ensure it is downloaded and placed there."
 	fi
 fi

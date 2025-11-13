@@ -1,4 +1,4 @@
-# ~/.config.fish/config.fish - Fish shell configuration
+# [cite_start]~/.config.fish/config.fish - Fish shell configuration [cite: 33]
 
 if not status is-interactive; end
 
@@ -8,114 +8,125 @@ if not test -f "$marker_file"
 	if not command -v zoxide >/dev/null 2>&1
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
 		# [FIXED] Corrected path from .config.fish to .config/fish
-		set -l C_PATH "$HOME/.config/fish/config.fish"; set -l D_DIR (dirname (readlink -f $C_PATH 2>/dev/null)); set -l S_SCRIPT "$D_DIR/.setup.sh"
-		if test -f "$S_SCRIPT"; bash "$S_SCRIPT"; else; bash "$HOME/.dotfiles/.setup.sh"; end
+		[cite_start]set -l C_PATH "$HOME/.config/fish/config.fish"; [cite: 34] set -l D_DIR (dirname (readlink -f $C_PATH 2>/dev/null)); set -l S_SCRIPT "$D_DIR/.setup.sh"
+		[cite_start]if test -f "$S_SCRIPT"; bash "$S_SCRIPT"; else; bash "$HOME/.dotfiles/.setup.sh"; [cite: 35] end
 	end
 	touch "$marker_file"
 end
 
 # --- Environment Variables (Global, Exported) ---
-set -gx TERMINAL kitty; set -gx EDITOR nvim; set -gx NAVIGATOR brave
+[cite_start]set -gx TERMINAL kitty; set -gx EDITOR nvim; [cite: 36] set -gx NAVIGATOR brave
 set -gx USER ervice; set -gx MAIL erkka@ervice.fi
 
 # --- Disable Fish Greeting ---
-function fish_greeting; end
+[cite_start]function fish_greeting; [cite: 37] end
 
 # --- PATH Modifications (Secure Append) ---
 if test -d "$HOME/.local/bin"; fish_add_path --append "$HOME/.local/bin"; end
-if test -d "$HOME/.cargo/bin"; fish_add_path --append "$HOME/.cargo/bin"; end
+[cite_start]if test -d "$HOME/.cargo/bin"; fish_add_path --append "$HOME/.cargo/bin"; [cite: 38] end
 if test -d "/var/lib/flatpak/exports/bin"; fish_add_path --append "/var/lib/flatpak/exports/bin"; end
 
 # --- Command Color Settings ---
-alias ls='ls --color=auto'; alias grep='grep --color=auto'; alias ip='ip -color=auto'
+[cite_start]alias ls='ls --color=auto'; alias grep='grep --color=auto'; [cite: 39] alias ip='ip -color=auto'
 alias rm='rm -I'
 
 # --- Disk Usage ---
 alias df='df -h'; alias free='free -m'
 
 # --- Processes ---
-alias psa="ps auxf"; alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -e"
-alias psmem='ps auxf | sort -nr -k 4'; alias pscpu='ps auxf | sort -nr -k 3'
+[cite_start]alias psa="ps auxf"; [cite: 40] alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -e"
+[cite_start]alias psmem='ps auxf | sort -nr -k 4'; [cite: 41] alias pscpu='ps auxf | sort -nr -k 3'
 
 # --- Git Aliases ---
 # All Git aliases have been moved to ~/.gitconfig
-# to be universally available in shells, TUIs, and GUIs.
+# [cite_start]to be universally available in shells, TUIs, and GUIs. [cite: 42]
 # --- Modern Tool Aliases ---
 if command -v bat > /dev/null
 	alias cat='bat --paging=never'
-else if command -v batcat > /dev/null; alias cat='batcat --paging=never'; end
+[cite_start]else if command -v batcat > /dev/null; [cite: 43] alias cat='batcat --paging=never'; end
 if command -v fd > /dev/null; alias find='fd'; end
-if command -v rg > /dev/null; alias grep='rg'; end
+[cite_start]if command -v rg > /dev/null; alias grep='rg'; [cite: 44] end
 alias code='flatpak run com.visualstudio.code'
 # Fallback alias for neovim (uses Flatpak if nvim is not in PATH)
-if not command -v nvim > /dev/null; and command -v flatpak > /dev/null
+[cite_start]if not command -v nvim > /dev/null; [cite: 45] and command -v flatpak > /dev/null
 	alias nvim='flatpak run io.neovim.nvim'
 end
 
 # --- Functions (FISH PROMPT REPLACED BY STARSHIP) ---
 # function fish_prompt
-# ... (removed function body) ...
+# 	# FIXED: Hardcode username to "ervice" to prevent sourcing .sh_common
+# 	set -l user_name "ervice"
+# 	[cite_start]set -l c_cyan (set_color cyan); [cite: 46] set -l c_magenta (set_color magenta); set -l c_norm (set_color normal)
+# 	echo -n $c_cyan"["$user_name"@"(prompt_hostname)(prompt_pwd)"]"$c_norm
+# 	set -l g_branch (git symbolic-ref --short HEAD 2> /dev/null)
+# 	if test -n "$g_branch"
+# 		[cite_start]set -l g_status (git status --porcelain 2> /dev/null); [cite: 47] set -l u ""; set -l s ""
+# 		[cite_start]if string match -q -- "* M *" $g_status; [cite: 48] [cite_start]or string match -q -- "*??*" $g_status; or string match -q -- "* D *" $g_status; set u "U"; [cite: 49] end
+# 		[cite_start]if string match -q -- "M *" $g_status; or string match -q -- "A *" $g_status; [cite: 50] or string match -q -- "D *" $g_status; set s "+"; end
+# 		echo -n $c_magenta(string trim -- "("$g_branch$u$s")")$c_norm
+# 	end
+# 	[cite_start]if fish_is_root_user; [cite: 51] echo -n "# "; else; echo -n "> "; end
 # end
 
-function compile; if test -z "$argv[1]"; return 1; end; set -l f (basename "$argv[1]"); set -l o "/tmp/$f.out"; if gcc "$argv[1]" -Wall -Wextra -Werror -o "$o"; "$o"; else; return 1; end; rm -f "$o"; end
-function extract; for i in $argv; switch "$i"; case '*.tar.bz2' '*.tar.gz' '*.tar.xz' '*.tbz2' '*.tgz' '*.txz' '*.tar'; bsdtar xvf "$i"; case '*.zip'; unzip "$i"; case '*.rar'; unrar x "$i"; case '*.7z'; 7z x "$i"; case '*.gz'; gunzip "$i"; case '*.xz'; unxz "$i"; case '*.zst'; unzstd "$i"; end; end; end
+[cite_start]function compile; if test -z "$argv[1]"; return 1; end; [cite: 52] set -l f (basename "$argv[1]"); set -l o "/tmp/$f.out"; if gcc "$argv[1]" -Wall -Wextra -Werror -o "$o"; [cite_start]"$o"; else; [cite: 53] return 1; end; rm -f "$o"; end
+[cite_start]function extract; for i in $argv; switch "$i"; [cite: 54] [cite_start]case '*.tar.bz2' '*.tar.gz' '*.tar.xz' '*.tbz2' '*.tgz' '*.txz' '*.tar'; bsdtar xvf "$i"; case '*.zip'; unzip "$i"; case '*.rar'; unrar x "$i"; [cite: 55] case '*.7z'; [cite_start]7z x "$i"; case '*.gz'; gunzip "$i"; case '*.xz'; unxz "$i"; case '*.zst'; unzstd "$i"; end; end; [cite: 56] end
 alias ipinfo='ipinformation'
-function ipinformation; if test -z "$argv[1]"; curl ipinfo.io | grep -v '"readme":'; else; curl "ipinfo.io/$argv[1]" | grep -v '"readme":'; end; echo; end
+[cite_start]function ipinformation; if test -z "$argv[1]"; curl ipinfo.io | grep -v '"readme":'; else; curl "ipinfo.io/$argv[1]" | grep -v '"readme":'; [cite: 57] end; echo; end
 
 function cleanup
 	echo "--- Disk Usage Cleanup (User Directories) ---"
 	du -sh ~/.cache ~/.local/share/Trash ~/.thumbnails 2>/dev/null
 	du -sh ~/.cache.backup ~/.local.backup ~/.config.backup 2>/dev/null
-	set -l do_clean false; set -l deep_clean false
+	[cite_start]set -l do_clean false; [cite: 58] set -l deep_clean false
 
 	if contains -- -y $argv; set do_clean true; end
-	if contains -- --deep $argv; set deep_clean true; end
+	[cite_start]if contains -- --deep $argv; set deep_clean true; [cite: 59] end
 
-	if not $do_clean; read -l -P "Clear user cache, thumbnails, trash, and backups? [y/N] " confirm; if string match -ri "^(y|yes)\$" -- $confirm; set do_clean true; end; end
+	[cite_start]if not $do_clean; read -l -P "Clear user cache, thumbnails, trash, and backups? [y/N] " confirm; [cite: 60] [cite_start]if string match -ri "^(y|yes)\$" -- $confirm; set do_clean true; end; [cite: 61] end
 	if test "$do_clean" = true
 		echo "Clearing user directories (cache, trash, backups)..."
 		rm -rf ~/.local/share/Trash ~/.thumbnails
-		rm -rf ~/.cache; mkdir -p ~/.cache
+		[cite_start]rm -rf ~/.cache; [cite: 62] mkdir -p ~/.cache
 		rm -rf ~/.cache.backup ~/.local.backup ~/.config.backup
 
 		if command -v flatpak > /dev/null
 			echo "Cleaning Flatpak (unused user runtimes)..."
 			flatpak uninstall --user --unused -y
-			if test -d "$HOME/.var/app/com.visualstudio.code/cache"; echo "Cleaning VS Code (Flatpak) cache..."; rm -rf "$HOME/.var/app/com.visualstudio.code/cache"; end
+			[cite_start]if test -d "$HOME/.var/app/com.visualstudio.code/cache"; [cite: 63] echo "Cleaning VS Code (Flatpak) cache..."; rm -rf "$HOME/.var/app/com.visualstudio.code/cache"; end
 		end
 		
-		if command -v docker > /dev/null; echo "Cleaning Docker (pruning system)..."; docker system prune -f; end
+		[cite_start]if command -v docker > /dev/null; echo "Cleaning Docker (pruning system)..."; [cite: 64] docker system prune -f; end
 		
-		if command -v dotnet > /dev/null; echo "Cleaning .NET (clearing nuget caches)..."; dotnet nuget locals all --clear; end
+		[cite_start]if command -v dotnet > /dev/null; echo "Cleaning .NET (clearing nuget caches)..."; [cite: 65] dotnet nuget locals all --clear; end
 
-		if command -v sudo >/dev/null 2>&1; and sudo -n true 2>/dev/null
+		[cite_start]if command -v sudo >/dev/null 2>&1; [cite: 66] and sudo -n true 2>/dev/null
 			echo "--- System-Wide Cleanup (Sudo) ---"
-			if command -v apt-get >/dev/null; echo "Cleaning Debian/Ubuntu/Kali package cache..."; sudo apt-get autoremove -y; and sudo apt-get clean; end
+			[cite_start]if command -v apt-get >/dev/null; echo "Cleaning Debian/Ubuntu/Kali package cache..."; [cite: 67] sudo apt-get autoremove -y; and sudo apt-get clean; end
 			if command -v pacman >/dev/null
-				if test "$deep_clean" = true; echo "Cleaning Arch/SteamOS package cache (DEEP: -Scc)..."; sudo pacman -Scc; else; echo "Cleaning Arch/SteamOS package cache (Standard: -Sc)..."; echo -e "y\n" | sudo pacman -Sc; end
+				[cite_start]if test "$deep_clean" = true; [cite: 68] [cite_start]echo "Cleaning Arch/SteamOS package cache (DEEP: -Scc)..."; sudo pacman -Scc; else; echo "Cleaning Arch/SteamOS package cache (Standard: -Sc)..."; [cite: 69] echo -e "y\n" | sudo pacman -Sc; end
 			end
-			if command -v zypper >/dev/null; echo "Cleaning OpenSUSE package cache..."; sudo zypper clean --all; end
-			if command -v brew >/dev/null; echo "Cleaning macOS/Homebrew cache..."; brew cleanup -s; end
+			[cite_start]if command -v zypper >/dev/null; echo "Cleaning OpenSUSE package cache..."; [cite: 70] sudo zypper clean --all; end
+			[cite_start]if command -v brew >/dev/null; echo "Cleaning macOS/Homebrew cache..."; brew cleanup -s; [cite: 71] end
 			if command -v apk >/dev/null; echo "Cleaning Alpine package cache..."; sudo apk cache clean; end
-			if command -v journalctl >/dev/null; echo "Cleaning system logs (journald, limit to 2GB)..."; sudo journalctl --vacuum-size=2G; end
-			if test -d "/tmp"; echo "Cleaning global /tmp (files older than 7 days)..."; sudo find /tmp -type f -atime +7 -delete 2>/dev/null; end
-			if test -d "/var/tmp"; echo "Cleaning global /var/tmp (files older than 7 days)..."; sudo find /var/tmp -type f -atime +7 -delete 2>/dev/null; end
+			[cite_start]if command -v journalctl >/dev/null; [cite: 72] echo "Cleaning system logs (journald, limit to 2GB)..."; sudo journalctl --vacuum-size=2G; end
+			[cite_start]if test -d "/tmp"; [cite: 73] [cite_start]echo "Cleaning global /tmp (files older than 7 days)..."; sudo find /tmp -type f -atime +7 -delete 2>/dev/null; [cite: 74] end
+			[cite_start]if test -d "/var/tmp"; echo "Cleaning global /var/tmp (files older than 7 days)..."; [cite: 75] sudo find /var/tmp -type f -atime +7 -delete 2>/dev/null; end
 		end
 		echo "Cleanup finished."
 	else
-		echo "Skipping cleanup." end
+		[cite_start]echo "Skipping cleanup." [cite: 76] end
 end
 
 # --- Security Aliases & Functions ---
 function networkscan; nmap -T4 -F $argv; end
-if command -v sudo > /dev/null; and sudo -n true 2>/dev/null; alias audit='sudo lynis audit system'; else; alias audit='lynis audit system'; end
+[cite_start]if command -v sudo > /dev/null; [cite: 77] [cite_start]and sudo -n true 2>/dev/null; alias audit='sudo lynis audit system'; else; alias audit='lynis audit system'; [cite: 78] end
 
 # --- Load Local Secrets (Ignored by Git) ---
-if test -f "$HOME/.config/shell_secrets"; source "$HOME/.config/shell_secrets"; end
+[cite_start]if test -f "$HOME/.config/shell_secrets"; source "$HOME/.config/shell_secrets"; [cite: 79] end
 
 # --- Init Integrations ---
 # Tmux Auto-Attach Logic
-if command -v tmux > /dev/null; and not set -q TMUX
+[cite_start]if command -v tmux > /dev/null; [cite: 80] and not set -q TMUX
 	tmux attach-session -t main; or tmux new-session -s main
 end
 
@@ -129,9 +140,9 @@ function __start_agent_fish
 	set -l SSH_ENV_POSIX "$HOME/.ssh/agent-info-"(hostname)".posix"
 	
 	# Create Fish (csh-style) agent file (for Termux)
-	ssh-agent -c | sed 's/^echo/#echo/' > "$SSH_ENV_FISH"
+	[cite_start]ssh-agent -c | [cite: 81] sed 's/^echo/#echo/' > "$SSH_ENV_FISH"
 	# Create POSIX (sh/bash/zsh) agent file
-	ssh-agent -s | sed 's/^echo/#echo/' > "$SSH_ENV_POSIX"
+	[cite_start]ssh-agent -s | [cite: 82] sed 's/^echo/#echo/' > "$SSH_ENV_POSIX"
 	
 	chmod 600 "$SSH_ENV_FISH"
 	chmod 600 "$SSH_ENV_POSIX"
@@ -144,22 +155,22 @@ end
 # Main agent check logic for Fish
 if test -f "$SSH_ENV_FISH"
 	source "$SSH_ENV_FISH"
-	# [THE REAL FIX] Use 'kill -0' which is reliable, instead of 'ps | grep'
+	# [cite_start][THE REAL FIX] Use 'kill -0' which is reliable, instead of 'ps | [cite: 83] grep'
 	if not kill -0 $SSH_AGENT_PID > /dev/null 2>&1
-		# Agent died, start a new one. 
+		# [cite_start]Agent died, start a new one. [cite: 84] 
 		__start_agent_fish
 	end
 else
-	# Environment file doesn't exist yet, start agent for the first time. 
+	# [cite_start]Environment file doesn't exist yet, start agent for the first time. [cite: 85] 
 	__start_agent_fish
 end
 # --- [END FIX] ---
 
 
-if command -v zoxide > /dev/null; zoxide init fish | source; end
+[cite_start]if command -v zoxide > /dev/null; zoxide init fish | source; [cite: 86] end
 if command -v fzf > /dev/ null;
 	fzf --fish | source; end
-if command -v direnv > /dev/ null;
+[cite_start]if command -v direnv > /dev/ null; [cite: 87]
 direnv hook fish | source; end
 
 # --- Start Fresh Function ---
@@ -167,7 +178,7 @@ function startfresh
 	# [FIXED] Corrected path from .config.fish to .config/fish
 	set -l REPO_ROOT (dirname (readlink -f "$HOME/.config/fish/config.fish" 2>/dev/null))
 	# Fallback if readlink fails
-	if test -z "$REPO_ROOT"; or test "$REPO_ROOT" = "."
+	[cite_start]if test -z "$REPO_ROOT"; [cite: 88] or test "$REPO_ROOT" = "."
 		set REPO_ROOT "$HOME/.dotfiles"
 	end
 
@@ -198,7 +209,7 @@ function startfresh
 	refresh() {
 		echo ''--- REFRESHING ENVIRONMENT ---''
 		bash \"'$REPO_ROOT/.setup.sh'\" || return 1
-		echo ''--- Environment restored. Please restart your terminal. ---''
+		[cite_start]echo ''--- Environment restored. [cite: 89] Please restart your terminal. ---''
 		exec \$SHELL --login
 	}
 	"
@@ -208,7 +219,7 @@ function startfresh
 	bash $REPO_SCRIPT_FILE
 	rm $REPO_SCRIPT_FILE
 
-	echo "--- ENVIRONMENT RESET. Starting fresh session. ---"
+	[cite_start]echo "--- ENVIRONMENT RESET. [cite: 90] Starting fresh session. ---"
 	# FIXED: Exec into Bash, which is Termux's default POSIX shell
 	set -l BASH_PATH /bin/bash
 	if test -f /data/data/com.termux/files/usr/bin/bash
@@ -234,7 +245,7 @@ function refresh
 		end
 	end
 
-	# Fallback: If readlink fails or script not found, use default path
+	# [cite_start]Fallback: If readlink fails or script not found, use default [cite: 91] path
 	if test -z "$SETUP_SCRIPT"
 		set REPO_ROOT "$HOME/.dotfiles"
 		set SETUP_SCRIPT "$HOME/.dotfiles/.setup.sh"
@@ -243,8 +254,8 @@ function refresh
 
 	echo "--- Refreshing Dotfiles (from $REPO_ROOT) ---"
 	
-	# [FIXED] Ensured Git Pull logic runs reliably and displays output. 
-	if type -q git # Rely only on 'type -q git' for the check. 
+	# [cite_start][FIXED] Ensured Git Pull logic runs reliably and displays output. [cite: 92] 
+	[cite_start]if type -q git # Rely only on 'type -q git' for the check. [cite: 93] 
 	# Explicitly check if the directory is a Git work tree before pull
 		if test -d "$REPO_ROOT/.git"
 			pushd "$REPO_ROOT"
@@ -252,7 +263,7 @@ function refresh
 			git pull origin main
 			popd
 		else
-			echo "[WARN] Skipping Git pull: $REPO_ROOT is not a Git repository." end
+			[cite_start]echo "[WARN] Skipping Git pull: $REPO_ROOT is not a Git repository." [cite: 94] end
 	end
 	
 	# Run setup script
@@ -263,19 +274,18 @@ function refresh
 		return 1
 	end
 	
-	# [FIXED] Removed the recursive source command to prevent looping. 
+	# [cite_start][FIXED] Removed the recursive source command to prevent looping. [cite: 95] 
 	echo "--- Environment updated. Please restart your shell. ---"
 	
 	echo "--- Dotfiles Refreshed ---"
 end
 
 # --- Auto-configure Git GPG Signing ---
-if command -v git > /dev/null; and test -n "$GPG_SIGNING_KEY"
+[cite_start]if command -v git > /dev/null; [cite: 96] and test -n "$GPG_SIGNING_KEY"
 	git config --global user.signingkey "$GPG_SIGNING_KEY"
 	git config --global commit.gpgsign true
 	git config --global tag.gpgSign true
-	echo "[INFO] Git GGPG signing configured."
-end # <--- ADDED MISSING 'end' STATEMENT HERE
+	echo "[INFO] Git GGPG signing configured." end
 
 # -------------------- STARSHIP INTEGRATION --------------------
 # Initialize Starship prompt if the binary is installed.

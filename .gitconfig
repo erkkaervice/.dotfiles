@@ -1,49 +1,43 @@
-# --- GLOBAL GIT CONFIGURATION ---
-# This file is used globally across all Git repositories.
-# For machine-specific settings (like a different email address at work),
-# use a file named '~/.gitconfig_local' (which is ignored by Git).
-
 [user]
-    # NOTE: These values are set for convenience. Your GPG key is loaded from shell_secrets.
 	name = ervice
 	email = erkka@ervice.fi
-	
 [core]
-    editor = nvim
-    # Use the safest method to handle case-sensitive/insensitive file systems
-    # Setting this to false prevents Git from getting confused on cross-platform systems.
-    ignorecase = false
-	
+	editor = nvim
+	ignorecase = false
 [init]
-    defaultBranch = main
-	
+	defaultBranch = main
 [color]
-    ui = auto
-	
+	ui = auto
 [pull]
-    # Always rebase when pulling to keep history clean and linear
-    rebase = true
-	
+	rebase = true
 [push]
-    # Automatically push the current branch to its upstream branch
-    default = current
-
+	default = current
 [alias]
-    # Status and History
-    st = status
-    co = checkout
-    br = branch
-    ci = commit
-    amend = commit --amend
-    prune = remote prune origin
-    logg = log --oneline --graph --decorate
-    # Clean up (Safe delete—requires a second command for remote deletion)
-    del = branch -d 
-    # Log (for viewing history)
-    l = log --graph --abbrev-commit --decorate --date=relative --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
-    
-# --- Local Overrides ---
-# This line ensures that you can override ANY setting above
-# by creating a file named ~/.gitconfig_local (which should be .gitignored)
+	# --- Status and History ---
+	st = status
+	co = checkout
+	br = branch
+	ci = commit
+	amend = commit --amend
+	prune = remote prune origin
+	logg = log --oneline --graph --decorate
+	del = branch -d 
+	l = log --graph --abbrev-commit --decorate --date=relative --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
+
+	# --- Aliases Consolidated from Shell Configs ---
+	addup = add -u
+	addall = add .
+	branch = branch
+	checkout = checkout
+	clone = clone
+	commit = commit -m
+	fetch = fetch
+	pull = pull origin
+	push = push origin
+	stat = status
+	tag = tag
+	newtag = tag -a
+	gl = log --oneline --graph --decorate --all
+	
 [include]
-    path = ~/.gitconfig_local
+	path = ~/.gitconfig_local

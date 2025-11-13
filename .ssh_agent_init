@@ -1,35 +1,57 @@
-# Termux-compatible script to load SSH Agent across sessions
+#!/bin/sh
+#
+# .ssh_agent_init - POSIX-compliant SSH agent loader
+#
+# This script ensures a single ssh-agent is running per session,
+# and creates environment files for both POSIX (sh, zsh, bash)
+# and Fish (fish) shells.
+#
 
-# --- Global Environment File ---
-SSH_ENV="$HOME/.ssh/agent-info-$(hostname)"
+# --- Environment File Paths ---
+# We use hostname to ensure sockets are not shared across different machines
+# using the same home directory (e..g., NFS).
+SSH_ENV_POSIX="$HOME/.ssh/agent-info-$(hostname).posix"
+SSH_ENV_FISH="$HOME/.ssh/agent-info-$(hostname).fish"
 
-# --- SSH Agent Initialization Function ---
-function start_agent {
+# --- Start Agent Function ---
+start_agent() {
 	echo "Initializing new SSH agent..."
-	# Use ssh-agent and write its environment variables to the file
-	/usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
-	chmod 600 "${SSH_ENV}"
-	. "${SSH_ENV}" > /dev/null
+	
+	# Create POSIX (sh/bash/zsh) agent file
+	# We 'sed' out the 'echo' commands to prevent noise
+	/usr/bin/ssh-agent -s | sed 's/^echo/#echo/' > "${SSH_ENV_POSIX}"
+	
+	# Create Fish (csh-style) agent file
+	/usr/bin/ssh-agent -c | sed 's/^echo/#echo/' > "${SSH_ENV_FISH}"
+	
+	# Set permissions
+	chmod 600 "${SSH_ENV_POSIX}"
+	chmod 600 "${SSH_ENV_FISH}"
+
+	# Source the POSIX file for the *current* (sh/bash/zsh) shell
+	. "${SSH_ENV_POSIX}" > /dev/null
+	
+	# Add default identities
 	ssh-add
 }
 
-# --- Main Agent Check Logic ---
+# --- Main Logic ---
 
-# Check if the environment file exists
-if [ -f "${SSH_ENV}" ]; then
-	. "${SSH_ENV}" > /dev/null
-	# Check if the agent process is actually running (Termux-compatible check)
-	if ps -p $SSH_AGENT_PID | grep ssh-agent > /dev/null; then
-		# Agent is running, everything is good.
+# Check if the POSIX environment file exists
+if [ -f "${SSH_ENV_POSIX}" ]; then
+	# Source the existing file
+	. "${SSH_ENV_POSIX}" > /dev/null
+	
+	# Check if the agent process (PID) is actually running
+	# 'ps -p' returns 0 if the process exists
+	if ps -p $SSH_AGENT_PID > /dev/null 2>&1; then
+		# Agent is running.
 		return 0
 	else
-		# Agent died, start a new one.
+		# The agent file is stale (process died). Start a new one.
 		start_agent
 	fi
 else
-	# Environment file doesn't exist yet, start agent for the first time.
+	# No agent file found. Start a new one for the first time.
 	start_agent
 fi
-
-# Note: The first time this runs, it will prompt for your passphrase via ssh-add.
-# Subsequent sessions will use the saved PID/Socket without prompting.

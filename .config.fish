@@ -37,11 +37,8 @@ alias psa="ps auxf"; alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -e"
 alias psmem='ps auxf | sort -nr -k 4'; alias pscpu='ps auxf | sort -nr -k 3'
 
 # --- Git Aliases ---
-alias addup='git add -u'; alias addall='git add .'; alias branch='git branch'
-alias checkout='git checkout'; alias clone='git clone'; alias commit='git commit -m'
-alias fetch='git fetch'; alias pull='git pull origin'; alias push='git push origin'
-alias stat='git status'; alias tag='git tag'; alias newtag='git tag -a'
-alias gl='git log --oneline --graph --decorate --all'
+# All Git aliases have been moved to ~/.gitconfig
+# to be universally available in shells, TUIs, and GUIs.
 
 # --- Modern Tool Aliases ---
 if command -v bat > /dev/null
@@ -52,7 +49,7 @@ if command -v rg > /dev/null; alias grep='rg'; end
 alias code='flatpak run com.visualstudio.code'
 # Fallback alias for neovim (uses Flatpak if nvim is not in PATH)
 if not command -v nvim > /dev/null; and command -v flatpak > /dev/null
-    alias nvim='flatpak run io.neovim.nvim'
+	alias nvim='flatpak run io.neovim.nvim'
 end
 
 # --- Functions ---
@@ -134,9 +131,49 @@ if command -v tmux > /dev/null; and not set -q TMUX
 	tmux attach-session -t main; or tmux new-session -s main
 end
 
-# FIXED: Removed incompatible .ssh_agent_init script.
+# --- [NEW] Fish SSH Agent (Native Implementation) ---
+# This block provides the same logic as .ssh_agent_init for Bash/Zsh
+
+# Define paths
+set -l SSH_ENV_FISH "$HOME/.ssh/agent-info-(hostname).fish"
+set -l SSH_ENV_POSIX "$HOME/.ssh/agent-info-(hostname).posix"
+
+# Function to start a new agent (Fish-compatible)
+function __start_agent_fish
+	echo "Initializing new SSH agent (Fish)..."
+	
+	# Create Fish (csh-style) agent file
+	ssh-agent -c | sed 's/^echo/#echo/' > "$SSH_ENV_FISH"
+	# Create POSIX (sh/bash/zsh) agent file
+	ssh-agent -s | sed 's/^echo/#echo/' > "$SSH_ENV_POSIX"
+	
+	chmod 600 "$SSH_ENV_FISH"
+	chmod 600 "$SSH_ENV_POSIX"
+	
+	# Source the new Fish file
+	source "$SSH_ENV_FISH"
+	ssh-add
+end
+
+# Main agent check logic for Fish
+if test -f "$SSH_ENV_FISH"
+	# Source existing file
+	source "$SSH_ENV_FISH"
+	
+	# Check if agent process is actually running
+	if not ps -p $SSH_AGENT_PID > /dev/null 2>&1
+		# Agent died, start a new one.
+		__start_agent_fish
+	end
+else
+	# Environment file doesn't exist yet, start agent for the first time.
+	__start_agent_fish
+end
+# --- [END NEW] ---
+
 if command -v zoxide > /dev/null; zoxide init fish | source; end
 if command -v fzf > /dev/ null; fzf --fish | source; end
+if command -v direnv > /dev/null; direnv hook fish | source; end
 
 # --- Start Fresh Function ---
 function startfresh
@@ -210,5 +247,5 @@ if command -v git > /dev/null; and test -n "$GPG_SIGNING_KEY"
 	git config --global user.signingkey "$GPG_SIGNING_KEY"
 	git config --global commit.gpgsign true
 	git config --global tag.gpgSign true
-	echo "[INFO] Git GPG signing configured."
+	echo "[INFO] Git GGPG signing configured."
 end

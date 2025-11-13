@@ -7,8 +7,8 @@ set -l marker_file "$HOME/.dotfiles_initialized_"(id -u)
 if not test -f "$marker_file"
 	if not command -v zoxide >/dev/null 2>&1
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
-		# [FIXED] Use $HOME instead of ~ for path expansion
-		set -l C_PATH "$HOME/.config.fish/config.fish"; set -l D_DIR (dirname (readlink -f $C_PATH 2>/dev/null)); set -l S_SCRIPT "$D_DIR/.setup.sh"
+		# [FIXED] Corrected path from .config.fish to .config/fish
+		set -l C_PATH "$HOME/.config/fish/config.fish"; set -l D_DIR (dirname (readlink -f $C_PATH 2>/dev/null)); set -l S_SCRIPT "$D_DIR/.setup.sh"
 		if test -f "$S_SCRIPT"; bash "$S_SCRIPT"; else; bash "$HOME/.dotfiles/.setup.sh"; end
 	end
 	touch "$marker_file"
@@ -143,10 +143,9 @@ set -g SSH_ENV_POSIX "$HOME/.ssh/agent-info-"(hostname)".posix"
 function __start_agent_fish
 	echo "Initializing new SSH agent (Fish)..."
 	
-	# Create Fish (csh-style) agent file
-	ssh-agent -c | sed 's/^echo/#echo/' > "$SSH_ENV_FISH"
-	# Create POSIX (sh/bash/zsh) agent file
-	ssh-agent -s | sed 's/^echo/#echo/' > "$SSH_ENV_POSIX"
+	# [FIXED] Use full path to match .ssh_agent_init
+	/usr/bin/ssh-agent -c | sed 's/^echo/#echo/' > "$SSH_ENV_FISH"
+	/usr/bin/ssh-agent -s | sed 's/^echo/#echo/' > "$SSH_ENV_POSIX"
 	
 	chmod 600 "$SSH_ENV_FISH"
 	chmod 600 "$SSH_ENV_POSIX"
@@ -162,7 +161,6 @@ if test -f "$SSH_ENV_FISH"
 	source "$SSH_ENV_FISH"
 	
 	# Check if agent process is actually running
-	# [FIXED] Use 'kill -0' for a reliable, cross-platform PID check.
 	if not kill -0 $SSH_AGENT_PID > /dev/null 2>&1
 		# Agent died, start a new one.
 		__start_agent_fish
@@ -179,8 +177,8 @@ if command -v direnv > /dev/null; direnv hook fish | source; end
 
 # --- Start Fresh Function ---
 function startfresh
-	# [FIXED] Use $HOME instead of ~ for path expansion
-	set -l REPO_ROOT (dirname (readlink -f "$HOME/.config.fish/config.fish" 2>/dev/null))
+	# [FIXED] Corrected path from .config.fish to .config/fish
+	set -l REPO_ROOT (dirname (readlink -f "$HOME/.config/fish/config.fish" 2>/dev/null))
 	# Fallback if readlink fails
 	if test -z "$REPO_ROOT"; or test "$REPO_ROOT" = "."
 		set REPO_ROOT "$HOME/.dotfiles"
@@ -204,7 +202,6 @@ function startfresh
 	rm -f "$HOME/.dotfiles_initialized_"(id -u)
 
 	echo "3. Creating temporary recovery files to prevent Zsh wizard..."
-	# FIXED: Using a separate file for RECOVERY_SCRIPT definition to avoid Fish syntax errors
 	set -l REPO_SCRIPT_FILE (mktemp)
 	echo '
 	RECOVERY_SCRIPT="
@@ -242,8 +239,8 @@ function refresh
 	set -l SETUP_SCRIPT ""
 
 	# Try to find the repo root using readlink
-	# [FIXED] Use $HOME instead of ~ for path expansion
-	set -l C_PATH "$HOME/.config.fish/config.fish"
+	# [FIXED] Corrected path from .config.fish to .config/fish
+	set -l C_PATH "$HOME/.config/fish/config.fish"
 	if command -v readlink > /dev/null
 		set -l D_DIR (dirname (readlink -f $C_PATH 2>/dev/null))
 		if test -n "$D_DIR"; and test "$D_DIR" != "/"; and test -f "$D_DIR/.setup.sh"

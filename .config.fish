@@ -172,7 +172,7 @@ end
 if command -v zoxide > /dev/null; zoxide init fish | source; end
 if command -v fzf > /dev/ null;
 	fzf --fish | source; end
-if command -v direnv > /dev/null;
+if command -v direnv > /dev/ null;
 	direnv hook fish | source; end
 
 # --- Start Fresh Function ---
@@ -259,10 +259,15 @@ function refresh
 	
 	# [FIXED] Ensured Git Pull logic runs reliably and displays output.
 	if type -q git # Rely only on 'type -q git' for the check.
-		pushd "$REPO_ROOT"
-		echo "Pulling updates from Git..."
-		git pull origin main
-		popd
+		# Explicitly check if the directory is a Git work tree before pull
+		if test -d "$REPO_ROOT/.git"
+			pushd "$REPO_ROOT"
+			echo "Pulling updates from Git..."
+			git pull origin main
+			popd
+		else
+			echo "[WARN] Skipping Git pull: $REPO_ROOT is not a Git repository."
+		end
 	end
 	
 	# Run setup script
@@ -273,7 +278,6 @@ function refresh
 		return 1
 	end
 	
-	# Reload fish config
 	# [FIXED] Removed the recursive source command to prevent looping.
 	echo "--- Environment updated. Please restart your shell. ---"
 	

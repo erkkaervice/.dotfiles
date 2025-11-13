@@ -110,6 +110,8 @@ service_user() {
 refresh() {
 	local REPO_ROOT=""
 	local SETUP_SCRIPT=""
+	# [FIXED] Set protective variable for recursive calls
+	export DOTFILES_REFRESHING=1 
 
 	# Try to find repo root using readlink on the symlink
 	if command -v readlink >/dev/null 2G; then
@@ -124,9 +126,12 @@ refresh() {
 
 	echo "--- Refreshing Dotfiles ---"
 
-	# [FIXED] Simplified conditional check to ensure Git pull executes
+	# [FIXED] Ensured Git Pull logic runs reliably and displays output.
 	if command -v git >/dev/null 2>&1; then
 		(
+			# Temporarily ensure SSH key is unlocked for the pull
+			ssh-add -l >/dev/null 2>&1 || ssh-add 
+			
 			echo "Pulling updates from Git..."
 			# We CD to the repo root and pull. Git will fail gracefully if it's not a git repo.
 			cd "$REPO_ROOT" 2>/dev/null && git pull origin main
@@ -147,6 +152,9 @@ refresh() {
 		echo "[Refresh] Error: Could not find setup script at $SETUP_SCRIPT" >&2
 		return 1
 	fi
+	
+	# Unset protective variable
+	unset DOTFILES_REFRESHING
 	
 	echo "--- Dotfiles Refreshed ---"
 }
@@ -294,22 +302,33 @@ if [ -f "$HOME/.config/shell_secrets" ]; then
 	. "$HOME/.config/shell_secrets"
 fi
 
-# --- Init Integrations ---
-# SSH Agent
-[ -f "$HOME/.ssh_agent_init" ] && . "$HOME/.ssh_agent_init"
+# [FIXED] Block SSH Agent and Direnv during recursive sourcing.
+if [ -z "$DOTFILES_REFRESHING" ]; then
 
-# Tmux Auto-Attach Logic
-# If tmux is installed AND we are not already inside tmux ($TMUX is not set)
-if command -v tmux >/dev/null 2G && [ -z "$TMUX" ]; then
-	# Attempt to attach to a session named "main"
-	# If it fails (||), create a new session named "main"
-	tmux attach-session -t main || tmux new-session -s main
-fi
+	# --- Init Integrations ---
+	# SSH Agent
+	[ -f "$HOME/.ssh_agent_init" ] && . "$HOME/.ssh_agent_init"
 
-# Direnv (loads .envrc files)
-if command -v direnv >/dev/null 2G; then
-	# [FIXED] Use the basename of $SHELL as a reliable fallback for the hook,
-	# preventing 'unknown target shell' error when $SHELL_NAME is empty.
-	HOOK_SHELL_NAME="${SHELL_NAME:-$(basename "$SHELL")}"
-	eval "$(direnv hook "$HOOK_SHELL_NAME")"
+	# Tmux Auto-Attach Logic
+	# If tmux is installed AND we are not already inside tmux ($TMUX is not set)
+	if command -v tmux >/dev/null 2G && [ -z "$TMUX" ]; then
+		# Attempt to attach to a session named "main"
+		# If it fails (||), create a new session named "main"
+		tmux attach-session -t main || tmux new-session -s main
+	fi
+
+	# Direnv (loads .envrc files)
+	if command -v direnv >/dev/null 2G; then
+		# [FIXED] Use the shell detection logic to provide a reliable target hook name.
+		if [ -n "$BASH_VERSION" ]; then
+			SHELL_TYPE="bash"
+		elif [ -n "$ZSH_VERSION" ]; then
+			SHELL_TYPE="zsh"
+		else
+			# Fallback for plain sh/unknown shells
+			SHELL_TYPE=$(basename "$SHELL")
+		fi
+		
+		eval "$(direnv hook "$SHELL_TYPE")"
+	fi
 fi

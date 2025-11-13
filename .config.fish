@@ -133,12 +133,11 @@ if command -v tmux > /dev/null; and not set -q TMUX
 end
 
 # --- [FIXED] Fish SSH Agent (Native Implementation) ---
-# This is the original, working logic from your file.
-# It uses ssh-agent -c and the 'ps' check.
+# This block provides the same logic as .ssh_agent_init for Bash/Zsh
 set -l SSH_ENV_FISH "$HOME/.ssh/agent-info-"(hostname)".fish"
 
 # Function to start a new agent and create both Fish and POSIX files
-function __start_agent_fish # Renamed to avoid conflict, just in case
+function __start_agent_fish
 	echo "Initializing new SSH agent (Fish)..."
 	set -l SSH_ENV_POSIX "$HOME/.ssh/agent-info-"(hostname)".posix"
 	
@@ -158,10 +157,8 @@ end
 # Main agent check logic for Fish
 if test -f "$SSH_ENV_FISH"
 	source "$SSH_ENV_FISH"
-	# Check if the agent process is actually running
-	if ps -p $SSH_AGENT_PID | grep ssh-agent > /dev/null
-		# Agent is running, good.
-	else
+	# [THE REAL FIX] Use 'kill -0' which is reliable, instead of 'ps | grep'
+	if not kill -0 $SSH_AGENT_PID > /dev/null 2>&1
 		# Agent died, start a new one.
 		__start_agent_fish
 	end
@@ -170,6 +167,7 @@ else
 	__start_agent_fish
 end
 # --- [END FIX] ---
+
 
 if command -v zoxide > /dev/null; zoxide init fish | source; end
 if command -v fzf > /dev/ null;
@@ -231,7 +229,7 @@ function startfresh
 	if test -f /data/data/com.termux/files/usr/bin/bash
 		set BASH_PATH /data/data/com.termux/files/usr/bin/bash
 	end
-	exec $BASH_PATH --login
+	exec $B_PATH --login
 end
 
 # --- Dotfiles Management Function ---
@@ -281,7 +279,6 @@ end
 
 # --- Auto-configure Git GPG Signing ---
 if command -v git > /dev/null; and test -n "$GPG_SIGNING_KEY"
-	# [FIXED] Reverted my typo of GPG_SIGN_PARAM
 	git config --global user.signingkey "$GPG_SIGNING_KEY"
 	git config --global commit.gpgsign true
 	git config --global tag.gpgSign true

@@ -134,9 +134,9 @@ end
 # --- [FIXED] Fish SSH Agent (Native Implementation) ---
 # This block provides the same logic as .ssh_agent_init for Bash/Zsh
 
-# Define paths (FIX: Corrected command substitution syntax for hostname)
-set SSH_ENV_FISH "$HOME/.ssh/agent-info-"(hostname)".fish"
-set SSH_ENV_POSIX "$HOME/.ssh/agent-info-"(hostname)".posix"
+# Define paths (FIX: Use 'set -g' to make variables global)
+set -g SSH_ENV_FISH "$HOME/.ssh/agent-info-"(hostname)".fish"
+set -g SSH_ENV_POSIX "$HOME/.ssh/agent-info-"(hostname)".posix"
 
 # Function to start a new agent (Fish-compatible)
 function __start_agent_fish

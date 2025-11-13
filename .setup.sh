@@ -52,40 +52,40 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 		termux)
 			print_info "Installing packages for Termux..."
 			# FIXED: Using dnsutils (for host) and neovim (for nvim)
-			pkg update -y && pkg install -y fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg clang dnsutils jq tmux neovim
+			pkg update -y && pkg install -y fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg clang dnsutils jq tmux neovim direnv
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Termux installation failed."; fi
 			;;
 		ubuntu|debian|pop|mint|kali)
 			print_info "Installing packages for Debian/Ubuntu/Kali based system..."
 			# Core Fixes: build-essential (for gcc), dnsutils (for host), libarchive-tools (for bsdtar), jq. ADDED tmux, nvim.
-			sudo apt-get update -qq && sudo apt-get install -y fish git curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump build-essential dnsutils libarchive-tools jq tmux neovim
+			sudo apt-get update -qq && sudo apt-get install -y fish git curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump build-essential dnsutils libarchive-tools jq tmux neovim direnv
 			
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Debian/Ubuntu/Kali installation failed."; fi
 			;;
 		arch|manjaro|steamos)
 			print_info "Installing packages for Arch/SteamOS based system..."
 			# Core Fixes: bind (for host), jq. base-devel handles gcc and libarchive. ADDED tmux, nvim.
-			sudo pacman -Syu --noconfirm --needed fish git base-devel curl bind unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty ttf-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump bind jq tmux neovim
+			sudo pacman -Syu --noconfirm --needed fish git base-devel curl bind unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty ttf-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump bind jq tmux neovim direnv
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Arch/SteamOS installation failed."; fi
 			;;
 		opensuse*|suse)
 			print_info "Installing packages for OpenSUSE based system..."
 			# Core Fixes: gcc, bind-utils (for host), libarchive-tools (for bsdtar), jq. ADDED tmux, nvim.
-			sudo zypper refresh && sudo zypper install -y fish git-core curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty google-inconsolata-fonts fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-utils libarchive-tools jq tmux neovim
+			sudo zypper refresh && sudo zypper install -y fish git-core curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty google-inconsolata-fonts fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-utils libarchive-tools jq tmux neovim direnv
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "OpenSUSE installation failed."; fi
 			;;
 		alpine)
 			print_info "Installing packages for Alpine based system..."
 			# Core Fixes: gcc, bind-tools (for host), libarchive (for bsdtar), jq. ADDED tmux, nvim.
-			sudo apk update && sudo apk add fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-tools libarchive jq tmux neovim
+			sudo apk update && sudo apk add fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-tools libarchive jq tmux neovim direnv
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Alpine installation failed."; fi
 			;;
 		macos)
 			if command -v brew >/dev/null; then
 				print_info "Installing packages for macOS (Homebrew)..."
-				# Core Fixes: gcc, bind, libarchive, jq. ADDED tmux, neovim.
+				# Core Fixes: gcc, bind, libarchive, jq. ADDED tmux, nvim.
 				brew update
-				brew install fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty nmap gnupg trivy gitleaks lynis tcpdump gcc bind libarchive jq tmux neovim
+				brew install fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty nmap gnupg trivy gitleaks lynis tcpdump gcc bind libarchive jq tmux neovim direnv
 				brew install --cask font-inconsolata 2>/dev/null || true
 			else INSTALL_FAILED=true; fi
 			[ $? -ne 0 ] && INSTALL_FAILED=true

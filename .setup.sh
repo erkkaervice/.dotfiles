@@ -51,41 +51,41 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 	case "$OS_ID" in
 		termux)
 			print_info "Installing packages for Termux..."
-			# Core Fixes: clang (for gcc), bind-utils (for host), jq
-			pkg update -y && pkg install -y fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg clang bind-utils jq tmux
+			# Core Fixes: clang (for gcc), bind-utils (for host), jq. ADDED tmux, nvim.
+			pkg update -y && pkg install -y fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg clang bind-utils jq tmux nvim
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Termux installation failed."; fi
 			;;
 		ubuntu|debian|pop|mint|kali)
 			print_info "Installing packages for Debian/Ubuntu/Kali based system..."
-			# Core Fixes: build-essential (for gcc), dnsutils (for host), libarchive-tools (for bsdtar), jq.
-			sudo apt-get update -qq && sudo apt-get install -y fish git curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump build-essential dnsutils libarchive-tools jq tmux
+			# Core Fixes: build-essential (for gcc), dnsutils (for host), libarchive-tools (for bsdtar), jq. ADDED tmux, nvim.
+			sudo apt-get update -qq && sudo apt-get install -y fish git curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump build-essential dnsutils libarchive-tools jq tmux nvim
 			
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Debian/Ubuntu/Kali installation failed."; fi
 			;;
 		arch|manjaro|steamos)
 			print_info "Installing packages for Arch/SteamOS based system..."
-			# Core Fixes: bind (for host), jq. base-devel handles gcc and libarchive.
-			sudo pacman -Syu --noconfirm --needed fish git base-devel curl bind unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty ttf-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump bind jq tmux
+			# Core Fixes: bind (for host), jq. base-devel handles gcc and libarchive. ADDED tmux, neovim.
+			sudo pacman -Syu --noconfirm --needed fish git base-devel curl bind unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty ttf-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump bind jq tmux neovim
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Arch/SteamOS installation failed."; fi
 			;;
 		opensuse*|suse)
 			print_info "Installing packages for OpenSUSE based system..."
-			# Core Fixes: gcc, bind-utils (for host), libarchive-tools (for bsdtar), jq.
-			sudo zypper refresh && sudo zypper install -y fish git-core curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty google-inconsolata-fonts fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-utils libarchive-tools jq tmux
+			# Core Fixes: gcc, bind-utils (for host), libarchive-tools (for bsdtar), jq. ADDED tmux, neovim.
+			sudo zypper refresh && sudo zypper install -y fish git-core curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty google-inconsolata-fonts fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-utils libarchive-tools jq tmux neovim
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "OpenSUSE installation failed."; fi
 			;;
 		alpine)
 			print_info "Installing packages for Alpine based system..."
-			# Core Fixes: gcc, bind-tools (for host), libarchive (for bsdtar), jq.
-			sudo apk update && sudo apk add fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-tools libarchive jq tmux
+			# Core Fixes: gcc, bind-tools (for host), libarchive (for bsdtar), jq. ADDED tmux, neovim.
+			sudo apk update && sudo apk add fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-tools libarchive jq tmux neovim
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Alpine installation failed."; fi
 			;;
 		macos)
 			if command -v brew >/dev/null; then
 				print_info "Installing packages for macOS (Homebrew)..."
-				# Core Fixes: gcc, bind, libarchive, jq.
+				# Core Fixes: gcc, bind, libarchive, jq. ADDED tmux, neovim.
 				brew update
-				brew install fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty nmap gnupg trivy gitleaks lynis tcpdump gcc bind libarchive jq tmux
+				brew install fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty nmap gnupg trivy gitleaks lynis tcpdump gcc bind libarchive jq tmux neovim
 				brew install --cask font-inconsolata 2>/dev/null || true
 			else INSTALL_FAILED=true; fi
 			[ $? -ne 0 ] && INSTALL_FAILED=true
@@ -125,7 +125,7 @@ if [ "$IS_TERMUX" = false ]; then
 		fi
 	fi
 	# 3. Zoxide & FZF Fallbacks
-	if ! command -v zoxide >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then print_info "Fallback: Zoxide..."; curl -sSf --proto '=https' httpss://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash; fi
+	if ! command -v zoxide >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then print_info "Fallback: Zoxide..."; curl -sSf --proto '=https' https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash; fi
 	if ! command -v fzf >/dev/null 2>&1 && command -v git >/dev/null 2>&1; then print_info "Fallback: FZF..."; git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf; ~/.fzf/install --all --no-bash --no-zsh --no-fish; ln -sf "$HOME/.fzf/bin/fzf" "$HOME/.local/bin/fzf"; fi
 fi
 
@@ -159,7 +159,7 @@ fi
 # --- Link Dotfiles ---
 print_info "Linking dotfiles..."
 # Loop through all core dotfiles and link them
-for f in .sh_common .profile .bashrc .zshrc .bash_logout .ssh_agent_init .gitconfig; do ln -sf "$DOTFILES_DIR/$f" "$HOME/$f"; done
+for f in .sh_common .profile .bashrc .zshrc .bash_logout .ssh_agent_init; do ln -sf "$DOTFILES_DIR/$f" "$HOME/$f"; done
 # Link config directories
 mkdir -p "$HOME/.config/fish"; ln -sf "$DOTFILES_DIR/.config.fish" "$HOME/.config/fish/config.fish"
 mkdir -p "$HOME/.config/nvim"; ln -sf "$DOTFILES_DIR/.init.vim" "$HOME/.config/nvim/init.vim"

@@ -132,43 +132,49 @@ if command -v tmux > /dev/null; and not set -q TMUX
 	tmux attach-session -t main; or tmux new-session -s main
 end
 
-# --- [FIXED] Fish SSH Agent (Native Implementation) ---
-# This block provides the same logic as .ssh_agent_init for Bash/Zsh
+# --- [THE REAL FIX] Fish SSH Agent ---
+# This block uses the POSIX output from ssh-agent and parses it manually,
+# avoiding the broken 'ssh-agent -c' and 'source' method.
 
-# Define paths (Use 'set -g' to make variables global)
-set -g SSH_ENV_FISH "$HOME/.ssh/agent-info-"(hostname)".fish"
 set -g SSH_ENV_POSIX "$HOME/.ssh/agent-info-"(hostname)".posix"
 
-# Function to start a new agent (Fish-compatible)
-function __start_agent_fish
-	echo "Initializing new SSH agent (Fish)..."
+# Function to start a new agent and parse its output
+function __start_agent_fish_posix
+	echo "Initializing new SSH agent (Fish/POSIX)..."
+	# Run the POSIX agent and capture its output
+	set -l agent_output (ssh-agent -s)
 	
-	# [FIXED] Reverted to use 'ssh-agent' from PATH (for Termux)
-	# This matches the user's original, working file.
-	ssh-agent -c | sed 's/^echo/#echo/' > "$SSH_ENV_FISH"
-	ssh-agent -s | sed 's/^echo/#echo/' > "$SSH_ENV_POSIX"
-	
-	chmod 600 "$SSH_ENV_FISH"
+	# Write the raw output to the POSIX file for Bash/Zsh to use
+	echo "$agent_output" | sed 's/^echo/#echo/' > "$SSH_ENV_POSIX"
 	chmod 600 "$SSH_ENV_POSIX"
 	
-	# Source the new Fish file
-	source "$SSH_ENV_FISH"
+	# Parse the output for Fish
+	for line in (string split ';' $agent_output)
+		if string match -q "SSH_AUTH_SOCK=*" $line
+			set -gx SSH_AUTH_SOCK (string split '=' $line)[2]
+		end
+		if string match -q "SSH_AGENT_PID=*" $line
+			set -gx SSH_AGENT_PID (string split '=' $line)[2]
+		end
+	end
+	
 	ssh-add
 end
 
 # Main agent check logic for Fish
-if test -f "$SSH_ENV_FISH"
-	# Source existing file
-	source "$SSH_ENV_FISH"
+if test -f "$SSH_ENV_POSIX"
+	# Source the *existing* POSIX file variables manually
+	# We read the file, remove 'export', and eval it
+	eval (cat "$SSH_ENV_POSIX" | grep -v '^#' | sed 's/export /set -gx /' | string join '; ')
 	
 	# Check if agent process is actually running
 	if not kill -0 $SSH_AGENT_PID > /dev/null 2>&1
 		# Agent died, start a new one.
-		__start_agent_fish
+		__start_agent_fish_posix
 	end
 else
 	# Environment file doesn't exist yet, start agent for the first time.
-	__start_agent_fish
+	__start_agent_fish_posix
 end
 # --- [END FIX] ---
 
@@ -279,8 +285,8 @@ function refresh
 end
 
 # --- Auto-configure Git GPG Signing ---
-if command -v git > /dev/null; and test -n "$GPG_SIGNING_KEY"
-	git config --global user.signingkey "$GPG_SIGNING_KEY"
+if command -v git > /dev/null; and test -n "$GPG_SIGN_KEY"
+	git config --global user.signingkey "$GPG_SIGN_PARAM"
 	git config --global commit.gpgsign true
 	git config --global tag.gpgSign true
 	echo "[INFO] Git GGPG signing configured."

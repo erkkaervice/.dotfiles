@@ -260,6 +260,7 @@ function refresh
 	
 	if type -q git; and test -d "$REPO_ROOT/.git"
 		pushd "$REPO_ROOT"
+		echo "Pulling updates from Git..."
 		git pull origin main
 		popd
 	end

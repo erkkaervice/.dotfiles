@@ -7,7 +7,7 @@ set -l marker_file "$HOME/.dotfiles_initialized_"(id -u)
 if not test -f "$marker_file"
 	if not command -v zoxide >/dev/null 2>&1
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
-		set -l C_PATH ~/.config/fish/config.fish; set -l D_DIR (dirname (readlink -f $C_PATH)); set -l S_SCRIPT "$D_DIR/.setup.sh"
+		set -l C_PATH ~/.config.fish/config.fish; set -l D_DIR (dirname (readlink -f $C_PATH)); set -l S_SCRIPT "$D_DIR/.setup.sh"
 		if test -f "$S_SCRIPT"; bash "$S_SCRIPT"; else; bash "$HOME/.dotfiles/.setup.sh"; end
 	end
 	touch "$marker_file"
@@ -134,7 +134,7 @@ end
 # --- [FIXED] Fish SSH Agent (Native Implementation) ---
 # This block provides the same logic as .ssh_agent_init for Bash/Zsh
 
-# Define paths (FIX: Use 'set -g' to make variables global)
+# Define paths (Use 'set -g' to make variables global)
 set -g SSH_ENV_FISH "$HOME/.ssh/agent-info-"(hostname)".fish"
 set -g SSH_ENV_POSIX "$HOME/.ssh/agent-info-"(hostname)".posix"
 
@@ -161,7 +161,8 @@ if test -f "$SSH_ENV_FISH"
 	source "$SSH_ENV_FISH"
 	
 	# Check if agent process is actually running
-	if not ps -p $SSH_AGENT_PID > /dev/null 2>&1
+	# [FIXED] Use 'kill -0' for a reliable, cross-platform PID check.
+	if not kill -0 $SSH_AGENT_PID > /dev/null 2>&1
 		# Agent died, start a new one.
 		__start_agent_fish
 	end
@@ -177,14 +178,14 @@ if command -v direnv > /dev/null; direnv hook fish | source; end
 
 # --- Start Fresh Function ---
 function startfresh
-	set -l REPO_ROOT (dirname (readlink -f ~/.config/fish/config.fish))
+	set -l REPO_ROOT (dirname (readlink -f ~/.config.fish/config.fish))
 
 	echo "--- WARNING: Starting Fresh (Removing all custom dotfile links) ---"
 	echo "This will revert your environment to the system default shell."
 	echo "1. Removing config links..."
 	rm -f ~/.sh_common ~/.profile ~/.bashrc ~/.zshrc ~/.bash_logout
 	rm -f "$HOME/.ssh_agent_init"
-	rm -rf ~/.config/fish
+	rm -rf ~/.config.fish
 	rm -rf ~/.config/kitty
 	rm -rf ~/.config/fontconfig
 	rm -f "$HOME/.config/shell_secrets"
@@ -230,7 +231,7 @@ end
 
 # --- Dotfiles Management Function ---
 function refresh
-	set -l C_PATH ~/.config/fish/config.fish; set -l D_DIR (dirname (readlink -f $C_PATH))
+	set -l C_PATH ~/.config.fish/config.fish; set -l D_DIR (dirname (readlink -f $C_PATH))
 	echo "--- Refreshing Dotfiles ---"
 	
 	if type -q git; and test -d "$D_DIR/.git"

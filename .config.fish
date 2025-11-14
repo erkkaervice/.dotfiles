@@ -173,9 +173,10 @@ end
 # Tmux Auto-Attach Logic
 if command -v tmux > /dev/null;
 	and not set -q TMUX
-	# [FIXED] Use 'exec' to replace the current shell with tmux.
-	# This ensures a single 'exit' will close the terminal.
-	exec tmux attach-session -t main; or exec tmux new-session -s main
+	# [FIXED] Run tmux normally.
+	tmux attach-session -t main; or tmux new-session -s main
+	# [FIXED] Now exit the parent shell, so kitty closes when tmux does.
+	exit
 end
 
 # --- [FIXED] Fish SSH Agent (Native Implementation) ---

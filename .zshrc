@@ -4,7 +4,8 @@
 [[ ! -o interactive ]] && return
 
 # --- Source Common Settings ---
-if [[ -f ~/.sh_common ]]; then
+if [[ -f ~/.sh_common ]];
+then
 	source ~/.sh_common
 fi
 
@@ -27,33 +28,34 @@ compinit -u
 
 # --- Path Abbreviation Function ---
 _zsh_abbreviate_path_manual() {
-	local pwd_relative_to_home=${PWD/#$HOME/\~}
-	[[ "$pwd_relative_to_home" == "/" ]] && { echo "/";
-	return }
-	[[ "$pwd_relative_to_home" == "~" ]] && { echo "~"; return }
+	local full_path="${PWD/#$HOME/\~}"
+	
+	if [[ "$full_path" == "/" ]]; then echo "/"; return; fi
+	if [[ "$full_path" == "~" ]]; then echo "~"; return; fi
 
 	local prefix=""; local path_to_process=""
-	if [[ "$pwd_relative_to_home" == \~* ]];
+	if [[ "$full_path" == \~* ]];
 	then
 		prefix="~/"
-		path_to_process="${pwd_relative_to_home#\~/}"
-	elif [[ "$pwd_relative_to_home" == /* ]]; then
+		path_to_process="${full_path#\~/}"
+	elif [[ "$full_path" == /* ]]; then
 		prefix="/"
-		path_to_process="${pwd_relative_to_home#/}"
+		path_to_process="${full_path#/}"
 	fi
 
 	local path_parts=( ${(s:/:)path_to_process} )
-	local result="$prefix"; local num_parts=${#path_parts[@]};
+	local result="$prefix"; 
+	local num_parts=${#path_parts[@]};
 	local i
 
 	for (( i=1; i <= num_parts; i++ )); do
 		if (( i < num_parts ));
 		then # Intermediate directory
-			if [[ "${path_parts[i]}" == .* ]]; then
-				 result+=".${path_parts[i][2]}/"
-			 elif [[ -n "${path_parts[i]}" ]];
-			then
-				result+="${path_parts[i][1]}/"
+			local part=${path_parts[i]}
+			if [[ "$part" == .* ]]; then
+				result+=".${part:1:1}/"
+			elif [[ -n "$part" ]]; then
+				result+="${part:0:1}/"
 			fi
 		elif [[ -n "${path_parts[i]}" ]]; then # Last directory
 			result+="${path_parts[i]}"
@@ -84,3 +86,6 @@ zstyle ':vcs_info:git:*' stagedstr '+'
 precmd() {
 	vcs_info
 }
+
+# --- Zsh Git-Aware Prompt ---
+PROMPT='%F{cyan}[$(service_user)@%m $(_zsh_abbreviate_path_manual)]%f ${vcs_info_msg_0_}> '

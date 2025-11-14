@@ -300,6 +300,7 @@ fi
 
 # --- Init Integrations ---
 # SSH Agent
+# [FIXED] Corrected typo from .ssh_t_init to .ssh_agent_init
 [ -f "$HOME/.ssh_agent_init" ] && . "$HOME/.ssh_agent_init"
 
 # Tmux Auto-Attach Logic

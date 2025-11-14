@@ -100,7 +100,7 @@ function ipinformation; if test -z "$argv[1]"; curl ipinfo.io | grep -v '"readme
 function cleanup
 	echo "--- Disk Usage Cleanup (User Directories) ---"
 	du -sh ~/.cache ~/.local/share/Trash ~/.thumbnails 2>/dev/null
-	du -sh ~/.cache.backup ~/.local.backup ~/.config.backup 2/dev/null
+	du -sh ~/.cache.backup ~/.local.backup ~/.config.backup 2>/dev/null
 	set -l do_clean false;
 	set -l deep_clean false
 
@@ -163,7 +163,7 @@ end
 # --- Security Aliases & Functions ---
 function networkscan; nmap -T4 -F $argv; end
 if command -v sudo > /dev/null;
-	and sudo -n true 2>/dev/null; alias audit='sudo lynis audit system'; else; alias audit='lynis audit.system';
+	and sudo -n true 2>/dev/null; alias audit='sudo lynis audit system'; else; alias audit='lynis audit system';
 end
 
 # --- Load Local Secrets (Ignored by Git) ---
@@ -174,9 +174,13 @@ end
 # Tmux Auto-Attach Logic
 if command -v tmux > /dev/null;
 	and not set -q TMUX
-	tmux attach-session -t main; or tmux new-session -s main
-	# [FIXED] Now exit the parent shell, so kitty closes when tmux does.
-	exit
+	# [FIXED] Use 'exec' after a check, not with 'or'.
+	# This replaces the shell and gives a true single-exit.
+	if tmux has-session -t main 2>/dev/null
+		exec tmux attach-session -t main
+	else
+		exec tmux new-session -s main
+	end
 end
 
 # --- [FINAL FIX] Fish SSH Agent (Native Implementation) ---

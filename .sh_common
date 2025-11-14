@@ -300,16 +300,17 @@ fi
 
 # --- Init Integrations ---
 # SSH Agent
-# [FIXED] Corrected typo from .ssh_t_init to .ssh_agent_init
 [ -f "$HOME/.ssh_agent_init" ] && . "$HOME/.ssh_agent_init"
 
 # Tmux Auto-Attach Logic
-# If tmux is installed AND we are not already inside tmux ($TMUX is not set)
 if command -v tmux >/dev/null 2>&1 && [ -z "$TMUX" ]; then
-	# [FIXED] Run tmux normally.
-	tmux attach-session -t main || tmux new-session -s main
-	# [FIXED] Now exit the parent shell, so kitty closes when tmux does.
-	exit
+	# [FIXED] Use 'exec' after a check, not with '||'.
+	# This replaces the shell and gives a true single-exit.
+	if tmux has-session -t main 2>/dev/null; then
+		exec tmux attach-session -t main
+	else
+		exec tmux new-session -s main
+	fi
 fi
 
 # Direnv (loads .envrc files)

@@ -100,7 +100,7 @@ function ipinformation; if test -z "$argv[1]"; curl ipinfo.io | grep -v '"readme
 function cleanup
 	echo "--- Disk Usage Cleanup (User Directories) ---"
 	du -sh ~/.cache ~/.local/share/Trash ~/.thumbnails 2>/dev/null
-	du -sh ~/.cache.backup ~/.local.backup ~/.config.backup 2>/dev/null
+	du -sh ~/.cache.backup ~/.local.backup ~/.config.backup 2/dev/null
 	set -l do_clean false;
 	set -l deep_clean false
 
@@ -163,7 +163,7 @@ end
 # --- Security Aliases & Functions ---
 function networkscan; nmap -T4 -F $argv; end
 if command -v sudo > /dev/null;
-	and sudo -n true 2>/dev/null; alias audit='sudo lynis audit system'; else; alias audit='lynis audit system';
+	and sudo -n true 2>/dev/null; alias audit='sudo lynis audit system'; else; alias audit='lynis audit.system';
 end
 
 # --- Load Local Secrets (Ignored by Git) ---
@@ -180,7 +180,7 @@ if command -v tmux > /dev/null;
 end
 
 # --- [FINAL FIX] Fish SSH Agent (Native Implementation) ---
-# [FIXED] Hardcode to 'localhost' since (prompt_hostname) and (uname) fail at startup.
+# [FIXED] Hardcode to 'localhost' since all dynamic hostnames fail at startup.
 set -l HOST_ID "localhost"
 set -l SSH_ENV_FISH "$HOME/.ssh/agent-info-$HOST_ID.fish"
 
@@ -188,6 +188,8 @@ set -l SSH_ENV_FISH "$HOME/.ssh/agent-info-$HOST_ID.fish"
 function __start_agent_fish
 	echo "Initializing new SSH agent (Fish)..."
 	set -l HOST_ID "localhost"
+	# [FIXED] Define *both* variables inside the function to ensure they are not empty.
+	set -l SSH_ENV_FISH "$HOME/.ssh/agent-info-$HOST_ID.fish"
 	set -l SSH_ENV_POSIX "$HOME/.ssh/agent-info-$HOST_ID.posix"
 	
 	# Create Fish (csh-style) agent file
@@ -299,7 +301,7 @@ function refresh
 	# [FIXED] Corrected path from .config.fish to .config/fish
 	set -l C_PATH "$HOME/.config/fish/config.fish"
 	if command -v readlink > /dev/null
-		set -l D_DIR (. (readlink -f $C_PATH 2>/dev/null))
+		set -l D_DIR (dirname (readlink -f $C_PATH 2>/dev/null))
 		if test -n "$D_DIR"; and test "$D_DIR" != "/"; and test -f "$D_DIR/.setup.sh"
 			set REPO_ROOT "$D_DIR"
 			set SETUP_SCRIPT "$D_DIR/.setup.sh"

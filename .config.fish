@@ -79,7 +79,8 @@ function fish_prompt
 		end
 		if string match -q -- "M *" $g_status; or string match -q -- "A *" $g_status;
 		or string match -q -- "D *" $g_status; set s "+"; end
-		echo -n $c_magenta(string trim -- "("$g_branch$u_s")")$c_norm
+		# [FIXED] Corrected variable typo from $u_s to $u$s
+		echo -n $c_magenta(string trim -- "("$g_branch$u$s")")$c_norm
 	end
 	if fish_is_root_user;
 		echo -n "# "; else; echo -n "> "; end
@@ -121,7 +122,7 @@ function cleanup
 			echo "Cleaning Flatpak (unused user runtimes)..."
 			flatpak uninstall --user --unused -y
 			if test -d "$HOME/.var/app/com.visualstudio.code/cache";
-				echo "Cleaning VS Code (Flatpak) cache..."; rm -rf "$HOME/.var/app/com_visualstudio.code/cache"; end
+				echo "Cleaning VS Code (Flatpak) cache..."; rm -rf "$HOME/.var/app/com.visualstudio.code/cache"; end
 		end
 		
 		if command -v docker > /dev/null; echo "Cleaning Docker (pruning system)...";
@@ -179,14 +180,14 @@ if command -v tmux > /dev/null;
 end
 
 # --- [FINAL FIX] Fish SSH Agent (Native Implementation) ---
-# [FIXED] Use the Fish-native `(prompt_hostname)` function for reliability.
-set -l HOST_ID (prompt_hostname)
+# [FIXED] Hardcode to 'localhost' since (prompt_hostname) and (uname) fail at startup.
+set -l HOST_ID "localhost"
 set -l SSH_ENV_FISH "$HOME/.ssh/agent-info-$HOST_ID.fish"
 
 # Function to start a new agent (for both Fish and POSIX)
 function __start_agent_fish
 	echo "Initializing new SSH agent (Fish)..."
-	set -l HOST_ID (prompt_hostname)
+	set -l HOST_ID "localhost"
 	set -l SSH_ENV_POSIX "$HOME/.ssh/agent-info-$HOST_ID.posix"
 	
 	# Create Fish (csh-style) agent file
@@ -283,7 +284,7 @@ function startfresh
 	# FIXED: Exec into Bash, which is Termux's default POSIX shell
 	set -l BASH_PATH /bin/bash
 	if test -f /data/data/com.termux/files/usr/bin/bash
-		set BASH_PATH /data/data/comFtermux/files/usr/bin/bash
+		set BASH_PATH /data/data/com.termux/files/usr/bin/bash
 	end
 	exec $BASH_PATH --login
 end
@@ -298,7 +299,7 @@ function refresh
 	# [FIXED] Corrected path from .config.fish to .config/fish
 	set -l C_PATH "$HOME/.config/fish/config.fish"
 	if command -v readlink > /dev/null
-		set -l D_DIR (dirname (readlink -f $C_PATH 2>/dev/null))
+		set -l D_DIR (. (readlink -f $C_PATH 2>/dev/null))
 		if test -n "$D_DIR"; and test "$D_DIR" != "/"; and test -f "$D_DIR/.setup.sh"
 			set REPO_ROOT "$D_DIR"
 			set SETUP_SCRIPT "$D_DIR/.setup.sh"

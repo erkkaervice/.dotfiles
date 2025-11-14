@@ -173,7 +173,6 @@ end
 # Tmux Auto-Attach Logic
 if command -v tmux > /dev/null;
 	and not set -q TMUX
-	# [FIXED] Run tmux normally.
 	tmux attach-session -t main; or tmux new-session -s main
 	# [FIXED] Now exit the parent shell, so kitty closes when tmux does.
 	exit
@@ -210,6 +209,10 @@ if test -f "$SSH_ENV_FISH"
 	if not kill -0 $SSH_AGENT_PID > /dev/null 2>&1
 		# Agent died, start a new one.
 		__start_agent_fish
+	else
+		# [THE REAL FIX] Agent is running, but check if keys are loaded.
+		# If ssh-add -l fails, run ssh-add.
+		ssh-add -l > /dev/null 2>&1; or ssh-add
 	end
 else
 	# Environment file doesn't exist yet, start agent for the first time.

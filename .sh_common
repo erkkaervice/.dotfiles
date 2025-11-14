@@ -59,7 +59,6 @@ compiler() {
 	[[ $1 ]] || { echo "Missing operand" >&2; return 1; }	
 	[[ -r $1 ]] || { printf "File %s does not exist or is not readable\n" "$1" >&2; return 1; }	
 	
-	# FIX: Use mktemp for a secure, unique output file
 	local output_path
 	output_path=$(mktemp "${TMPDIR:-/tmp}/${1##*/}.XXXXXX") || { echo "Failed to create temp file" >&2; return 1; }
 	
@@ -170,13 +169,11 @@ then
 fi
 
 # --- PATH Modifications (Secure Append) ---
-# FIX: Add ~/.local/bin to PATH for Bash/Zsh to find fallback tools
 if [ -d "$HOME/.local/bin" ]; then
 	export PATH="$PATH:$HOME/.local/bin"
 fi
 
 # --- Auto-configure Git GPG Signing ---
-# FIX: Add GPG logic (was missing from Bash/Zsh)
 if command -v git >/dev/null 2>&1 && [ -n "$GPG_SIGNING_KEY" ];
 then
 	git config --global user.signingkey "$GPG_SIGNING_KEY"

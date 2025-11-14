@@ -6,7 +6,6 @@
 # This is the single source of truth, called by wrappers in all shells.
 #
 
-# FIX: Removed 'local' - cannot be used at script-level
 REPO_ROOT=""
 
 if [ -f "$HOME/.dotfiles-path" ];
@@ -60,7 +59,6 @@ cp "$HOME/.bashrc" "$HOME/.zshrc"
 
 
 echo "--- ENVIRONMENT RESET. Starting fresh session. ---"
-# FIX: Removed 'local' - cannot be used at script-level
 BASH_PATH=/bin/bash
 if [ -f /data/data/com.termux/files/usr/bin/bash ];
 then

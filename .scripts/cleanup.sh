@@ -10,7 +10,6 @@ echo "--- Disk Usage Cleanup (User Directories) ---"
 du -sh ~/.cache ~/.local/share/Trash ~/.thumbnails 2>/dev/null
 du -sh ~/.cache.backup ~/.local.backup ~/.config.backup 2>/dev/null
 
-# FIX: Removed 'local' - cannot be used at script-level
 DO_CLEAN=0
 DEEP_CLEAN=0
 OPT=""

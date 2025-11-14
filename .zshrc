@@ -4,22 +4,20 @@
 [[ ! -o interactive ]] && return
 
 # --- Source Common Settings ---
-if [[ -f ~/.sh_common ]];
-then
+if [[ -f ~/.sh_common ]]; then
 	source ~/.sh_common
 fi
 
 # --- Fish Shell Auto-Switch ---
-# Switch to Fish in graphical sessions, fall back to Zsh if not.
+# This block is commented out by default.
+# Uncomment it if you want Bash/Zsh to *always* try to switch to Fish.
 # if [[ $DISPLAY ]]; then
-# 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]];
-# then
+# 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
 # 		if command -v fish > /dev/null 2>&1; then
 # 			export SHELL=/usr/bin/fish
 # 			exec fish "$@"
 # 			export SHELL=/bin/zsh
-# 			echo "Failed to switch to fish shell."
-# >&2
+# 			echo "Failed to switch to fish shell." >&2
 # 		fi
 # 	fi
 # fi
@@ -28,79 +26,83 @@ fi
 autoload -Uz compinit
 compinit -u
 
-# --- Path Abbreviation Function (FINAL FIXED VERSION using Zsh array joining) ---
+# --- Path Abbreviation Function (SYNTAX & LOGIC FIX) ---
 _zsh_abbreviate_path_manual() {
 	local full_path="${PWD/#$HOME/\~}"
-	
 	if [[ "$full_path" == "/" ]]; then echo "/"; return; fi
-	if [[ "$full_path" == "~" ]]; then echo "~"; return; } # Changed to { } block
-    
-	local path_to_process=""
-	local prefix=""
+	if [[ "$full_path" == "~" ]]; then echo "~"; return; }
 
-	# 1. Determine prefix and remove it from path for processing
-	if [[ "$full_path" == \~* ]];
-	then
+	local prefix=""; local path_to_process=""
+	if [[ "$full_path" == \~* ]]; then
 		prefix="~/"
-		path_to_process="${full_path#\~/}"
+		path_to_process=${full_path#\~/}
 	elif [[ "$full_path" == /* ]]; then
 		prefix="/"
-		path_to_process="${full_path#/}"
+		path_to_process=${full_path#/}
+	else
+		echo "$full_path"; return
 	fi
 
-	# 2. Split path into array elements (Zsh arrays are 1-indexed)
-	local path_parts=( ${(s:/:)path_to_process} )
-	local num_parts=${#path_parts[@]};
-	local result_parts=()
-	local i
+	local -a path_parts
+	path_parts=( ${(s:/:)path_to_process} )
+	local result="$prefix"; local num_parts=${#path_parts[@]}; local i
 
-	# 3. Process all but the last part (abbreviate intermediate directories)
-	for (( i=1; i < num_parts; i++ )); do
-		local part=${path_parts[i]}
-		if [[ "$part" == .* ]]; then
-			# If dotfile, keep dot and first char: .d/
-			result_parts+=( ".${part:1:1}" ) 
-		elif [[ -n "$part" ]]; then
-			# Otherwise, keep first char: d/
-			result_parts+=( "${part:0:1}" )
+	for (( i=1; i <= num_parts; i++ )); do
+		if (( i < num_parts )); then # Intermediate directory
+			local part=${path_parts[i]}
+			if [[ "$part" == .* ]]; then
+				 result+=".${part:1:1}/"
+			 elif [[ -n "$part" ]]; then
+				result+="${part:0:1}/"
+			fi
+		elif [[ -n "${path_parts[i]}" ]]; then # Last directory
+			result+="${path_parts[i]}"
 		fi
 	done
-    
-	# 4. Append the last part (the full directory name)
-	if [[ -n "${path_parts[num_parts]}" ]]; then
-		result_parts+=( "${path_parts[num_parts]}" )
-	fi
 
-	# 5. Join the parts with '/' and prepend the prefix (~/ or /)
-    # ${(j:/:)array} is Zsh's highly reliable array join syntax.
-    local joined_path="${(j:/:)result_parts}"
-    
-    # Handle the special case where the path is just a single dot or nothing
-    if [[ -z "$joined_path" && "$prefix" == "~/" ]]; then
-        echo "~"
-        return
-    fi
-    
-	echo "${prefix}${joined_path}"
+	if [[ "$result" == */ ]] && [[ "$num_parts" -gt 0 && "$prefix" != "/" ]]; then
+		result="${result%/}"
+	fi
+	echo "$result"
 }
+
 
 # --- Zsh Git-Aware Prompt ---
+
 autoload -U promptinit
 promptinit
+# Allow substitutions (like function calls) in the prompt
 setopt PROMPT_SUBST
-autoload -Uz vcs_info
 
-# Set vcs_info options
+# Load version control info
+autoload -Uz vcs_info
+# Enable Git backend and check for changes
 zstyle ':vcs_info:*' enable git
 zstyle ':vcs_info:*' check-for-changes true
-zstyle ':vcs_info:git:*' formats '%F{magenta}(%b%u%c)%f'
-zstyle ':vcs_info:git:*' unstagedstr 'U'
-zstyle ':vcs_info:git:*' stagedstr '+'
 
-# Pre-prompt function to update vcs_info
+# Set formats:
+zstyle ':vcs_info:git:*' formats '%F{magenta}(%b%u%c)%f'
+zstyle ':vcs_info:git:*' actionformats '%F{magenta}(%b|%a%u%c)%f'
+
+# This function runs *before* every prompt is drawn
 precmd() {
 	vcs_info
+	# Zsh requires the prompt to be set *outside* of the vcs_info mechanism to include the function call.
+	local abbreviated_wd=$(_zsh_abbreviate_path_manual)
+	
+	PROMPT="%F{cyan}[$(service_user)@%m ${abbreviated_wd}]%f${vcs_info_msg_0_}> "
 }
 
-# PROMPT: [user@host path](git) >
-PROMPT='%F{cyan}[$(service_user)@%m $(_zsh_abbreviate_path_manual)]%f ${vcs_info_msg_0_}> '
+# --- Zsh Specific Options ---
+setopt EXTENDED_GLOB
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_SPACE
+setopt APPEND_HISTORY
+setopt SHARE_HISTORY
+setopt INC_APPEND_HISTORY
+setopt CORRECT
+setopt COMPLETE_IN_WORD
+# setopt NO_BEEP
+
+HISTFILE=~/.zsh_history
+HISTSIZE=10000

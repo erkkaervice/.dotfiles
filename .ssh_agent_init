@@ -10,7 +10,6 @@
 # --- Environment File Paths ---
 # We use hostname to ensure sockets are not shared across different machines
 # using the same home directory (e..g., NFS).
-# [FIXED] Use `uname -n` for reliability instead of `hostname`
 HOST_ID=$(uname -n)
 SSH_ENV_POSIX="$HOME/.ssh/agent-info-$HOST_ID.posix"
 SSH_ENV_FISH="$HOME/.ssh/agent-info-$HOST_ID.fish"
@@ -48,10 +47,8 @@ then
 	. "${SSH_ENV_POSIX}" > /dev/null
 	
 	# Check if the agent process (PID) is actually running
-	# [FIXED] Use 'kill -0' for a reliable, cross-platform PID check.
 if kill -0 $SSH_AGENT_PID > /dev/null 2>&1; then
-		# [THE REAL FIX] Agent is running, but check if keys are loaded.
-# If ssh-add -l fails, run ssh-add.
+		# If ssh-add -l fails, run ssh-add.
 		ssh-add -l > /dev/null 2>&1 ||
 ssh-add
 		return 0

@@ -158,7 +158,6 @@ if command -v tmux > /dev/null; and not set -q TMUX
 end
 
 # --- SSH Agent ---
-# FIX: Source the agent file managed by the POSIX .ssh_agent_init script
 # This eliminates the conflicting agent-starting logic.
 set -l HOST_ID (uname -n)
 set -l SSH_ENV_FISH "$HOME/.ssh/agent-info-$HOST_ID.fish"

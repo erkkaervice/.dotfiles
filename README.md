@@ -51,6 +51,7 @@ This configuration provides:
     * `br`: `branch`
     * `ci`: `commit`
     * `amend`: `commit --amend`
+    * `prune`: `remote prune origin`
     * `l`: Pretty graph log
     * `logg`: One-line graph log
     * `addup`: `add -u`
@@ -58,7 +59,7 @@ This configuration provides:
     * `gl`: One-line graph log (all)
 
 ### Helper Functions
-* **`refresh`**: The master command. Pulls updates from Git, re-runs the full setup/installation script, and reloads the current shell.
+* **`refresh`**: The master command. Pulls updates from Git, **automatically stashing local changes before pulling**, re-runs the full setup/installation script, and reloads the current shell.
 * **`startfresh`**: A "factory reset" that wipes all symlinked configs and local apps, resetting to a clean system shell (but preserves a recovery `refresh` command).
 * **`cleanup`**: Cleans user caches (`~/.cache`, Trash), old backups, and application-specific caches (Flatpak, Docker, .NET). Can also clean system package caches (e.g., `cleanup --deep` for aggressive Pacman cleaning).
 * **`extract`**: Universal archive extractor.
@@ -132,7 +133,7 @@ The `setup.sh` script automatically detects and supports:
     * **Copies** your provided `.ttf` files from the `.fonts/` directory to the system font locations.
     * Hardens SSH directory permissions.
     * Symlinks all configuration files (`.bashrc`, `.zshrc`, `.config/fish`, `.kitty.conf`, etc.).
-    * Links `.gitconfig` and links `.gitignore` as `~/.gitignore_global`. You must run `git config --global core.excludesfile ~/.gitignore_global` one time to activate it.
+    * **Links `.gitconfig` and links `.gitignore` as `~/.gitignore_global`, automatically setting the global excludes file via `git config`.**
     * Triggers desktop integration to set Kitty and standard fonts as default.
 
 5.  **Restart:**
@@ -203,7 +204,7 @@ If installed successfully, Kitty should appear in your system's application menu
 
 * **`.setup.sh`**: Master installation script. Handles OS detection, package managers, local fallbacks, font installation, and file linking.
 * **`.configure_desktop.sh`**: Called by `setup.sh` to apply GNOME/KDE/XFCE specific settings (default terminal, fonts).
-* **`.sh_common`**: Core logic shared by Bash and Zsh (aliases, exports, `refresh`, `cleanup`, `startfresh`).
+* **`.sh_common`**: Core logic shared by Bash and Zsh (aliases, exports, `refresh`, `cleanup`, `startfresh`, **SSH Agent**, **Zoxide**, and **FZF** initialization).
 * **`.config.fish`**: Feature-equivalent configuration for Fish shell.
 * **`.kitty.conf`**: Cross-platform configuration for the Kitty terminal (fonts, opacity).
 * **`.fonts.conf`**: System-wide configuration to map "monospace" to `InconsolataNerdFont` and "sans-serif" to Candara.
@@ -226,11 +227,11 @@ If installed successfully, Kitty should appear in your system's application menu
 
 ## Troubleshooting
 
-*	**`startfresh` fails:** If `refresh` is not found after running `startfresh`, you may need to manually `cd ~/.dotfiles` and run `bash .setup.sh` one time to restore the environment.
-*	**Kitty not in menu**: Run `refresh` again. The script includes a specific fix to regenerate the `.desktop` file in `~/.local/share/applications` if it's missing.
-*	**Fonts are broken / Kitty won't start:** This almost always means you did not place the required `.ttf` files (especially `InconsolataNerdFont-Regular.ttf`) into the `.fonts/` directory *before* running `.setup.sh`.
-*	**Security Tools Are Missing:** On non-`sudo` systems (like a restricted school computer), security tools (`nmap`, `gnupg`, `lynis`, `tcpdump`, `trivy`, `gitleaks`) are **not** installed. This is expected, as they require root privileges which are unavailable.
-*	**`tcpdump` fails:** `tcpdump` requires root access. On Termux, you must run `su` first. On Linux, you must use `sudo tcpdump ...`.
+* **`startfresh` fails:** If `refresh` is not found after running `startfresh`, you may need to manually `cd ~/.dotfiles` and run `bash .setup.sh` one time to restore the environment.
+* **Kitty not in menu**: Run `refresh` again. The script includes a specific fix to regenerate the `.desktop` file in `~/.local/share/applications` if it's missing.
+* **Fonts are broken / Kitty won't start:** This almost always means you did not place the required `.ttf` files (especially `InconsolataNerdFont-Regular.ttf`) into the `.fonts/` directory *before* running `.setup.sh`.
+* **Security Tools Are Missing:** On non-`sudo` systems (like a restricted school computer), security tools (`nmap`, `gnupg`, `lynis`, `tcpdump`, `trivy`, `gitleaks`) are **not** installed. This is expected, as they require root privileges which are unavailable.
+* **`tcpdump` fails:** `tcpdump` requires root access. On Termux, you must run `su` first. On Linux, you must use `sudo tcpdump ...`.
 
 ---
 

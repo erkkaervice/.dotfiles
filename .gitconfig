@@ -4,6 +4,7 @@
 [core]
 	editor = nvim
 	ignorecase = false
+	excludesfile = /home/eala-lah/.gitignore_global
 [init]
 	defaultBranch = main
 [color]

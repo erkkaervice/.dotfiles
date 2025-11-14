@@ -12,12 +12,14 @@ fi
 # --- Fish Shell Auto-Switch ---
 # Switch to Fish in graphical sessions, fall back to Zsh if not.
 # if [[ $DISPLAY ]]; then
-# 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
+# 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]];
+# then
 # 		if command -v fish > /dev/null 2>&1; then
 # 			export SHELL=/usr/bin/fish
 # 			exec fish "$@"
 # 			export SHELL=/bin/zsh
-# 			echo "Failed to switch to fish shell." >&2
+# 			echo "Failed to switch to fish shell."
+# >&2
 # 		fi
 # 	fi
 # fi
@@ -26,17 +28,17 @@ fi
 autoload -Uz compinit
 compinit -u
 
-# --- Path Abbreviation Function (FINAL Zsh Fix) ---
+# --- Path Abbreviation Function (FINAL FIXED VERSION using Zsh array joining) ---
 _zsh_abbreviate_path_manual() {
-	# Use Zsh's built-in parameter expansion to resolve $HOME to ~
 	local full_path="${PWD/#$HOME/\~}"
 	
 	if [[ "$full_path" == "/" ]]; then echo "/"; return; fi
-	if [[ "$full_path" == "~" ]]; then echo "~"; return; fi
+	if [[ "$full_path" == "~" ]]; then echo "~"; return; } # Changed to { } block
+    
+	local path_to_process=""
+	local prefix=""
 
-	local prefix=""; local path_to_process=""
-	
-	# Determine if we need to keep a prefix (~/ or /)
+	# 1. Determine prefix and remove it from path for processing
 	if [[ "$full_path" == \~* ]];
 	then
 		prefix="~/"
@@ -46,35 +48,40 @@ _zsh_abbreviate_path_manual() {
 		path_to_process="${full_path#/}"
 	fi
 
-	# Split path into array elements. This method is cleaner in Zsh.
+	# 2. Split path into array elements (Zsh arrays are 1-indexed)
 	local path_parts=( ${(s:/:)path_to_process} )
-	local result="$prefix"
 	local num_parts=${#path_parts[@]};
+	local result_parts=()
+	local i
 
-	# Loop through all but the last part (Zsh arrays are 1-indexed)
+	# 3. Process all but the last part (abbreviate intermediate directories)
 	for (( i=1; i < num_parts; i++ )); do
 		local part=${path_parts[i]}
 		if [[ "$part" == .* ]]; then
 			# If dotfile, keep dot and first char: .d/
-			result+=".${part:1:1}/" 
+			result_parts+=( ".${part:1:1}" ) 
 		elif [[ -n "$part" ]]; then
 			# Otherwise, keep first char: d/
-			result+="${part:0:1}/"
+			result_parts+=( "${part:0:1}" )
 		fi
 	done
     
-	# Append the last part (the full directory name)
+	# 4. Append the last part (the full directory name)
 	if [[ -n "${path_parts[num_parts]}" ]]; then
-		result+="${path_parts[num_parts]}"
+		result_parts+=( "${path_parts[num_parts]}" )
 	fi
 
-	# Cleanup: The final path should not end in a slash unless it's root
-	# This handles the edge case where the loop might leave a trailing slash.
-	if [[ "$result" == */ ]] && [[ "$num_parts" -gt 0 ]];
-	then
-		result="${result%/}"
-	fi
-	echo "$result"
+	# 5. Join the parts with '/' and prepend the prefix (~/ or /)
+    # ${(j:/:)array} is Zsh's highly reliable array join syntax.
+    local joined_path="${(j:/:)result_parts}"
+    
+    # Handle the special case where the path is just a single dot or nothing
+    if [[ -z "$joined_path" && "$prefix" == "~/" ]]; then
+        echo "~"
+        return
+    fi
+    
+	echo "${prefix}${joined_path}"
 }
 
 # --- Zsh Git-Aware Prompt ---
@@ -95,5 +102,5 @@ precmd() {
 	vcs_info
 }
 
-# --- Zsh Git-Aware Prompt ---
+# PROMPT: [user@host path](git) >
 PROMPT='%F{cyan}[$(service_user)@%m $(_zsh_abbreviate_path_manual)]%f ${vcs_info_msg_0_}> '

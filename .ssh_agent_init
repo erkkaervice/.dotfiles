@@ -10,8 +10,10 @@
 # --- Environment File Paths ---
 # We use hostname to ensure sockets are not shared across different machines
 # using the same home directory (e..g., NFS).
-SSH_ENV_POSIX="$HOME/.ssh/agent-info-$(hostname).posix"
-SSH_ENV_FISH="$HOME/.ssh/agent-info-$(hostname).fish"
+# [FIXED] Use `uname -n` for reliability instead of `hostname`
+HOST_ID=$(uname -n)
+SSH_ENV_POSIX="$HOME/.ssh/agent-info-$HOST_ID.posix"
+SSH_ENV_FISH="$HOME/.ssh/agent-info-$HOST_ID.fish"
 
 # --- Start Agent Function ---
 start_agent() {

@@ -180,12 +180,15 @@ end
 
 # --- [FINAL FIX] Fish SSH Agent (Native Implementation) ---
 # This block is now self-contained and does not depend on Bash/Zsh.
-set -l SSH_ENV_FISH "$HOME/.ssh/agent-info-"(hostname)".fish"
+# [FIXED] Use (uname -n) for reliability instead of (hostname)
+set -l HOST_ID (uname -n)
+set -l SSH_ENV_FISH "$HOME/.ssh/agent-info-$HOST_ID.fish"
 
 # Function to start a new agent (for both Fish and POSIX)
 function __start_agent_fish
 	echo "Initializing new SSH agent (Fish)..."
-	set -l SSH_ENV_POSIX "$HOME/.ssh/agent-info-"(hostname)".posix"
+	set -l HOST_ID (uname -n)
+	set -l SSH_ENV_POSIX "$HOME/.ssh/agent-info-$HOST_ID.posix"
 	
 	# Create Fish (csh-style) agent file
 	ssh-agent -c | sed 's/^echo/#echo/' > "$SSH_ENV_FISH"

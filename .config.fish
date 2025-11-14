@@ -229,12 +229,18 @@ end
 # --- [END FIX] ---
 
 
-if command -v zoxide > /dev/null; zoxide init fish | source;
+if command -v zoxide > /dev/null
+	# [FIXED] Silence harmless startup warning
+	zoxide init fish 2>/dev/null | source;
 end
 if command -v fzf > /dev/ null;
-	fzf --fish | source; end
+	# [FIXED] Silence harmless startup warning
+	fzf --fish 2>/dev/null | source;
+end
 if command -v direnv > /dev/ null;
-	direnv hook fish | source; end
+	# [FIXED] Silence harmless startup warning
+	direnv hook fish 2>/dev/null | source;
+end
 
 # --- Start Fresh Function ---
 function startfresh

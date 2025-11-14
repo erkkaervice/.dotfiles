@@ -229,17 +229,16 @@ end
 # --- [END FIX] ---
 
 
-if command -v zoxide > /dev/null
-	# [FIXED] Silence harmless startup warning
-	zoxide init fish 2>/dev/null | source;
-end
-if command -v fzf > /dev/ null;
-	# [FIXED] Silence harmless startup warning
-	fzf --fish 2>/dev/null | source;
-end
-if command -v direnv > /dev/ null;
-	# [FIXED] Silence harmless startup warning
-	direnv hook fish 2>/dev/null | source;
+if command -v zoxide > /dev/null; zoxide init fish | source; end
+if command -v direnv > /dev/ null; direnv hook fish | source; end
+
+# [FIXED] Lazy-load FZF to fix the "/dev/" startup race condition in Termux.
+# This function will run on the first prompt, *after* the shell is fully interactive.
+if command -v fzf > /dev/null
+	function __fzf_init --on-event fish_prompt
+		fzf --fish | source
+		functions -e __fzf_init
+	end
 end
 
 # --- Start Fresh Function ---

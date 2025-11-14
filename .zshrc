@@ -4,7 +4,8 @@
 [[ ! -o interactive ]] && return
 
 # --- Source Common Settings ---
-if [[ -f ~/.sh_common ]]; then
+if [[ -f ~/.sh_common ]];
+then
 	source ~/.sh_common
 fi
 
@@ -15,9 +16,11 @@ fi
 
 # --- Fish Shell Auto-Switch ---
 # This block is commented out by default.
-# if [[ $DISPLAY ]]; then
+# if [[ $DISPLAY ]];
+then
 # 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
-# 		if command -v fish > /dev/null 2>&1; then
+# 		if command -v fish > /dev/null 2>&1;
+then
 # 			export SHELL=/usr/bin/fish
 # 			exec fish "$@"
 # 			export SHELL=/bin/zsh
@@ -33,11 +36,13 @@ compinit -u
 # --- Path Abbreviation Function ---
 _zsh_abbreviate_path_manual() {
 	local pwd_relative_to_home=${PWD/#$HOME/\~}
-	[[ "$pwd_relative_to_home" == "/" ]] && { echo "/"; return }
+	[[ "$pwd_relative_to_home" == "/" ]] && { echo "/";
+	return }
 	[[ "$pwd_relative_to_home" == "~" ]] && { echo "~"; return }
 
 	local prefix=""; local path_to_process=""
-	if [[ "$pwd_relative_to_home" == \~* ]]; then
+	if [[ "$pwd_relative_to_home" == \~* ]];
+	then
 		prefix="~/"
 		path_to_process="${pwd_relative_to_home#\~/}"
 	elif [[ "$pwd_relative_to_home" == /* ]]; then
@@ -46,13 +51,16 @@ _zsh_abbreviate_path_manual() {
 	fi
 
 	local path_parts=( ${(s:/:)path_to_process} )
-	local result="$prefix"; local num_parts=${#path_parts[@]}; local i
+	local result="$prefix"; local num_parts=${#path_parts[@]};
+	local i
 
 	for (( i=1; i <= num_parts; i++ )); do
-		if (( i < num_parts )); then # Intermediate directory
+		if (( i < num_parts ));
+		then # Intermediate directory
 			if [[ "${path_parts[i]}" == .* ]]; then
 				 result+=".${path_parts[i][2]}/"
-			 elif [[ -n "${path_parts[i]}" ]]; then
+			 elif [[ -n "${path_parts[i]}" ]];
+			then
 				result+="${path_parts[i][1]}/"
 			fi
 		elif [[ -n "${path_parts[i]}" ]]; then # Last directory
@@ -60,7 +68,8 @@ _zsh_abbreviate_path_manual() {
 		fi
 	done
 
-	if [[ "$result" == */ ]] && [[ "$num_parts" -gt 0 && "$prefix" != "/" ]]; then
+	if [[ "$result" == */ ]] && [[ "$num_parts" -gt 0 && "$prefix" != "/" ]];
+	then
 		result="${result%/}"
 	fi
 	echo "$result"
@@ -83,7 +92,6 @@ precmd() {
 	PROMPT="%F{cyan}[$(service_user)@%m${abbreviated_wd}]%f${vcs_info_msg_0_}> "
 }
 
-# --- Tmux Auto-Attach Logic ---
-if command -v tmux &> /dev/null && [ -z "$TMUX" ]; then
-    tmux attach-session -t main || tmux new-session -s main
-fi
+# --- [FIXED] Tmux Auto-Attach Logic ---
+# This block was removed because it is now correctly handled
+# inside ~/.sh_common, which is sourced above.

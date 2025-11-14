@@ -26,14 +26,17 @@ fi
 autoload -Uz compinit
 compinit -u
 
-# --- Path Abbreviation Function ---
+# --- Path Abbreviation Function (FINAL Zsh Fix) ---
 _zsh_abbreviate_path_manual() {
+	# Use Zsh's built-in parameter expansion to resolve $HOME to ~
 	local full_path="${PWD/#$HOME/\~}"
 	
 	if [[ "$full_path" == "/" ]]; then echo "/"; return; fi
 	if [[ "$full_path" == "~" ]]; then echo "~"; return; fi
 
 	local prefix=""; local path_to_process=""
+	
+	# Determine if we need to keep a prefix (~/ or /)
 	if [[ "$full_path" == \~* ]];
 	then
 		prefix="~/"
@@ -43,26 +46,31 @@ _zsh_abbreviate_path_manual() {
 		path_to_process="${full_path#/}"
 	fi
 
+	# Split path into array elements. This method is cleaner in Zsh.
 	local path_parts=( ${(s:/:)path_to_process} )
-	local result="$prefix"; 
+	local result="$prefix"
 	local num_parts=${#path_parts[@]};
-	local i
 
-	for (( i=1; i <= num_parts; i++ )); do
-		if (( i < num_parts ));
-		then # Intermediate directory
-			local part=${path_parts[i]}
-			if [[ "$part" == .* ]]; then
-				result+=".${part:1:1}/"
-			elif [[ -n "$part" ]]; then
-				result+="${part:0:1}/"
-			fi
-		elif [[ -n "${path_parts[i]}" ]]; then # Last directory
-			result+="${path_parts[i]}"
+	# Loop through all but the last part (Zsh arrays are 1-indexed)
+	for (( i=1; i < num_parts; i++ )); do
+		local part=${path_parts[i]}
+		if [[ "$part" == .* ]]; then
+			# If dotfile, keep dot and first char: .d/
+			result+=".${part:1:1}/" 
+		elif [[ -n "$part" ]]; then
+			# Otherwise, keep first char: d/
+			result+="${part:0:1}/"
 		fi
 	done
+    
+	# Append the last part (the full directory name)
+	if [[ -n "${path_parts[num_parts]}" ]]; then
+		result+="${path_parts[num_parts]}"
+	fi
 
-	if [[ "$result" == */ ]] && [[ "$num_parts" -gt 0 && "$prefix" != "/" ]];
+	# Cleanup: The final path should not end in a slash unless it's root
+	# This handles the edge case where the loop might leave a trailing slash.
+	if [[ "$result" == */ ]] && [[ "$num_parts" -gt 0 ]];
 	then
 		result="${result%/}"
 	fi

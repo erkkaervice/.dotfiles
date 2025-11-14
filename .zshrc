@@ -16,11 +16,9 @@ fi
 
 # --- Fish Shell Auto-Switch ---
 # This block is commented out by default.
-# if [[ $DISPLAY ]];
-then
+# if [[ $DISPLAY ]]; then
 # 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
-# 		if command -v fish > /dev/null 2>&1;
-then
+# 		if command -v fish > /dev/null 2>&1; then
 # 			export SHELL=/usr/bin/fish
 # 			exec fish "$@"
 # 			export SHELL=/bin/zsh

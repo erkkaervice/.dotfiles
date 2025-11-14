@@ -302,9 +302,9 @@ fi
 # Tmux Auto-Attach Logic
 # If tmux is installed AND we are not already inside tmux ($TMUX is not set)
 if command -v tmux >/dev/null 2>&1 && [ -z "$TMUX" ]; then
-	# Attempt to attach to a session named "main"
-	# If it fails (||), create a new session named "main"
-	tmux attach-session -t main || tmux new-session -s main
+	# [FIXED] Use 'exec' to replace the current shell with tmux.
+	# This ensures a single 'exit' will close the terminal.
+	exec tmux attach-session -t main || exec tmux new-session -s main
 fi
 
 # Direnv (loads .envrc files)

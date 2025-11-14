@@ -173,7 +173,9 @@ end
 # Tmux Auto-Attach Logic
 if command -v tmux > /dev/null;
 	and not set -q TMUX
-	tmux attach-session -t main; or tmux new-session -s main
+	# [FIXED] Use 'exec' to replace the current shell with tmux.
+	# This ensures a single 'exit' will close the terminal.
+	exec tmux attach-session -t main; or exec tmux new-session -s main
 end
 
 # --- [FIXED] Fish SSH Agent (Native Implementation) ---

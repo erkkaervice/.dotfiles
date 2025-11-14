@@ -7,7 +7,6 @@ set -l marker_file "$HOME/.dotfiles_initialized_"(id -u)
 if not test -f "$marker_file"
 	if not command -v zoxide >/dev/null 2>&1
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
-		# [FIXED] Corrected path from .config.fish to .config/fish
 		set -l C_PATH "$HOME/.config/fish/config.fish";
 		set -l D_DIR (dirname (readlink -f $C_PATH 2>/dev/null)); set -l S_SCRIPT "$D_DIR/.setup.sh"
 		if test -f "$S_SCRIPT"; bash "$S_SCRIPT"; else; bash "$HOME/.dotfiles/.setup.sh";
@@ -49,11 +48,14 @@ alias pscpu='ps auxf | sort -nr -k 3'
 # All Git aliases have been moved to ~/.gitconfig
 # to be universally available in shells, TUIs, and GUIs.
 # --- Modern Tool Aliases ---
-if command -v bat > /dev/null
-	alias cat='bat --paging=never'
-else if command -v batcat > /dev/null;
-	alias cat='batcat --paging=never'; end
-if command -v fd > /dev/null; alias find='fd'; end
+if command -v batcat > /dev/null
+	alias cat='batcat --paging=never'
+else if command -v bat > /dev/null;
+	alias cat='bat --paging=never'; end
+if command -v fdfind > /dev/null
+	alias find='fdfind'
+else if command -v fd > /dev/null;
+	alias find='fd'; end
 if command -v rg > /dev/null; alias grep='rg';
 end
 alias code='flatpak run com.visualstudio.code'
@@ -65,7 +67,6 @@ end
 
 # --- Functions ---
 function fish_prompt
-	# FIXED: Hardcode username to "ervice" to prevent sourcing .sh_common
 	set -l user_name "ervice"
 	set -l c_cyan (set_color cyan);
 	set -l c_magenta (set_color magenta); set -l c_norm (set_color normal)
@@ -79,7 +80,6 @@ function fish_prompt
 		end
 		if string match -q -- "M *" $g_status; or string match -q -- "A *" $g_status;
 		or string match -q -- "D *" $g_status; set s "+"; end
-		# [FIXED] Corrected variable typo from $u_s to $u$s
 		echo -n $c_magenta(string trim -- "("$g_branch$u$s")")$c_norm
 	end
 	if fish_is_root_user;
@@ -174,7 +174,6 @@ end
 # Tmux Auto-Attach Logic
 if command -v tmux > /dev/null;
 	and not set -q TMUX
-	# [FIXED] Use 'exec' after a check, not with 'or'.
 	# This replaces the shell and gives a true single-exit.
 	if tmux has-session -t main 2>/dev/null
 		exec tmux attach-session -t main
@@ -183,23 +182,22 @@ if command -v tmux > /dev/null;
 	end
 end
 
-# --- [FINAL FIX] Fish SSH Agent (Native Implementation) ---
-# [FIXED] Hardcode to 'localhost' since all dynamic hostnames fail at startup.
 set -l HOST_ID "localhost"
 set -l SSH_ENV_FISH "$HOME/.ssh/agent-info-$HOST_ID.fish"
 
 # Function to start a new agent (for both Fish and POSIX)
 function __start_agent_fish
 	echo "Initializing new SSH agent (Fish)..."
-	set -l HOST_ID "localhost"
-	# [FIXED] Define *both* variables inside the function to ensure they are not empty.
+	set -l HOST_ID (uname -n)
 	set -l SSH_ENV_FISH "$HOME/.ssh/agent-info-$HOST_ID.fish"
 	set -l SSH_ENV_POSIX "$HOME/.ssh/agent-info-$HOST_ID.posix"
 	
 	# Create Fish (csh-style) agent file
-	ssh-agent -c | sed 's/^echo/#echo/' > "$SSH_ENV_FISH"
+	ssh-agent -c |
+		sed 's/^echo/#echo/' > "$SSH_ENV_FISH"
 	# Create POSIX (sh/bash/zsh) agent file
-	ssh-agent -s | sed 's/^echo/#echo/' > "$SSH_ENV_POSIX"
+	ssh-agent -s |
+		sed 's/^echo/#echo/' > "$SSH_ENV_POSIX"
 	
 	chmod 600 "$SSH_ENV_FISH"
 	chmod 600 "$SSH_ENV_POSIX"
@@ -226,29 +224,29 @@ else
 	# Environment file doesn't exist yet, start agent for the first time.
 	__start_agent_fish
 end
-# --- [END FIX] ---
 
 
-# [FIXED] Lazy-load all integrations to fix the "/dev/" startup race condition.
 # These will run on the first prompt, *after* the shell is fully interactive.
-
 if command -v zoxide > /dev/null
 	function __zoxide_init --on-event fish_prompt
-		zoxide init fish | source
+		zoxide init fish |
+			source
 		functions -e __zoxide_init
 	end
 end
 
 if command -v fzf > /dev/null
 	function __fzf_init --on-event fish_prompt
-		fzf --fish | source
+		fzf --fish |
+			source
 		functions -e __fzf_init
 	end
 end
 
 if command -v direnv > /dev/null
 	function __direnv_init --on-event fish_prompt
-		direnv hook fish | source
+		direnv hook fish |
+			source
 		functions -e __direnv_init
 	end
 end
@@ -256,7 +254,6 @@ end
 
 # --- Start Fresh Function ---
 function startfresh
-	# [FIXED] Corrected path from .config.fish to .config/fish
 	set -l REPO_ROOT (dirname (readlink -f "$HOME/.config/fish/config.fish" 2>/dev/null))
 	# Fallback if readlink fails
 	if test -z "$REPO_ROOT";
@@ -305,7 +302,6 @@ function startfresh
 
 	echo "--- ENVIRONMENT RESET.
 	Starting fresh session. ---"
-	# FIXED: Exec into Bash, which is Termux's default POSIX shell
 	set -l BASH_PATH /bin/bash
 	if test -f /data/data/com.termux/files/usr/bin/bash
 		set BASH_PATH /data/data/com.termux/files/usr/bin/bash
@@ -315,12 +311,10 @@ end
 
 # --- Dotfiles Management Function ---
 function refresh
-	# --- [FIXED] Robust path detection for Termux ---
 	set -l REPO_ROOT ""
 	set -l SETUP_SCRIPT ""
 
 	# Try to find the repo root using readlink
-	# [FIXED] Corrected path from .config.fish to .config/fish
 	set -l C_PATH "$HOME/.config/fish/config.fish"
 	if command -v readlink > /dev/null
 		set -l D_DIR (dirname (readlink -f $C_PATH 2>/dev/null))
@@ -335,12 +329,11 @@ function refresh
 		set REPO_ROOT "$HOME/.dotfiles"
 		set SETUP_SCRIPT "$HOME/.dotfiles/.setup.sh"
 	end
-	# --- [END FIX] ---
 
 	echo "--- Refreshing Dotfiles (from $REPO_ROOT) ---"
 	
-	# [FIXED] Ensured Git Pull logic runs reliably and displays output.
-	if type -q git # Rely only on 'type -q git' for the check.
+	if type -q git # Rely only on 'type -q git' for 
+		the check.
 		# Explicitly check if the directory is a Git work tree before pull
 		if test -d "$REPO_ROOT/.git"
 			pushd "$REPO_ROOT"
@@ -360,8 +353,8 @@ function refresh
 		return 1
 	end
 	
-	# [FIXED] Removed the recursive source command to prevent looping.
-	echo "--- Environment updated. Please restart your shell. ---"
+	echo "--- Environment updated. Reloading shell... ---"
+	source "$HOME/.config/fish/config.fish"
 	
 	echo "--- Dotfiles Refreshed ---"
 end

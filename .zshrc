@@ -1,7 +1,8 @@
 # ~/.zshrc: executed by zsh(1) for interactive shells.
 
 # If not running interactively, don't do anything
-[[ ! -o interactive ]] && return
+[[ !
+-o interactive ]] && return
 
 # --- Source Common Settings ---
 if [[ -f ~/.sh_common ]];
@@ -9,19 +10,17 @@ then
 	source ~/.sh_common
 fi
 
-# --- Source SSH Agent (Interactive Only) ---
-# [FIXED] This block has been removed.
-# .sh_common (sourced above) now handles all ssh-agent logic.
-
 # --- Fish Shell Auto-Switch ---
-# This block is commented out by default.
+# Switch to Fish in graphical sessions, fall back to Zsh if not.
 # if [[ $DISPLAY ]]; then
-# 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
+# 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]];
+# then
 # 		if command -v fish > /dev/null 2>&1; then
 # 			export SHELL=/usr/bin/fish
 # 			exec fish "$@"
 # 			export SHELL=/bin/zsh
-# 			echo "Failed to switch to fish shell." >&2
+# 			echo "Failed to switch to fish shell."
+# >&2
 # 		fi
 # 	fi
 # fi
@@ -81,14 +80,4 @@ autoload -Uz vcs_info
 zstyle ':vcs_info:*' enable git
 zstyle ':vcs_info:*' check-for-changes true
 zstyle ':vcs_info:git:*' formats '%F{magenta}(%b%u%c)%f'
-zstyle ':vcs_info:git:*' actionformats '%F{magenta}(%b|%a%u%c)%f'
-
-precmd() {
-	vcs_info
-	local abbreviated_wd=$(_zsh_abbreviate_path_manual)
-	PROMPT="%F{cyan}[$(service_user)@%m${abbreviated_wd}]%f${vcs_info_msg_0_}> "
-}
-
-# --- [FIXED] Tmux Auto-Attach Logic ---
-# This block was removed because it is now correctly handled
-# inside ~/.sh_common, which is sourced above.
+zstyle ':vcs_info:git

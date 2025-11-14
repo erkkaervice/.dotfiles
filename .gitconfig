@@ -27,15 +27,6 @@
 	# --- Aliases Consolidated from Shell Configs ---
 	addup = add -u
 	addall = add .
-	branch = branch
-	checkout = checkout
-	clone = clone
-	commit = commit -m
-	fetch = fetch
-	pull = pull origin
-	push = push origin
-	stat = status
-	tag = tag
 	newtag = tag -a
 	gl = log --oneline --graph --decorate --all
 	

@@ -5,10 +5,6 @@
 # export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # --- Source Common Settings ---
-# Source common settings for login shells too (includes PATH additions)
-if [ -f "$HOME/.sh_common" ]; then
-	. "$HOME/.sh_common"
-fi
 
 # --- Clear Temp Directory ---
 # Clear temp directory on login (if it exists)
@@ -17,18 +13,22 @@ fi
 
 # --- Source Shell-Specific RC File ---
 # Source shell-specific rc file if login shell is also interactive
-if [ -n "$BASH_VERSION" ]; then
+if [ -n "$BASH_VERSION" ];
+then
 	# include .bashrc if it exists
 	if [ -f "$HOME/.bashrc" ]; then
 		. "$HOME/.bashrc"
 	fi
 fi
-if [ -n "$ZSH_VERSION" ]; then
-	# include .zshrc if it exists
-	if [ -f "$HOME/.zshrc" ]; then
+if [ -n "$ZSH_VERSION" ];
+then
+	# include .zshrc if it
+	if [ -f "$HOME/.zshrc" ];
+	then
 		# Zsh should automatically source .zshrc for interactive login shells
 		# but explicitly sourcing doesn't hurt if needed.
-		# . "$HOME/.zshrc"
+		# .
+		# "$HOME/.zshrc"
 		: # Zsh usually handles this
 	fi
 fi

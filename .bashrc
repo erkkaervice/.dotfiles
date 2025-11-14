@@ -9,19 +9,17 @@ then
 	. "$HOME/.sh_common"
 fi
 
-# --- Source SSH Agent (Interactive Only) ---
-# [FIXED] This block has been removed.
-# .sh_common (sourced above) now handles all ssh-agent logic.
-
 # --- Fish Shell Auto-Switch ---
-# This block is commented out by default.
+# Switch to Fish in graphical sessions, fall back to Bash if not.
 # if [[ $DISPLAY ]]; then
-# 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
+# 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]];
+# then
 # 		if command -v fish > /dev/null 2>&1; then
 # 			export SHELL=/usr/bin/fish
 # 			exec fish "$@"
 # 			export SHELL=/bin/bash
-# 			echo "Failed to switch to fish shell." >&2
+# 			echo "Failed to switch to fish shell."
+# >&2
 # 		fi
 # 	fi
 # fi
@@ -87,9 +85,3 @@ _bash_custom_git_prompt() {
 
 # --- Bash Git-Aware Prompt ---
 PS1='\\[\\e[0;36m\\][$(service_user)@\\h$(_bash_abbreviate_path)]\\[\\e[0m\\]\\[\\e[0;35m\\]$(_bash_custom_git_prompt)\\[\\e[0m\\]> '
-
-# --- Initialize Modern Tools ---
-
-# --- [FIXED] Tmux Auto-Attach Logic ---
-# This block was removed because it is now correctly handled
-# inside ~/.sh_common, which is sourced above.

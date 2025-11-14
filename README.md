@@ -200,11 +200,11 @@ If installed successfully, Kitty should appear in your system's application menu
 
 ## Troubleshooting
 
-* **`startfresh` fails:** If `refresh` is not found after running `startfresh`, you may need to manually `cd ~/.dotfiles` and run `bash .setup.sh` one time to restore the environment.
-* **Kitty not in menu**: Run `refresh` again. The script includes a specific fix to regenerate the `.desktop` file in `~/.local/share/applications` if it's missing.
-* **Wrong Shell**: If you aren't switched to Fish automatically, ensure `fish` is in your standard `/bin` or `/usr/bin` (and that the auto-switch logic is uncommented in `.bashrc`/`.zshrc`).
-* **Security Tools Are Missing:** On non-`sudo` systems (like a restricted school computer), most security tools (`nmap`, `gnupg`, `lynis`, `tcpdump`, `trivy`, `gitleaks`) will **not** be installed. This is expected behavior.
-* **`tcpdump` fails:** `tcpdump` requires root access. On Termux, you must run `su` first. On Linux, you must use `sudo tcpdump ...`.
+*	**`startfresh` fails:** If `refresh` is not found after running `startfresh`, you may need to manually `cd ~/.dotfiles` and run `bash .setup.sh` one time to restore the environment.
+*	**Kitty not in menu**: Run `refresh` again. The script includes a specific fix to regenerate the `.desktop` file in `~/.local/share/applications` if it's missing.
+*	**Wrong Shell**: If you aren't switched to Fish automatically, ensure `fish` is in your standard `/bin` or `/usr/bin`.
+*	**Security Tools Are Missing:** On non-`sudo` systems (like a restricted school computer), security tools (`nmap`, `gnupg`, `lynis`, `tcpdump`, `trivy`, `gitleaks`) are **not** installed. This is expected, as they require root privileges which are unavailable.
+*	**`tcpdump` fails:** `tcpdump` requires root access. On Termux, you must run `su` first. On Linux, you must use `sudo tcpdump ...`.
 
 ---
 

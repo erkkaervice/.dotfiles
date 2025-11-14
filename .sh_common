@@ -36,16 +36,15 @@ alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -e"
 alias psmem='ps auxf | sort -nr -k 4'	
 alias pscpu='ps auxf | sort -nr -k 3'
 
-# --- Git Aliases ---
-# All Git aliases have been moved to ~/.gitconfig
-# to be universally available in shells, TUIs, and GUIs.
 # --- Modern Tool Aliases ---
-if command -v bat > /dev/null 2>&1; then
-	alias cat='bat --paging=never'	
-elif command -v batcat > /dev/null 2>&1; then
-	alias cat='batcat --paging=never'
+if command -v batcat > /dev/null 2>&1; then
+	alias cat='batcat --paging=never'	
+elif command -v bat > /dev/null 2>&1; then
+	alias cat='bat --paging=never'
 fi	
-if command -v fd > /dev/null 2>&1; then
+if command -v fdfind > /dev/null 2>&1; then
+	alias find='fdfind'
+elif command -v fd > /dev/null 2>&1; then
 	alias find='fd'
 fi
 if command -v rg > /dev/null 2>&1; then
@@ -124,7 +123,6 @@ refresh() {
 
 	echo "--- Refreshing Dotfiles (from $REPO_ROOT) ---"
 
-	# [FIXED] Added explicit check for .git directory, just like in the fish config.
 	if command -v git >/dev/null 2>&1; then
 		if [ -d "$REPO_ROOT/.git" ]; then
 			(
@@ -136,7 +134,6 @@ refresh() {
 		fi
 	fi
 	
-	# [FIXED] Force shell reload before running setup and again at the end.
 	# This ensures the script is running the latest definitions.
 	if [ -n "$BASH_VERSION" ]; then
 		[ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"
@@ -291,6 +288,66 @@ cleanup() {
 	fi
 }
 
+# --- Start Fresh Function ---
+startfresh() {
+	local REPO_ROOT=""
+	local C_PATH=""
+	
+	# Try to find the repo root using readlink
+	if command -v readlink >/dev/null 2>&1; then
+		C_PATH=$(readlink -f "$HOME/.sh_common")
+		REPO_ROOT=$(dirname "$C_PATH")
+	fi
+
+	# Fallback if readlink fails or script not found, use default 
+	if [ -z "$REPO_ROOT" ] || [ "$REPO_ROOT" = "." ] || [ "$REPO_ROOT" = "/" ]; then
+		REPO_ROOT="$HOME/.dotfiles"
+	fi
+
+	echo "--- WARNING: Starting Fresh (Removing all custom dotfile links) ---"
+	echo "1. Removing config links..."
+	rm -f ~/.sh_common ~/.profile ~/.bashrc ~/.zshrc ~/.bash_logout
+	rm -f "$HOME/.ssh_agent_init"
+	rm -rf ~/.config/fish
+	rm -rf ~/.config/kitty
+	rm -rf ~/.config/fontconfig
+	rm -f "$HOME/.config/shell_secrets"
+
+	echo "2. Removing local user applications..."
+	rm -rf ~/.local/kitty.app
+	rm -rf ~/.fzf
+	rm -rf ~/.local/share/applications/kitty.desktop
+
+	rm -f "$HOME/.dotfiles_initialized_$(id -u)"
+
+	echo "3. Creating temporary recovery files to prevent Zsh/Bash wizard..."
+	
+	# Create a temporary, minimal .bashrc with only the refresh command
+	cat << EOF > "$HOME/.bashrc"
+# --- TEMPORARY RECOVERY SCRIPT ---
+echo '---------------------------------------------------'
+echo 'RUN: refresh (to rebuild your custom setup)'
+echo '---------------------------------------------------'
+
+refresh() {
+	echo '--- REFRESHING ENVIRONMENT ---'
+	bash "$REPO_ROOT/.setup.sh" || return 1
+	echo '--- Environment restored. Please restart your terminal. ---'
+	exec \$SHELL --login
+}
+EOF
+	
+	# Zsh can use the same recovery file
+	cp "$HOME/.bashrc" "$HOME/.zshrc"
+
+
+	echo "--- ENVIRONMENT RESET. Starting fresh session. ---"
+	local BASH_PATH=/bin/bash
+	if [ -f /data/data/com.termux/files/usr/bin/bash ]; then
+		BASH_PATH=/data/data/com.termux/files/usr/bin/bash
+	fi
+	exec $BASH_PATH --login
+}
 
 # --- Load Local Secrets (Ignored by Git) ---
 # Use this for API keys, tokens, etc.
@@ -304,7 +361,6 @@ fi
 
 # Tmux Auto-Attach Logic
 if command -v tmux >/dev/null 2>&1 && [ -z "$TMUX" ]; then
-	# [FIXED] Use 'exec' after a check, not with '||'.
 	# This replaces the shell and gives a true single-exit.
 	if tmux has-session -t main 2>/dev/null; then
 		exec tmux attach-session -t main
@@ -315,5 +371,9 @@ fi
 
 # Direnv (loads .envrc files)
 if command -v direnv >/dev/null 2>&1; then
-	eval "$(direnv hook "$SHELL_NAME")"
+	if [ -n "$BASH_VERSION" ]; then
+		eval "$(direnv hook bash)"
+	elif [ -n "$ZSH_VERSION" ]; then
+		eval "$(direnv hook zsh)"
+	fi
 fi

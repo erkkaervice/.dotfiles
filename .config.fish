@@ -146,7 +146,7 @@ function cleanup
 			end
 			if command -v apk >/dev/null; echo "Cleaning Alpine package cache..."; sudo apk cache clean; end
 			if command -v journalctl >/dev/null;
-				echo "Cleaning system logs (journald, limit to 2GB)..."; sudo journalctl --vacuum-size=2G; end
+				echo "Cleaning system logs (journald, limit to 2G)..."; sudo journalctl --vacuum-size=2G; end
 			if test -d "/tmp";
 				echo "Cleaning global /tmp (files older than 7 days)..."; sudo find /tmp -type f -atime +7 -delete 2>/dev/null;
 			end
@@ -178,26 +178,44 @@ if command -v tmux > /dev/null;
 	exit
 end
 
-# --- [THE REAL FIX] Unified SSH Agent ---
-# This logic *only* reads the agent file.
-# The .ssh_agent_init script (run by Bash/Zsh) is now the *only*
-# script that creates or starts the agent.
+# --- [FINAL FIX] Fish SSH Agent (Native Implementation) ---
+# This block is now self-contained and does not depend on Bash/Zsh.
 set -l SSH_ENV_FISH "$HOME/.ssh/agent-info-"(hostname)".fish"
 
+# Function to start a new agent (for both Fish and POSIX)
+function __start_agent_fish
+	echo "Initializing new SSH agent (Fish)..."
+	set -l SSH_ENV_POSIX "$HOME/.ssh/agent-info-"(hostname)".posix"
+	
+	# Create Fish (csh-style) agent file
+	ssh-agent -c | sed 's/^echo/#echo/' > "$SSH_ENV_FISH"
+	# Create POSIX (sh/bash/zsh) agent file
+	ssh-agent -s | sed 's/^echo/#echo/' > "$SSH_ENV_POSIX"
+	
+	chmod 600 "$SSH_ENV_FISH"
+	chmod 600 "$SSH_ENV_POSIX"
+	
+	# Source the new Fish file
+	source "$SSH_ENV_FISH"
+	ssh-add
+end
+
+# Main agent check logic for Fish
 if test -f "$SSH_ENV_FISH"
 	source "$SSH_ENV_FISH"
 	
-	# Check if agent is running
+	# Check if agent process is alive
 	if not kill -0 $SSH_AGENT_PID > /dev/null 2>&1
-		# Agent is dead. User must log in via Bash/Zsh to restart it.
-		echo "[SSH Agent] Agent is dead. Please log in from Bash/Zsh to restart it."
+		# Agent died, start a new one.
+		__start_agent_fish
 	else
-		# Agent is running, check if keys are loaded (this is the "ask once" logic)
+		# Agent is alive, check if keys are loaded.
+		# If not, run ssh-add. This asks "once per session".
 		ssh-add -l > /dev/null 2>&1; or ssh-add
 	end
 else
-	# File doesn't exist.
-	echo "[SSH Agent] Agent files not found. Please log in from Bash/Zsh to create them."
+	# Environment file doesn't exist yet, start agent for the first time.
+	__start_agent_fish
 end
 # --- [END FIX] ---
 
@@ -265,7 +283,7 @@ function startfresh
 	if test -f /data/data/com.termux/files/usr/bin/bash
 		set BASH_PATH /data/data/com.termux/files/usr/bin/bash
 	end
-	exec $B_PATH --login
+	exec $BASH_PATH --login
 end
 
 # --- Dotfiles Management Function ---

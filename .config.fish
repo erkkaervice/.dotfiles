@@ -79,7 +79,7 @@ function fish_prompt
 		end
 		if string match -q -- "M *" $g_status; or string match -q -- "A *" $g_status;
 		or string match -q -- "D *" $g_status; set s "+"; end
-		echo -n $c_magenta(string trim -- "("$g_branch$u$s")")$c_norm
+		echo -n $c_magenta(string trim -- "("$g_branch$u_s")")$c_norm
 	end
 	if fish_is_root_user;
 		echo -n "# "; else; echo -n "> "; end
@@ -121,7 +121,7 @@ function cleanup
 			echo "Cleaning Flatpak (unused user runtimes)..."
 			flatpak uninstall --user --unused -y
 			if test -d "$HOME/.var/app/com.visualstudio.code/cache";
-				echo "Cleaning VS Code (Flatpak) cache..."; rm -rf "$HOME/.var/app/com.visualstudio.code/cache"; end
+				echo "Cleaning VS Code (Flatpak) cache..."; rm -rf "$HOME/.var/app/com_visualstudio.code/cache"; end
 		end
 		
 		if command -v docker > /dev/null; echo "Cleaning Docker (pruning system)...";
@@ -146,7 +146,7 @@ function cleanup
 			end
 			if command -v apk >/dev/null; echo "Cleaning Alpine package cache..."; sudo apk cache clean; end
 			if command -v journalctl >/dev/null;
-				echo "Cleaning system logs (journald, limit to 2G)..."; sudo journalctl --vacuum-size=2G; end
+				echo "Cleaning system logs (journald, limit to 2GB)..."; sudo journalctl --vacuum-size=2G; end
 			if test -d "/tmp";
 				echo "Cleaning global /tmp (files older than 7 days)..."; sudo find /tmp -type f -atime +7 -delete 2>/dev/null;
 			end
@@ -179,15 +179,14 @@ if command -v tmux > /dev/null;
 end
 
 # --- [FINAL FIX] Fish SSH Agent (Native Implementation) ---
-# This block is now self-contained and does not depend on Bash/Zsh.
-# [FIXED] Use (uname -n) for reliability instead of (hostname)
-set -l HOST_ID (uname -n)
+# [FIXED] Use the Fish-native `(prompt_hostname)` function for reliability.
+set -l HOST_ID (prompt_hostname)
 set -l SSH_ENV_FISH "$HOME/.ssh/agent-info-$HOST_ID.fish"
 
 # Function to start a new agent (for both Fish and POSIX)
 function __start_agent_fish
 	echo "Initializing new SSH agent (Fish)..."
-	set -l HOST_ID (uname -n)
+	set -l HOST_ID (prompt_hostname)
 	set -l SSH_ENV_POSIX "$HOME/.ssh/agent-info-$HOST_ID.posix"
 	
 	# Create Fish (csh-style) agent file
@@ -284,7 +283,7 @@ function startfresh
 	# FIXED: Exec into Bash, which is Termux's default POSIX shell
 	set -l BASH_PATH /bin/bash
 	if test -f /data/data/com.termux/files/usr/bin/bash
-		set BASH_PATH /data/data/com.termux/files/usr/bin/bash
+		set BASH_PATH /data/data/comFtermux/files/usr/bin/bash
 	end
 	exec $BASH_PATH --login
 end

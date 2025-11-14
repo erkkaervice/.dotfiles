@@ -10,9 +10,8 @@ then
 fi
 
 # --- Source SSH Agent (Interactive Only) ---
-if [ -f "$HOME/.ssh_agent_init" ]; then
-	. "$HOME/.ssh_agent_init"
-fi
+# [FIXED] This block has been removed.
+# .sh_common (sourced above) now handles all ssh-agent logic.
 
 # --- Fish Shell Auto-Switch ---
 # This block is commented out by default.

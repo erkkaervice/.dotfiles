@@ -178,45 +178,26 @@ if command -v tmux > /dev/null;
 	exit
 end
 
-# --- [FIXED] Fish SSH Agent (Native Implementation) ---
-# This block provides the same logic as .ssh_agent_init for Bash/Zsh
+# --- [THE REAL FIX] Unified SSH Agent ---
+# This logic *only* reads the agent file.
+# The .ssh_agent_init script (run by Bash/Zsh) is now the *only*
+# script that creates or starts the agent.
 set -l SSH_ENV_FISH "$HOME/.ssh/agent-info-"(hostname)".fish"
 
-# Function to start a new agent and create both Fish and POSIX files
-function __start_agent_fish
-	echo "Initializing new SSH agent (Fish)..."
-	set -l SSH_ENV_POSIX "$HOME/.ssh/agent-info-"(hostname)".posix"
-	
-	# Create Fish (csh-style) agent file (for Termux)
-	ssh-agent -c |
-		sed 's/^echo/#echo/' > "$SSH_ENV_FISH"
-	# Create POSIX (sh/bash/zsh) agent file
-	ssh-agent -s |
-		sed 's/^echo/#echo/' > "$SSH_ENV_POSIX"
-	
-	chmod 600 "$SSH_ENV_FISH"
-	chmod 600 "$SSH_ENV_POSIX"
-	
-	# Source the new Fish file
-	source "$SSH_ENV_FISH"
-	ssh-add
-end
-
-# Main agent check logic for Fish
 if test -f "$SSH_ENV_FISH"
 	source "$SSH_ENV_FISH"
-	# [THE REAL FIX] Use 'kill -0' which is reliable, instead of 'ps |
+	
+	# Check if agent is running
 	if not kill -0 $SSH_AGENT_PID > /dev/null 2>&1
-		# Agent died, start a new one.
-		__start_agent_fish
+		# Agent is dead. User must log in via Bash/Zsh to restart it.
+		echo "[SSH Agent] Agent is dead. Please log in from Bash/Zsh to restart it."
 	else
-		# [THE REAL FIX] Agent is running, but check if keys are loaded.
-		# If ssh-add -l fails, run ssh-add.
+		# Agent is running, check if keys are loaded (this is the "ask once" logic)
 		ssh-add -l > /dev/null 2>&1; or ssh-add
 	end
 else
-	# Environment file doesn't exist yet, start agent for the first time.
-	__start_agent_fish
+	# File doesn't exist.
+	echo "[SSH Agent] Agent files not found. Please log in from Bash/Zsh to create them."
 end
 # --- [END FIX] ---
 
@@ -284,7 +265,7 @@ function startfresh
 	if test -f /data/data/com.termux/files/usr/bin/bash
 		set BASH_PATH /data/data/com.termux/files/usr/bin/bash
 	end
-	exec $BASH_PATH --login
+	exec $B_PATH --login
 end
 
 # --- Dotfiles Management Function ---

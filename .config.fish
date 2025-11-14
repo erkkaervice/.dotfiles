@@ -229,17 +229,30 @@ end
 # --- [END FIX] ---
 
 
-if command -v zoxide > /dev/null; zoxide init fish | source; end
-if command -v direnv > /dev/ null; direnv hook fish | source; end
+# [FIXED] Lazy-load all integrations to fix the "/dev/" startup race condition.
+# These will run on the first prompt, *after* the shell is fully interactive.
 
-# [FIXED] Lazy-load FZF to fix the "/dev/" startup race condition in Termux.
-# This function will run on the first prompt, *after* the shell is fully interactive.
+if command -v zoxide > /dev/null
+	function __zoxide_init --on-event fish_prompt
+		zoxide init fish | source
+		functions -e __zoxide_init
+	end
+end
+
 if command -v fzf > /dev/null
 	function __fzf_init --on-event fish_prompt
 		fzf --fish | source
 		functions -e __fzf_init
 	end
 end
+
+if command -v direnv > /dev/null
+	function __direnv_init --on-event fish_prompt
+		direnv hook fish | source
+		functions -e __direnv_init
+	end
+end
+
 
 # --- Start Fresh Function ---
 function startfresh

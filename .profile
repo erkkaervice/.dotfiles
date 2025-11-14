@@ -5,6 +5,10 @@
 # export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # --- Source Common Settings ---
+if [ -f "$HOME/.sh_common" ];
+then
+	. "$HOME/.sh_common"
+fi
 
 # --- Clear Temp Directory ---
 # Clear temp directory on login (if it exists)

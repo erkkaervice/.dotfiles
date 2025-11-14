@@ -6,6 +6,7 @@
 # --- Helper Functions ---
 print_info() { echo "[INFO] $1"; }
 print_error() { echo "[ERROR] $1" >&2; }
+print_warning() { echo "[WARN] $1" >&2; } # Added warning helper
 
 # --- Global Variables ---
 CAN_INSTALL_PACKAGES=true # Assume yes initially
@@ -35,9 +36,13 @@ check_sudo_and_set_flag() {
 # --- Main Script ---
 print_info "Starting dotfiles setup..."
 DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+echo "$DOTFILES_DIR" > "$HOME/.dotfiles-path"
+
 # Add ~/.local/bin to PATH immediately for this script
 # This ensures we can find locally installed Kitty for desktop integration.
-export PATH="$HOME/.local/bin:$PATH"
+# FIX: Use secure append to match README and runtime configs
+export PATH="$PATH:$HOME/.local/bin"
 
 check_sudo_and_set_flag
 
@@ -51,35 +56,36 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 	case "$OS_ID" in
 		termux)
 			print_info "Installing packages for Termux..."
-			pkg update -y && pkg install -y fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg clang dnsutils jq tmux neovim direnv
+			pkg update -y && pkg install -y curl git zsh fish unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg clang dnsutils jq tmux neovim direnv
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Termux installation failed."; fi
 			;;
 		ubuntu|debian|pop|mint|kali)
 			print_info "Installing packages for Debian/Ubuntu/Kali based system..."
-			sudo apt-get update -qq && sudo apt-get install -y fish git curl unzip p7zip-full unrar zstd fzf batcat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump build-essential dnsutils libarchive-tools jq tmux neovim direnv
+			sudo apt-get update -qq && sudo apt-get install -y curl git zsh fish unzip p7zip-full unrar zstd fzf batcat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump build-essential dnsutils libarchive-tools jq tmux neovim direnv
 			
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Debian/Ubuntu/Kali installation failed."; fi
 			;;
 		arch|manjaro|steamos)
 			print_info "Installing packages for Arch/SteamOS based system..."
-			sudo pacman -Syu --noconfirm --needed fish git base-devel curl bind unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty ttf-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump bind jq tmux neovim direnv libarchive
+			sudo pacman -Syu --noconfirm --needed curl git zsh fish base-devel bind unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty ttf-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump bind jq tmux neovim direnv libarchive
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Arch/SteamOS installation failed."; fi
 			;;
 		opensuse*|suse)
 			print_info "Installing packages for OpenSUSE based system..."
-			sudo zypper refresh && sudo zypper install -y fish git-core curl unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty google-inconsolata-fonts fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-utils libarchive-tools jq tmux neovim direnv
+			# FIX: Changed fd-find to fd
+			sudo zypper refresh && sudo zypper install -y curl git zsh fish unzip p7zip-full unrar zstd fzf bat fd ripgrep zoxide kitty google-inconsolata-fonts fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-utils libarchive-tools jq tmux neovim direnv
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "OpenSUSE installation failed."; fi
 			;;
 		alpine)
 			print_info "Installing packages for Alpine based system..."
-			sudo apk update && sudo apk add fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-tools libarchive jq tmux neovim direnv
+			sudo apk update && sudo apk add curl git zsh fish unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-tools libarchive jq tmux neovim direnv
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Alpine installation failed."; fi
 			;;
 		macos)
 			if command -v brew >/dev/null; then
 				print_info "Installing packages for macOS (Homebrew)..."
 				brew update
-				brew install fish git curl unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty nmap gnupg trivy gitleaks lynis tcpdump gcc bind libarchive jq tmux neovim direnv
+				brew install curl iproute2 git zsh fish unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty nmap gnupg trivy gitleaks lynis tcpdump gcc bind libarchive jq tmux neovim direnv
 				brew install --cask font-inconsolata 2>/dev/null || true
 			else INSTALL_FAILED=true; fi
 			[ $? -ne 0 ] && INSTALL_FAILED=true
@@ -89,10 +95,6 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 	esac
 	[ "$INSTALL_FAILED" = true ] && print_error "System package installation failed."
 else print_info "Skipping system packages (no sudo)."; fi
-
-# --- Update Flatpak/Snap Packages ---
-# MOVED TO HUB: This task is now performed manually via the planned 'hub' script for better control and speed.
-# The stub remains here to delineate the location.
 
 # --- Fallback: Local Tool Installation (No Sudo Required) ---
 if [ "$IS_TERMUX" = false ]; then
@@ -134,12 +136,6 @@ if [ "$IS_TERMUX" = false ]; then
 	fi
 fi
 
-# --- Fallback: Security Tools (Always run) ---
-# incompatible with Termux (non-PIE executable).
-if command -v curl >/dev/null 2>&1; then
-	: # All fallbacks removed
-fi
-
 # --- Custom Font Installation ---
 if [ "$IS_TERMUX" = false ]; then
 	# Define user font directory
@@ -150,6 +146,10 @@ if [ "$IS_TERMUX" = false ]; then
 	if [ -d "$FONTS_DIR" ] && [ "$(ls -A "$FONTS_DIR"/*.ttf 2>/dev/null)" ]; then
 		print_info "Installing all custom TTF fonts from .fonts/ directory...";
 		cp -n "$FONTS_DIR"/*.ttf "$UFD"/ 2>/dev/null
+		
+		if ! ls "$UFD"/Merriweather*.ttf > /dev/null 2>&1; then
+			print_warning "'.fonts.conf' maps 'serif' to 'Merriweather', but no Merriweather*.ttf font was found in your .fonts/ directory."
+		fi
 	else
 		print_warning "No TTF fonts found in .fonts/ directory. Skipping font installation."
 	fi
@@ -161,7 +161,6 @@ elif [ "$IS_TERMUX" = true ]; then
 	print_info "Installing Inconsolata Nerd Font (Termux)..."
 	mkdir -p "$HOME/.termux"
 	
-	# Check if the font is available locally in the repo's .fonts/ directory
 	LOCAL_FONT="$DOTFILES_DIR/.fonts/InconsolataNerdFont-Regular.ttf"
 	TERMUX_FONT="$HOME/.termux/font.ttf"
 	
@@ -169,13 +168,11 @@ elif [ "$IS_TERMUX" = true ]; then
 		print_info "Copying local Inconsolata Nerd Font to ~/.termux/font.ttf"
 		cp "$LOCAL_FONT" "$TERMUX_FONT"
 		
-		# Apply changes only if the file was copied
 		if [ -f "$TERMUX_FONT" ]; then
 			print_info "Applying font changes..."
 			command -v termux-reload-settings >/dev/null 2>&1 && termux-reload-settings
 		fi
 	else
-		# This will only happen if the user hasn't placed the file locally.
 		print_error "Could not find InconsolataNerdFont-Regular.ttf in .fonts/. Please ensure it is downloaded and placed there."
 	fi
 fi
@@ -193,9 +190,21 @@ fi
 
 # --- Link Dotfiles ---
 print_info "Linking dotfiles..."
-# Loop through all core dotfiles and link them
 for f in .sh_common .profile .bashrc .zshrc .bash_logout .ssh_agent_init; do ln -sf "$DOTFILES_DIR/$f" "$HOME/$f"; done
-# Link config directories
+
+ln -sf "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
+ln -sf "$DOTFILES_DIR/.gitignore" "$HOME/.gitignore_global"
+print_info "Linked .gitconfig and .gitignore_global."
+
+# FIX: Automate the final git config step
+if command -v git >/dev/null 2>&1; then
+	git config --global core.excludesfile "$HOME/.gitignore_global"
+	print_info "Set ~/.gitignore_global as global git exclude file."
+else
+	print_warning "git not found, skipping global exclude file setup."
+fi
+
+
 mkdir -p "$HOME/.config/fish"; ln -sf "$DOTFILES_DIR/.config.fish" "$HOME/.config/fish/config.fish"
 mkdir -p "$HOME/.config/nvim"; ln -sf "$DOTFILES_DIR/.init.vim" "$HOME/.config/nvim/init.vim"
 mkdir -p "$HOME/.var/app/io.neovim.nvim/config/nvim"; ln -sf "$DOTFILES_DIR/.init.vim" "$HOME/.var/app/io.neovim.nvim/config/nvim/init.vim"
@@ -208,6 +217,5 @@ if [ "$IS_TERMUX" = false ]; then
 fi
 print_info "Dotfiles linked. Setup finished!"
 
-# Run desktop configuration last
 [ -f "$DOTFILES_DIR/.configure_desktop.sh" ] && bash "$DOTFILES_DIR/.configure_desktop.sh"
 exit 0

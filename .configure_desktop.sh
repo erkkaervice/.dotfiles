@@ -28,7 +28,8 @@ case "$CURRENT_DE" in
 			if [ "$KITTY_AVAILABLE" = true ]; then gsettings set org.gnome.desktop.default-applications.terminal exec 'kitty'; gsettings set org.gnome.desktop.default-applications.terminal exec-arg ''; fi
 			gsettings set org.gnome.desktop.interface font-name 'Candara 11'
 			gsettings set org.gnome.desktop.interface document-font-name 'Candara 11'
-			gsettings set org.gnome.desktop.interface monospace-font-name 'Inconsolata 12'
+			# FIX: Use Nerd Font to match other configs
+			gsettings set org.gnome.desktop.interface monospace-font-name 'InconsolataNerdFont 12'
 			print_info "GNOME settings updated."
 		else print_warning "gsettings not found."; fi ;;
 	*kde*|*plasma*)
@@ -49,7 +50,8 @@ case "$CURRENT_DE" in
 				fi
 			fi
 			xfconf-query -c xsettings -p /Gtk/FontName -s 'Candara 11' --create
-			xfconf-query -c xsettings -p /Gtk/MonospaceFontName -s 'Inconsolata 12' --create
+			# FIX: Use Nerd Font to match other configs
+			xfconf-query -c xsettings -p /Gtk/MonospaceFontName -s 'InconsolataNerdFont 12' --create
 			print_info "XFCE settings updated."
 		else print_warning "xfconf-query not found."; fi ;;
 	*) print_warning "Unknown DE: $CURRENT_DE.";;

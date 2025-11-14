@@ -1,26 +1,22 @@
 # ~/.zshrc: executed by zsh(1) for interactive shells.
 
 # If not running interactively, don't do anything
-[[ !
--o interactive ]] && return
+[[ ! -o interactive ]] && return
 
 # --- Source Common Settings ---
-if [[ -f ~/.sh_common ]];
-then
+if [[ -f ~/.sh_common ]]; then
 	source ~/.sh_common
 fi
 
 # --- Fish Shell Auto-Switch ---
 # Switch to Fish in graphical sessions, fall back to Zsh if not.
 # if [[ $DISPLAY ]]; then
-# 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]];
-# then
+# 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
 # 		if command -v fish > /dev/null 2>&1; then
 # 			export SHELL=/usr/bin/fish
 # 			exec fish "$@"
 # 			export SHELL=/bin/zsh
-# 			echo "Failed to switch to fish shell."
-# >&2
+# 			echo "Failed to switch to fish shell." >&2
 # 		fi
 # 	fi
 # fi
@@ -71,13 +67,20 @@ _zsh_abbreviate_path_manual() {
 	echo "$result"
 }
 
-
 # --- Zsh Git-Aware Prompt ---
 autoload -U promptinit
 promptinit
 setopt PROMPT_SUBST
 autoload -Uz vcs_info
+
+# Set vcs_info options
 zstyle ':vcs_info:*' enable git
 zstyle ':vcs_info:*' check-for-changes true
 zstyle ':vcs_info:git:*' formats '%F{magenta}(%b%u%c)%f'
-zstyle ':vcs_info:git
+zstyle ':vcs_info:git:*' unstagedstr 'U'
+zstyle ':vcs_info:git:*' stagedstr '+'
+
+# Pre-prompt function to update vcs_info
+precmd() {
+	vcs_info
+}

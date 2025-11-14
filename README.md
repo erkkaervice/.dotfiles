@@ -1,7 +1,7 @@
 # dotfiles
 Personal shell configuration files for creating a consistent, powerful, and secure environment across various Linux distributions, macOS, and Termux.
 
-This repository provides synchronized setups for Bash, Zsh, and Fish. It standardizes not just the shell, but the entire terminal experience by including configurations for the **Kitty** terminal emulator and bundled system-wide font preferences. It features automated setup scripts that handle everything from package installation (with non-root fallbacks) to desktop environment integration and security hardening.
+This repository provides synchronized setups for Bash, Zsh, and Fish. It standardizes not just the shell, but the entire terminal experience by including configurations for the **Kitty** terminal emulator and system-wide font preferences. It features automated setup scripts that handle everything from package installation (with non-root fallbacks) to desktop environment integration and security hardening.
 
 ---
 
@@ -25,8 +25,9 @@ This configuration provides:
 ### Core Terminal Experience
 * **Universal Terminal**: Standardizes on **Kitty** across all desktop systems for a consistent rendering experience with no title bar.
 * **Consistent Fonts**:
-    * **Terminal**: Automatically installs and configures **Inconsolata** as the default monospace font.
-    * **UI/Desktop**: Includes and installs **Candara** as the default UI font via a bundled `.fonts` directory.
+    * **Terminal**: Automatically installs and configures **`InconsolataNerdFont`** as the default monospace font.
+    * **UI/Desktop**: Configures **Candara** (and **Merriweather** for serif) as the default UI fonts.
+    * **NOTE:** This setup *requires you to provide your own font files* (see Installation).
 * **Desktop Integration**: A specialized script (`.configure_desktop.sh`) automatically sets Kitty as the default terminal and applies font settings on GNOME, KDE Plasma, and XFCE.
 
 ### Multi-Shell Support
@@ -44,11 +45,21 @@ This configuration provides:
 * **Modern Replacements**: Automatically installs and aliases `cat` → `bat`, `find` → `fd`, `grep` → `ripgrep`, and `cd` → `zoxide`.
 * **Fuzzy Finding**: Integrates `fzf` for history search (`CTRL-R`), file search (`CTRL-T`), and directory jumping (`ALT-C`).
 * **System Management**: Colorized `ip`, human-readable `df`/`free`, and process shortcuts (`psa`, `psmem`, `pscpu`).
-* **Git Shortcuts**: `addup`, `addall`, `stat`, `pull`, `push`, `gl` (pretty log).
+* **Git Shortcuts**: A global `.gitconfig` provides:
+    * `st`: `status`
+    * `co`: `checkout`
+    * `br`: `branch`
+    * `ci`: `commit`
+    * `amend`: `commit --amend`
+    * `l`: Pretty graph log
+    * `logg`: One-line graph log
+    * `addup`: `add -u`
+    * `addall`: `add .`
+    * `gl`: One-line graph log (all)
 
 ### Helper Functions
 * **`refresh`**: The master command. Pulls updates from Git, re-runs the full setup/installation script, and reloads the current shell.
-* **`startfresh`**: A "factory reset" that wipes all custom configs and local apps, resetting to a clean system shell while preserving a recovery `refresh` command.
+* **`startfresh`**: A "factory reset" that wipes all symlinked configs and local apps, resetting to a clean system shell (but preserves a recovery `refresh` command).
 * **`cleanup`**: Cleans user caches (`~/.cache`, Trash), old backups, and application-specific caches (Flatpak, Docker, .NET). Can also clean system package caches (e.g., `cleanup --deep` for aggressive Pacman cleaning).
 * **`extract`**: Universal archive extractor.
 * **`ipinfo`**: Quick public IP and domain lookup.
@@ -91,25 +102,40 @@ The `setup.sh` script automatically detects and supports:
 
 ## Installation
 
-1.  **Clone the repository:**
+1.  **Install Git:**
+    You must have `git` installed to clone the repository.
+    ```sh
+    # Example for Debian/Ubuntu
+    sudo apt update && sudo apt install git
+    ```
+
+2.  **Clone the repository:**
     ```sh
     git clone git@github.com:erkkaervice/.dotfiles.git ~/.dotfiles
     cd ~/.dotfiles
     ```
 
-2.  **Run the Setup Script:**
+3.  **Add Your Fonts:**
+    This setup **requires** you to provide your own fonts. The script will *not* download them.
+    Place your `.ttf` files inside the `.fonts/` directory before proceeding.
+    * **Required for Kitty/Desktop:** `InconsolataNerdFont-Regular.ttf`
+    * **Required for Termux:** `InconsolataNerdFont-Regular.ttf`
+    * **Required for Desktop UI:** `Candara.ttf`, `Merriweather-Regular.ttf`, etc.
+
+4.  **Run the Setup Script:**
     ```sh
     bash .setup.sh
     ```
     *What it does:*
     * Detects OS and checks for `sudo` rights.
     * Installs required packages (falling back to local user install if `sudo` is missing).
-    * Installs bundled custom fonts (Candara) and system fonts (Inconsolata).
+    * **Copies** your provided `.ttf` files from the `.fonts/` directory to the system font locations.
     * Hardens SSH directory permissions.
     * Symlinks all configuration files (`.bashrc`, `.zshrc`, `.config/fish`, `.kitty.conf`, etc.).
+    * Links `.gitconfig` and links `.gitignore` as `~/.gitignore_global`. You must run `git config --global core.excludesfile ~/.gitignore_global` one time to activate it.
     * Triggers desktop integration to set Kitty and standard fonts as default.
 
-3.  **Restart:**
+5.  **Restart:**
     Close and reopen your terminal. The auto-refresh logic should run automatically, and you will be in your fully configured shell.
 
 ### Manual GPG Setup (One-Time Per Machine)
@@ -133,11 +159,10 @@ Find your new key in the list.
     ```sh
     gpg --list-secret-keys --keyid-format=long
     ```
-Copy the long key ID from the `sec rsa4096/...` line. (e.g., `ABC123DEF456GHI7`).
+Copy the long key ID from the `sec rsa406/`... line. (e.g., `ABC123DEF456GHI7`).
 
 **3. Save Your Key ID**
 This command creates the secret file (if missing) and adds your key, which the shell scripts will automatically detect. This file is already in your `.gitignore`.
-
     ```sh
     mkdir -p ~/.config
     echo 'export GPG_SIGNING_KEY="YOUR_KEY_ID_HERE"' >> ~/.config/shell_secrets
@@ -151,7 +176,7 @@ This command will print your public key.
 Copy the *entire block* (from `-----BEGIN...` to `-----END...`) and paste it into GitHub under **Settings > SSH and GPG keys > New GPG key**.
 
 **5. Restart Your Shell**
-Open a new terminal. You should see the message: `[INFO] Git GPG signing configured.`
+Open a new terminal. You should see the message: `[INFO] Git GGPG signing configured.`
 
 ---
 
@@ -181,11 +206,12 @@ If installed successfully, Kitty should appear in your system's application menu
 * **`.sh_common`**: Core logic shared by Bash and Zsh (aliases, exports, `refresh`, `cleanup`, `startfresh`).
 * **`.config.fish`**: Feature-equivalent configuration for Fish shell.
 * **`.kitty.conf`**: Cross-platform configuration for the Kitty terminal (fonts, opacity).
-* **`.fonts.conf`**: System-wide configuration to map "monospace" to Inconsolata and "sans-serif" to Candara.
-* **`.fonts/`**: Directory containing bundled TrueType fonts (Candara).
-* **`.gitignore`**: Prevents secrets, cache files, and OS junk from being committed.
+* **`.fonts.conf`**: System-wide configuration to map "monospace" to `InconsolataNerdFont` and "sans-serif" to Candara.
+* **`.fonts/`**: **(User-Provided)** Directory where you must place your `.ttf` files (e.g., `InconsolataNerdFont-Regular.ttf`).
+* **`.gitignore`**: Template for `~/.gitignore_global`. Prevents secrets, cache files, and OS junk from being committed *in any repo on your system*.
 * **`.ssh_agent_init`**: Cross-shell script to manage `ssh-agent` persistence.
 * **`.bashrc` / `.zshrc` / `.profile`**: Standard shell entry points that source the common config.
+* **`.gitconfig`**: Global Git configuration (user, editor, aliases).
 
 ---
 
@@ -202,7 +228,7 @@ If installed successfully, Kitty should appear in your system's application menu
 
 *	**`startfresh` fails:** If `refresh` is not found after running `startfresh`, you may need to manually `cd ~/.dotfiles` and run `bash .setup.sh` one time to restore the environment.
 *	**Kitty not in menu**: Run `refresh` again. The script includes a specific fix to regenerate the `.desktop` file in `~/.local/share/applications` if it's missing.
-*	**Wrong Shell**: If you aren't switched to Fish automatically, ensure `fish` is in your standard `/bin` or `/usr/bin`.
+*	**Fonts are broken / Kitty won't start:** This almost always means you did not place the required `.ttf` files (especially `InconsolataNerdFont-Regular.ttf`) into the `.fonts/` directory *before* running `.setup.sh`.
 *	**Security Tools Are Missing:** On non-`sudo` systems (like a restricted school computer), security tools (`nmap`, `gnupg`, `lynis`, `tcpdump`, `trivy`, `gitleaks`) are **not** installed. This is expected, as they require root privileges which are unavailable.
 *	**`tcpdump` fails:** `tcpdump` requires root access. On Termux, you must run `su` first. On Linux, you must use `sudo tcpdump ...`.
 

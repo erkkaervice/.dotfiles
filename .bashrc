@@ -12,16 +12,15 @@ fi
 # --- Fish Shell Auto-Switch ---
 # Switch to Fish in graphical sessions, fall back to Bash if not.
 # if [[ $DISPLAY ]]; then
-# 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]];
-# then
-# 		if command -v fish > /dev/null 2>&1; then
-# 			export SHELL=/usr/bin/fish
-# 			exec fish "$@"
-# 			export SHELL=/bin/bash
-# 			echo "Failed to switch to fish shell."
-# >&2
-# 		fi
-# 	fi
+#	if [[ "$(ps -p $$ -o comm=)" != "fish" ]];
+#	then
+#		if command -v fish > /dev/null 2>&1; then
+#			export SHELL=/usr/bin/fish
+#			exec fish "$@"
+#			export SHELL=/bin/bash
+#			echo "Failed to switch to fish shell." >&2
+#		fi
+#	fi
 # fi
 
 # --- Path Abbreviation Function ---
@@ -75,7 +74,8 @@ _bash_custom_git_prompt() {
 		then
 			unstaged="U"
 		fi
-		if [[ "$git_status" =~ ^(M |A |D) ]]; then
+		if [[ "$git_status" =~ ^(M |A |D) ]];
+		then
 			staged="+"
 		fi
 		echo "(${git_branch}${unstaged}${staged})"

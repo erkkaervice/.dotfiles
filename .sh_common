@@ -1,20 +1,11 @@
 # Common Aliases, Functions, and Exports for Bash and Zsh	
 
 # --- Auto-Refresh (Once per session) ---
-# Checks for a marker file.
-# If it doesn't exist,	
-# it checks if 'zoxide' is installed.
-# If not, it assumes this is a fresh
-# setup and runs the setup script automatically.
 if [ ! -f "$HOME/.dotfiles_initialized_$(id -u)" ]; then	
-	if ! command -v zoxide >/dev/null 2>&1; then	
+	if ! command -v zoxide >/dev/null 2>&1;
+	then	
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
-		if command -v readlink >/dev/null 2>&1; then
-			COMMON_PATH=$(readlink -f "$HOME/.sh_common"); REPO_ROOT=$(dirname "$COMMON_PATH");
-			SETUP_SCRIPT="$REPO_ROOT/.setup.sh"
-		else
-			SETUP_SCRIPT="$HOME/.dotfiles/.setup.sh"
-		fi	
+		SETUP_SCRIPT="$HOME/.dotfiles/.setup.sh"
 		[ -f "$SETUP_SCRIPT" ] && bash "$SETUP_SCRIPT" || echo "[Auto-Setup] Error: Could not find .setup.sh"
 	fi
 	touch "$HOME/.dotfiles_initialized_$(id -u)"
@@ -23,7 +14,10 @@ fi
 # --- Command Color Settings ---
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
-alias ip='ip -color=auto'
+if command -v ip >/dev/null 2>&1;
+then
+	alias ip='ip -color=auto'
+fi
 alias rm='rm -I'
 
 # --- Disk Usage ---
@@ -37,21 +31,25 @@ alias psmem='ps auxf | sort -nr -k 4'
 alias pscpu='ps auxf | sort -nr -k 3'
 
 # --- Modern Tool Aliases ---
-if command -v batcat > /dev/null 2>&1; then
+if command -v batcat > /dev/null 2>&1;
+then
 	alias cat='batcat --paging=never'	
 elif command -v bat > /dev/null 2>&1; then
 	alias cat='bat --paging=never'
 fi	
-if command -v fdfind > /dev/null 2>&1; then
+if command -v fdfind > /dev/null 2>&1;
+then
 	alias find='fdfind'
 elif command -v fd > /dev/null 2>&1; then
 	alias find='fd'
 fi
-if command -v rg > /dev/null 2>&1; then
+if command -v rg > /dev/null 2>&1;
+then
 	alias grep='rg'
 fi	
 # Fallback alias for neovim (uses Flatpak if nvim is not in PATH)
-if ! command -v nvim >/dev/null 2>&1 && command -v flatpak >/dev/null 2>&1; then
+if ! command -v nvim >/dev/null 2>&1 && command -v flatpak >/dev/null 2>&1;
+then
 	alias nvim='flatpak run io.neovim.nvim'
 fi
 
@@ -60,11 +58,17 @@ alias compile='compiler'
 compiler() {
 	[[ $1 ]] || { echo "Missing operand" >&2; return 1; }	
 	[[ -r $1 ]] || { printf "File %s does not exist or is not readable\n" "$1" >&2; return 1; }	
-	local output_path=${TMPDIR:-/tmp}/${1##*/};
-	gcc "$1" -Wall -Wextra -Werror -o "$output_path" && "$output_path";
-	rm "$output_path";
-	return 0;
-}	
+	
+	# FIX: Use mktemp for a secure, unique output file
+	local output_path
+	output_path=$(mktemp "${TMPDIR:-/tmp}/${1##*/}.XXXXXX") || { echo "Failed to create temp file" >&2; return 1; }
+	
+	gcc "$1" -Wall -Wextra -Werror -o "$output_path" && "$output_path"
+	local ret_code=$? # Capture exit code
+	
+	rm "$output_path"
+	return $ret_code
+}
 
 alias extract='extractor'
 extractor() {
@@ -92,9 +96,11 @@ extractor() {
 			*) echo "extractor: Skipped '$i' (unknown extension)." >&2; c=1 ;;
 		esac
 		
-		if [ $e -eq 0 ] && [ $c -eq 0 ]; then
+		if [ $e -eq 0 ] && [ $c -eq 0 ];
+		then
 			echo "extractor: Successfully extracted '$i'"
-		elif [ $e -eq 1 ]; then
+		elif [ $e -eq 1 ];
+		then
 			echo "extractor: Encountered an error extracting '$i'" >&2
 		fi
 	done
@@ -105,57 +111,42 @@ service_user() {
 	echo "ervice"
 }
 
-# --- Dotfiles Management Function ---
+# --- Dotfiles Management Wrappers ---
+# Get the repo root path once for all wrapper functions
+__get_dotfiles_repo_root() {
+	if [ -f "$HOME/.dotfiles-path" ];
+	then
+		cat "$HOME/.dotfiles-path"
+	else
+		echo "$HOME/.dotfiles" # Fallback
+	fi
+}
+
 refresh() {
-	local REPO_ROOT=""
-	local SETUP_SCRIPT=""
+	local REPO_ROOT
+	REPO_ROOT=$(__get_dotfiles_repo_root)
+	bash "$REPO_ROOT/.scripts/refresh.sh" "$@"
+	# Re-source the definitions after refresh
+	[ -f "$HOME/.sh_common" ] && . "$HOME/.sh_common"
+}
 
-	# Try to find repo root using readlink on the symlink
-	if command -v readlink >/dev/null 2>&1; then
-		local COMMON_PATH=$(readlink -f "$HOME/.sh_common")
-		REPO_ROOT=$(dirname "$COMMON_PATH")
-		SETUP_SCRIPT="$REPO_ROOT/.setup.sh"
-	else
-		# Fallback: Assume standard path
-		REPO_ROOT="$HOME/.dotfiles"
-		SETUP_SCRIPT="$REPO_ROOT/.setup.sh"
-	fi
+cleanup() {
+	local REPO_ROOT
+	REPO_ROOT=$(__get_dotfiles_repo_root)
+	bash "$REPO_ROOT/.scripts/cleanup.sh" "$@"
+}
 
-	echo "--- Refreshing Dotfiles (from $REPO_ROOT) ---"
-
-	if command -v git >/dev/null 2>&1; then
-		if [ -d "$REPO_ROOT/.git" ]; then
-			(
-				echo "Pulling updates from Git..."
-				cd "$REPO_ROOT" && git pull origin main
-			)
-		else
-			echo "[WARN] Skipping Git pull: $REPO_ROOT is not a Git repository."
-		fi
-	fi
-	
-	# This ensures the script is running the latest definitions.
-	if [ -n "$BASH_VERSION" ]; then
-		[ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"
-	elif [ -n "$ZSH_VERSION" ]; then
-		[ -f "$HOME/.zshrc" ] && . "$HOME/.zshrc"
-	fi
-	
-	# Run setup script using the latest sourced version
-	if [ -f "$SETUP_SCRIPT" ]; then
-		bash "$SETUP_SCRIPT"
-	else
-		echo "[Refresh] Error: Could not find setup script at $SETUP_SCRIPT" >&2
-		return 1
-	fi
-	
-	echo "--- Dotfiles Refreshed ---"
+startfresh() {
+	local REPO_ROOT
+	REPO_ROOT=$(__get_dotfiles_repo_root)
+	bash "$REPO_ROOT/.scripts/startfresh.sh" "$@"
 }
 
 # --- Network ---
 alias ipinfo='ipinformation'
 ipinformation() {
-	if [ -z "$1" ]; then
+	if [ -z "$1" ];
+	then
 		curl ipinfo.io | grep -v '"readme":'
 	else
 		curl "ipinfo.io/$1" | grep -v '"readme":'
@@ -165,194 +156,33 @@ ipinformation() {
 alias networkscan='nmap -T4 -F'
 
 # --- System & Security ---
-if sudo -n true 2>/dev/null; then
+if sudo -n true 2>/dev/null;
+then
 	alias audit='sudo lynis audit system'
 else
 	alias audit='lynis audit system'
 fi
 
-# --- Cleanup Function ---
-cleanup() {
-	echo "--- Disk Usage Cleanup (User Directories) ---"
-	du -sh ~/.cache ~/.local/share/Trash ~/.thumbnails 2>/dev/null
-	du -sh ~/.cache.backup ~/.local.backup ~/.config.backup 2>/dev/null
-	
-	local DO_CLEAN=0
-	local DEEP_CLEAN=0
-	local OPT
-	
-	# Parse arguments
-	while [ "$#" -gt 0 ]; do
-		OPT="$1"
-		case $OPT in
-			-y|--yes)
-				DO_CLEAN=1
-				shift
-				;;
-			--deep)
-				DEEP_CLEAN=1
-				shift
-				;;
-			*)
-				echo "Unknown option: $1" >&2
-				return 1
-				;;
-		esac
-	done
-
-	if [ "$DO_CLEAN" -eq 0 ]; then
-		printf "Clear user cache, thumbnails, trash, and backups? [y/N] "
-		read -r response
-		if [ "$(echo "$response" | tr '[:upper:]' '[:lower:]')" = "y" ] || [ "$(echo "$response" | tr '[:upper:]' '[:lower:]')" = "yes" ]; then
-			DO_CLEAN=1
-		fi
-	fi
-	
-	if [ "$DO_CLEAN" -eq 1 ]; then
-		echo "Clearing user directories (cache, trash, backups)..."
-		rm -rf ~/.local/share/Trash ~/.thumbnails
-		rm -rf ~/.cache; mkdir -p ~/.cache
-		rm -rf ~/.cache.backup ~/.local.backup ~/.config.backup
-		
-		command -v flatpak >/dev/null 2>&1 && {
-			echo "Cleaning Flatpak (unused user runtimes)..."
-			flatpak uninstall --user --unused -y
-			[ -d "$HOME/.var/app/com.visualstudio.code/cache" ] && {
-				echo "Cleaning VS Code (Flatpak) cache..."
-				rm -rf "$HOME/.var/app/com.visualstudio.code/cache"
-			}
-		}
-		
-		command -v docker >/dev/null 2>&1 && {
-			echo "Cleaning Docker (pruning system)..."
-			docker system prune -f
-		}
-		
-		command -v dotnet >/dev/null 2>&1 && {
-			echo "Cleaning .NET (clearing nuget caches)..."
-			dotnet nuget locals all --clear
-		}
-		
-		# Sudo-based cleanup
-		if sudo -n true 2>/dev/null; then
-			echo "--- System-Wide Cleanup (Sudo) ---"
-			
-			command -v apt-get >/dev/null 2>&1 && {
-				echo "Cleaning Debian/Ubuntu/Kali package cache..."
-				sudo apt-get autoremove -y && sudo apt-get clean
-			}
-			
-			command -v pacman >/dev/null 2>&1 && {
-				if [ "$DEEP_CLEAN" -eq 1 ]; then
-					echo "Cleaning Arch/SteamOS package cache (DEEP: -Scc)..."
-					sudo pacman -Scc --noconfirm
-				else
-					echo "Cleaning Arch/SteamOS package cache (Standard: -Sc)..."
-					echo -e "y\n" | sudo pacman -Sc
-				fi
-			}
-			
-			command -v zypper >/dev/null 2>&1 && {
-				echo "Cleaning OpenSUSE package cache..."
-				sudo zypper clean --all
-			}
-			
-			command -v brew >/dev/null 2>&1 && {
-				echo "Cleaning macOS/Homebrew cache..."
-				brew cleanup -s
-			}
-			
-			command -v apk >/dev/null 2>&1 && {
-				echo "Cleaning Alpine package cache..."
-				sudo apk cache clean
-			}
-			
-			command -v journalctl >/dev/null 2>&1 && {
-				echo "Cleaning system logs (journald, limit to 2GB)..."
-				sudo journalctl --vacuum-size=2G
-			}
-			
-			[ -d "/tmp" ] && {
-				echo "Cleaning global /tmp (files older than 7 days)..."
-				sudo find /tmp -type f -atime +7 -delete 2>/dev/null
-			}
-			[ -d "/var/tmp" ] && {
-				echo "Cleaning global /var/tmp (files older than 7 days)..."
-				sudo find /var/tmp -type f -atime +7 -delete 2>/dev/null
-			}
-		fi
-		
-		echo "Cleanup finished."
-	else
-		echo "Skipping cleanup."
-	fi
-}
-
-# --- Start Fresh Function ---
-startfresh() {
-	local REPO_ROOT=""
-	local C_PATH=""
-	
-	# Try to find the repo root using readlink
-	if command -v readlink >/dev/null 2>&1; then
-		C_PATH=$(readlink -f "$HOME/.sh_common")
-		REPO_ROOT=$(dirname "$C_PATH")
-	fi
-
-	# Fallback if readlink fails or script not found, use default 
-	if [ -z "$REPO_ROOT" ] || [ "$REPO_ROOT" = "." ] || [ "$REPO_ROOT" = "/" ]; then
-		REPO_ROOT="$HOME/.dotfiles"
-	fi
-
-	echo "--- WARNING: Starting Fresh (Removing all custom dotfile links) ---"
-	echo "1. Removing config links..."
-	rm -f ~/.sh_common ~/.profile ~/.bashrc ~/.zshrc ~/.bash_logout
-	rm -f "$HOME/.ssh_agent_init"
-	rm -rf ~/.config/fish
-	rm -rf ~/.config/kitty
-	rm -rf ~/.config/fontconfig
-	rm -f "$HOME/.config/shell_secrets"
-
-	echo "2. Removing local user applications..."
-	rm -rf ~/.local/kitty.app
-	rm -rf ~/.fzf
-	rm -rf ~/.local/share/applications/kitty.desktop
-
-	rm -f "$HOME/.dotfiles_initialized_$(id -u)"
-
-	echo "3. Creating temporary recovery files to prevent Zsh/Bash wizard..."
-	
-	# Create a temporary, minimal .bashrc with only the refresh command
-	cat << EOF > "$HOME/.bashrc"
-# --- TEMPORARY RECOVERY SCRIPT ---
-echo '---------------------------------------------------'
-echo 'RUN: refresh (to rebuild your custom setup)'
-echo '---------------------------------------------------'
-
-refresh() {
-	echo '--- REFRESHING ENVIRONMENT ---'
-	bash "$REPO_ROOT/.setup.sh" || return 1
-	echo '--- Environment restored. Please restart your terminal. ---'
-	exec \$SHELL --login
-}
-EOF
-	
-	# Zsh can use the same recovery file
-	cp "$HOME/.bashrc" "$HOME/.zshrc"
-
-
-	echo "--- ENVIRONMENT RESET. Starting fresh session. ---"
-	local BASH_PATH=/bin/bash
-	if [ -f /data/data/com.termux/files/usr/bin/bash ]; then
-		BASH_PATH=/data/data/com.termux/files/usr/bin/bash
-	fi
-	exec $BASH_PATH --login
-}
-
 # --- Load Local Secrets (Ignored by Git) ---
-# Use this for API keys, tokens, etc.
-if [ -f "$HOME/.config/shell_secrets" ]; then
+if [ -f "$HOME/.config/shell_secrets" ];
+then
 	. "$HOME/.config/shell_secrets"
+fi
+
+# --- PATH Modifications (Secure Append) ---
+# FIX: Add ~/.local/bin to PATH for Bash/Zsh to find fallback tools
+if [ -d "$HOME/.local/bin" ]; then
+	export PATH="$PATH:$HOME/.local/bin"
+fi
+
+# --- Auto-configure Git GPG Signing ---
+# FIX: Add GPG logic (was missing from Bash/Zsh)
+if command -v git >/dev/null 2>&1 && [ -n "$GPG_SIGNING_KEY" ];
+then
+	git config --global user.signingkey "$GPG_SIGNING_KEY"
+	git config --global commit.gpgsign true
+	git config --global tag.gpgSign true
+	echo "[INFO] Git GPG signing configured."
 fi
 
 # --- Init Integrations ---
@@ -360,9 +190,10 @@ fi
 [ -f "$HOME/.ssh_agent_init" ] && . "$HOME/.ssh_agent_init"
 
 # Tmux Auto-Attach Logic
-if command -v tmux >/dev/null 2>&1 && [ -z "$TMUX" ]; then
-	# This replaces the shell and gives a true single-exit.
-	if tmux has-session -t main 2>/dev/null; then
+if command -v tmux >/dev/null 2>&1 && [ -z "$TMUX" ];
+then
+	if tmux has-session -t main 2>/dev/null;
+	then
 		exec tmux attach-session -t main
 	else
 		exec tmux new-session -s main
@@ -370,10 +201,35 @@ if command -v tmux >/dev/null 2>&1 && [ -z "$TMUX" ]; then
 fi
 
 # Direnv (loads .envrc files)
-if command -v direnv >/dev/null 2>&1; then
+if command -v direnv >/dev/null 2>&1;
+then
 	if [ -n "$BASH_VERSION" ]; then
 		eval "$(direnv hook bash)"
-	elif [ -n "$ZSH_VERSION" ]; then
+	elif [ -n "$ZSH_VERSION" ];
+	then
 		eval "$(direnv hook zsh)"
 	fi
+fi
+
+# Zoxide (Smart 'cd' replacement)
+if command -v zoxide >/dev/null 2>&1; then
+	if [ -n "$BASH_VERSION" ];
+	then
+		eval "$(zoxide init bash)"
+	elif [ -n "$ZSH_VERSION" ]; then
+		eval "$(zoxide init zsh)"
+	fi
+fi
+
+# FZF (Keybindings)
+if [ -f "$HOME/.fzf.bash" ] && [ -n "$BASH_VERSION" ];
+then
+	. "$HOME/.fzf.bash"
+elif [ -f "$HOME/.fzf.zsh" ] && [ -n "$ZSH_VERSION" ]; then
+	. "$HOME/.fzf.zsh"
+# Fallback for package manager installs
+elif [ -f /usr/share/fzf/key-bindings.bash ] && [ -n "$BASH_VERSION" ]; then
+	. /usr/share/fzf/key-bindings.bash
+elif [ -f /usr/share/fzf/key-bindings.zsh ] && [ -n "$ZSH_VERSION" ]; then
+	. /usr/share/fzf/key-bindings.zsh
 fi

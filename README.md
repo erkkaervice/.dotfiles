@@ -91,14 +91,6 @@ The `setup.sh` script automatically detects and supports:
 
 ## Installation
 
-### ⚠️ CRITICAL PRE-INSTALLATION CHECK (SELinux/AppArmor)
-
-Before running the setup script on any system that uses Mandatory Access Control (MAC) like SELinux or AppArmor (common on Arch, Fedora, Debian, Ubuntu), you must set the framework to **permissive** or **disable it entirely**.
-
-If you skip this, the dotfiles setup script will fail when trying to install local binaries and symlinks, as the kernel will block the actions.
-
-**Action:** Ensure the system is set to permissive mode, then proceed with installation.
-
 1.  **Clone the repository:**
     ```sh
     git clone git@github.com:erkkaervice/.dotfiles.git ~/.dotfiles

@@ -57,6 +57,6 @@ esac
 
 if [ -f /etc/debian_version ] && command -v update-alternatives >/dev/null 2>&1; then
 	if [ "$EUID" -ne 0 ] && ! sudo -n true >/dev/null 2>&1; then print_warning "Not root. Skipping update-alternatives."
-	elif [ "$KITTY_AVAILABLE" = true ]; then print_info "Setting Debian alternatives priority..."; sudo update-alternatives --install /usr/bin/x-terminal-emulator x-terminal-emulator "$(which kitty)" 50 2>/dev/null; fi
+	elif [ "$KITTY_AVAILABLE" = true ]; then print_info "Setting Debian alternatives priority..."; sudo update-alternatives --install /usr/bin/x-terminal-emulator x-terminal-emulator "$(which kitty)" 50; fi
 fi
 exit 0

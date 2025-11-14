@@ -7,10 +7,11 @@
 # If not, it assumes this is a fresh
 # setup and runs the setup script automatically.
 if [ ! -f "$HOME/.dotfiles_initialized_$(id -u)" ]; then	
-	if ! command -v zoxide >/dev/null 2G; then	
+	if ! command -v zoxide >/dev/null 2>&1; then	
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
-		if command -v readlink >/dev/null 2G; then
-			COMMON_PATH=$(readlink -f "$HOME/.sh_common"); REPO_ROOT=$(dirname "$COMMON_PATH"); SETUP_SCRIPT="$REPO_ROOT/.setup.sh"
+		if command -v readlink >/dev/null 2>&1; then
+			COMMON_PATH=$(readlink -f "$HOME/.sh_common"); REPO_ROOT=$(dirname "$COMMON_PATH");
+			SETUP_SCRIPT="$REPO_ROOT/.setup.sh"
 		else
 			SETUP_SCRIPT="$HOME/.dotfiles/.setup.sh"
 		fi	
@@ -31,28 +32,27 @@ alias free='free -m'
 
 # --- Processes ---
 alias psa="ps auxf"
-alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -E"
+alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -e"
 alias psmem='ps auxf | sort -nr -k 4'	
 alias pscpu='ps auxf | sort -nr -k 3'
 
 # --- Git Aliases ---
 # All Git aliases have been moved to ~/.gitconfig
 # to be universally available in shells, TUIs, and GUIs.
-
 # --- Modern Tool Aliases ---
-if command -v bat > /dev/null 2G; then
+if command -v bat > /dev/null 2>&1; then
 	alias cat='bat --paging=never'	
-elif command -v batcat > /dev/null 2G; then
+elif command -v batcat > /dev/null 2>&1; then
 	alias cat='batcat --paging=never'
 fi	
-if command -v fd > /dev/null 2G; then
+if command -v fd > /dev/null 2>&1; then
 	alias find='fd'
 fi
-if command -v rg > /dev/null 2G; then
+if command -v rg > /dev/null 2>&1; then
 	alias grep='rg'
 fi	
 # Fallback alias for neovim (uses Flatpak if nvim is not in PATH)
-if ! command -v nvim >/dev/null 2G && command -v flatpak >/dev/null 2G; then
+if ! command -v nvim >/dev/null 2>&1 && command -v flatpak >/dev/null 2>&1; then
 	alias nvim='flatpak run io.neovim.nvim'
 fi
 
@@ -71,7 +71,7 @@ alias extract='extractor'
 extractor() {
 	local c e i
 	
-	command -v bsdtar >/dev/null 2G || { echo "bsdtar (libarchive) is not installed." >&2; return 1; }
+	command -v bsdtar >/dev/null 2>&1 || { echo "bsdtar (libarchive) is not installed." >&2; return 1; }
 	
 	for i in "$@"; do
 		if [ ! -f "$i" ]; then
@@ -112,7 +112,7 @@ refresh() {
 	local SETUP_SCRIPT=""
 
 	# Try to find repo root using readlink on the symlink
-	if command -v readlink >/dev/null 2G; then
+	if command -v readlink >/dev/null 2>&1; then
 		local COMMON_PATH=$(readlink -f "$HOME/.sh_common")
 		REPO_ROOT=$(dirname "$COMMON_PATH")
 		SETUP_SCRIPT="$REPO_ROOT/.setup.sh"
@@ -125,7 +125,7 @@ refresh() {
 	echo "--- Refreshing Dotfiles ---"
 
 	# [FIXED] Removed the failing directory check and simplified the block.
-	if command -v git >/dev/null 2G; then
+	if command -v git >/dev/null 2>&1; then
 		(
 			echo "Pulling updates from Git..."
 			# We CD to the repo root and pull. This will fail gracefully if it's not a git repo.
@@ -214,7 +214,7 @@ cleanup() {
 		rm -rf ~/.cache; mkdir -p ~/.cache
 		rm -rf ~/.cache.backup ~/.local.backup ~/.config.backup
 		
-		command -v flatpak >/dev/null 2G && {
+		command -v flatpak >/dev/null 2>&1 && {
 			echo "Cleaning Flatpak (unused user runtimes)..."
 			flatpak uninstall --user --unused -y
 			[ -d "$HOME/.var/app/com.visualstudio.code/cache" ] && {
@@ -223,12 +223,12 @@ cleanup() {
 			}
 		}
 		
-		command -v docker >/dev/null 2G && {
+		command -v docker >/dev/null 2>&1 && {
 			echo "Cleaning Docker (pruning system)..."
 			docker system prune -f
 		}
 		
-		command -v dotnet >/dev/null 2G && {
+		command -v dotnet >/dev/null 2>&1 && {
 			echo "Cleaning .NET (clearing nuget caches)..."
 			dotnet nuget locals all --clear
 		}
@@ -237,12 +237,12 @@ cleanup() {
 		if sudo -n true 2>/dev/null; then
 			echo "--- System-Wide Cleanup (Sudo) ---"
 			
-			command -v apt-get >/dev/null 2G && {
+			command -v apt-get >/dev/null 2>&1 && {
 				echo "Cleaning Debian/Ubuntu/Kali package cache..."
 				sudo apt-get autoremove -y && sudo apt-get clean
 			}
 			
-			command -v pacman >/dev/null 2G && {
+			command -v pacman >/dev/null 2>&1 && {
 				if [ "$DEEP_CLEAN" -eq 1 ]; then
 					echo "Cleaning Arch/SteamOS package cache (DEEP: -Scc)..."
 					sudo pacman -Scc --noconfirm
@@ -252,22 +252,22 @@ cleanup() {
 				fi
 			}
 			
-			command -v zypper >/dev/null 2G && {
+			command -v zypper >/dev/null 2>&1 && {
 				echo "Cleaning OpenSUSE package cache..."
 				sudo zypper clean --all
 			}
 			
-			command -v brew >/dev/null 2G && {
+			command -v brew >/dev/null 2>&1 && {
 				echo "Cleaning macOS/Homebrew cache..."
 				brew cleanup -s
 			}
 			
-			command -v apk >/dev/null 2G && {
+			command -v apk >/dev/null 2>&1 && {
 				echo "Cleaning Alpine package cache..."
 				sudo apk cache clean
 			}
 			
-			command -v journalctl >/dev/null 2G && {
+			command -v journalctl >/dev/null 2>&1 && {
 				echo "Cleaning system logs (journald, limit to 2GB)..."
 				sudo journalctl --vacuum-size=2G
 			}
@@ -301,13 +301,13 @@ fi
 
 # Tmux Auto-Attach Logic
 # If tmux is installed AND we are not already inside tmux ($TMUX is not set)
-if command -v tmux >/dev/null 2G && [ -z "$TMUX" ]; then
+if command -v tmux >/dev/null 2>&1 && [ -z "$TMUX" ]; then
 	# Attempt to attach to a session named "main"
 	# If it fails (||), create a new session named "main"
 	tmux attach-session -t main || tmux new-session -s main
 fi
 
 # Direnv (loads .envrc files)
-if command -v direnv >/dev/null 2G; then
+if command -v direnv >/dev/null 2>&1; then
 	eval "$(direnv hook "$SHELL_NAME")"
 fi

@@ -9,7 +9,6 @@
 
 # --- Environment File Paths ---
 # We use hostname to ensure sockets are not shared across different machines
-# using the same home directory (e..g., NFS).
 HOST_ID=$(uname -n)
 SSH_ENV_POSIX="$HOME/.ssh/agent-info-$HOST_ID.posix"
 SSH_ENV_FISH="$HOME/.ssh/agent-info-$HOST_ID.fish"
@@ -19,13 +18,10 @@ start_agent() {
 	echo "Initializing new SSH agent..."
 	
 	# Create POSIX (sh/bash/zsh) agent file
-	# We 'sed' out the 'echo' commands to prevent noise
-	/usr/bin/ssh-agent -s |
-sed 's/^echo/#echo/' > "${SSH_ENV_POSIX}"
+	/usr/bin/ssh-agent -s | sed 's/^echo/#echo/' > "${SSH_ENV_POSIX}"
 	
 	# Create Fish (csh-style) agent file
-	/usr/bin/ssh-agent -c |
-sed 's/^echo/#echo/' > "${SSH_ENV_FISH}"
+	/usr/bin/ssh-agent -c | sed 's/^echo/#echo/' > "${SSH_ENV_FISH}"
 	
 	# Set permissions
 	chmod 600 "${SSH_ENV_POSIX}"
@@ -34,7 +30,7 @@ sed 's/^echo/#echo/' > "${SSH_ENV_FISH}"
 	# Source the POSIX file for the *current* (sh/bash/zsh) shell
 	. "${SSH_ENV_POSIX}" > /dev/null
 	
-	# Add default identities
+	# Add default identities (This is where the user inputs the passphrase ONCE)
 	ssh-add
 }
 
@@ -47,11 +43,21 @@ then
 	. "${SSH_ENV_POSIX}" > /dev/null
 	
 	# Check if the agent process (PID) is actually running
-if kill -0 $SSH_AGENT_PID > /dev/null 2>&1; then
-		# If ssh-add -l fails, run ssh-add.
-		ssh-add -l > /dev/null 2>&1 ||
-ssh-add
-		return 0
+	if kill -0 $SSH_AGENT_PID > /dev/null 2>&1; then
+        
+		# --- FIX: Only prompt for password if agent is running AND keys are MISSING ---
+        
+        # ssh-add -l returns 0 if keys are loaded, 1 if keys are missing/agent is empty, or 2 if agent is unavailable.
+        if ssh-add -l > /dev/null 2>&1; then
+            # Keys are loaded (return code 0). Do nothing.
+            return 0
+        else
+            # Agent is running but keys are missing (return code 1). Add them now.
+            # This causes the one-time passphrase prompt.
+            echo "Loading SSH keys into agent..."
+            ssh-add 2>/dev/null
+            return 0
+        fi
 	else
 		# The agent file is stale (process died). Start a new one.
 		start_agent

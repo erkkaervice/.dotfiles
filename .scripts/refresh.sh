@@ -32,34 +32,33 @@ then
 		(
 			print_info "Pulling updates from Git..."
 			cd "$REPO_ROOT"
-
+            
 			# --- FIX: Implement Stash/Pop to handle local uncommitted changes ---
-
-			# 1. Stash changes, suppress output
-			# -u includes untracked files. STASHED=0 means stashed successfully.
+            
+			# 1. Stash changes, capturing both exit code AND text output
 			STASH_OUTPUT=$(git stash push -u -m "Auto-stashed by dotfiles refresh script" 2>&1)
 			STASHED=$?
+            
+			# 2. Check if a stash was *actually* created
+			# We check if STASHED=0 (command success) AND
+			# if the output does NOT contain the "no changes" message.
+			local DID_STASH=1 # 1 = false (no stash created)
+			if [ $STASHED -eq 0 ] && ! echo "$STASH_OUTPUT" | grep -q "No local changes to save"; then
+				DID_STASH=0 # 0 = true (stash was created)
+			fi
 
-			# Check if stashing was successful (0) or if there were no changes (1)
-			if [ $STASHED -eq 0 ] || [ $STASHED -eq 1 ]; then
-
-				# 2. Pull updates (will rebase due to .gitconfig)
-				git pull origin main || print_error "Git pull failed. Manual intervention may be required."
-
-				# 3. Apply stash back IF AND ONLY IF changes were stashed (STASHED=0)
-				if [ $STASHED -eq 0 ]; then
-					print_info "Re-applying stashed local changes..."
-					# --index tries to restore staged files back to staged
-					# Check return code of pop command to detect conflicts
-					if ! git stash pop --index; then 
-						print_warning "Conflict detected when popping stash. Please resolve manually and run setup again."
-					fi
-				else
-					# STASHED = 1 (No local changes, no need to pop)
-					print_info "No local changes were stashed."
+			# 3. Pull updates
+			git pull origin main || print_error "Git pull failed. Manual intervention may be required."
+				
+			# 4. Apply stash back IF AND ONLY IF a stash was created (DID_STASH=0)
+			if [ $DID_STASH -eq 0 ]; then
+				print_info "Re-applying stashed local changes..."
+				# --index tries to restore staged files back to staged
+				if ! git stash pop --index; then 
+					print_warning "Conflict detected when popping stash. Please resolve manually and run setup again."
 				fi
 			else
-				print_error "Git stash failed: $STASH_OUTPUT"
+				print_info "No local changes were stashed."
 			fi
 		)
 	else

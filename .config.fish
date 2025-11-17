@@ -110,7 +110,6 @@ function compile
 	end
 end
 
-# --- FIX: Corrected 'extract' function syntax ---
 function extract
 	if not command -v bsdtar > /dev/null
 		echo "extract: bsdtar (libarchive) is not installed." >&2
@@ -139,7 +138,6 @@ function extract
 end
 
 alias ipinfo='ipinformation'
-# --- FIX: Corrected 'ipinformation' function syntax ---
 function ipinformation
 	if test -z "$argv[1]"
 		curl ipinfo.io | grep -v '"readme":'
@@ -154,9 +152,24 @@ function __get_dotfiles_repo_root
 	cat "$HOME/.dotfiles-path" 2>/dev/null; or echo "$HOME/.dotfiles"
 end
 
+# --- FIX: Modified 'refresh' to inject the agent into the bash sub-shell ---
 function refresh
 	set -l REPO_ROOT (__get_dotfiles_repo_root)
-	bash "$REPO_ROOT/.scripts/refresh.sh" $argv
+	
+	# Manually source the POSIX agent file in the bash sub-shell
+	# This fixes the "passphrase" loop in Termux by giving the bash
+	# sub-shell the SSH_AUTH_SOCK variable from the POSIX file.
+	set -l HOST_ID (uname -n)
+	set -l SSH_ENV_POSIX "$HOME/.ssh/agent-info-$HOST_ID.posix"
+	
+	if test -f "$SSH_ENV_POSIX"
+		# Force the bash sub-shell to load the agent, THEN run the script
+		bash -c "source $SSH_ENV_POSIX; $REPO_ROOT/.scripts/refresh.sh $argv"
+	else
+		# Fallback if agent file is missing
+		bash "$REPO_ROOT/.scripts/refresh.sh" $argv
+	end
+
 	# Re-source the definitions after refresh
 	[ -f "$HOME/.config/fish/config.fish" ] && source "$HOME/.config/fish/config.fish"
 end
@@ -233,5 +246,5 @@ if command -v git > /dev/null;
 	git config --global user.signingkey "$GPG_SIGNING_KEY"
 	git config --global commit.gpgsign true
 	git config --global tag.gpgSign true
-	echo "[INFO] Git GClick signing configured."
+	echo "[INFO] Git GPG signing configured."
 end

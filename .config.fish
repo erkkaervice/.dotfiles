@@ -164,7 +164,8 @@ function refresh
 	
 	if test -f "$SSH_ENV_POSIX"
 		# Force the bash sub-shell to load the agent, THEN run the script
-		bash -c "source $SSH_ENV_POSIX; $REPO_ROOT/.scripts/refresh.sh $argv"
+		# Use "bash" as $0 and pass $argv as $1, $2...
+		bash -c ". $SSH_ENV_POSIX; $REPO_ROOT/.scripts/refresh.sh \"\$@\"" bash $argv
 	else
 		# Fallback if agent file is missing
 		bash "$REPO_ROOT/.scripts/refresh.sh" $argv

@@ -30,32 +30,22 @@ start_agent() {
 	# Source the POSIX file for the *current* (sh/bash/zsh) shell
 	. "${SSH_ENV_POSIX}" > /dev/null
 	
-	# Add default identities (This is where the user inputs the passphrase ONCE)
-	ssh-add
+	# --- FIX: Removed 'ssh-add' ---
+	# Keys should be added manually by the user when needed.
 }
 
 # --- Main Logic ---
 
 # Check if the POSIX environment file exists
-if [ -f "${SSH_ENV_POSIX}" ];
-then
+if [ -f "${SSH_ENV_POSIX}" ]; then
 	# Source the existing file
 	. "${SSH_ENV_POSIX}" > /dev/null
 	
 	# Check if the agent process (PID) is actually running
 	if kill -0 $SSH_AGENT_PID > /dev/null 2>&1; then
-                
-        # ssh-add -l returns 0 if keys are loaded, 1 if keys are missing/agent is empty, or 2 if agent is unavailable.
-        if ssh-add -l > /dev/null 2>&1; then
-            # Keys are loaded (return code 0). Do nothing.
-            return 0
-        else
-            # Agent is running but keys are missing (return code 1). Add them now.
-            # This causes the one-time passphrase prompt.
-            echo "Loading SSH keys into agent..."
-            ssh-add 2>/dev/null
-            return 0
-        fi
+		# --- FIX: Removed logic that auto-ran 'ssh-add' if keys were missing ---
+		# Agent is running, do nothing.
+		return 0
 	else
 		# The agent file is stale (process died). Start a new one.
 		start_agent

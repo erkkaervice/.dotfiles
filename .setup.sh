@@ -60,7 +60,8 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 			;;
 		ubuntu|debian|pop|mint|kali)
 			print_info "Installing packages for Debian/Ubuntu/Kali based system..."
-			sudo apt-get update -qq && sudo apt-get install -y curl git zsh fish unzip p7zip-full unrar zstd fzf batcat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump build-essential dnsutils libarchive-tools jq tmux neovim direnv
+			# --- FIX 1: Changed 'batcat' to 'bat' ---
+			sudo apt-get update -qq && sudo apt-get install -y curl git zsh fish unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump build-essential dnsutils libarchive-tools jq tmux neovim direnv
 			
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Debian/Ubuntu/Kali installation failed."; fi
 			;;
@@ -117,7 +118,7 @@ if [ "$IS_TERMUX" = false ]; then
 		print_warning "git not found. Skipping local fallback for FZF."
 	else
 		# 2. FZF Fallback
-		if ! command -v fzf >/dev/null 2>&1; then print_info "Fallback: FZF..."; git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf; ~/.fzf/install --all --no-bash --no-zsh --no-fish; ln -sf "$HOME/.fzf/bin/fzf" "$HOME/.local/bin/fzf"; fi
+		if ! command -v fzf >/dev/null 2>&1; then print_info "Fallback: FZF..."; git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf; ~/.ff/install --all --no-bash --no-zsh --no-fish; ln -sf "$HOME/.fzf/bin/fzf" "$HOME/.local/bin/fzf"; fi
 	fi
 
 	# 2. Kitty Desktop Integration (Always check, even if installed)
@@ -194,12 +195,13 @@ ln -sf "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
 ln -sf "$DOTFILES_DIR/.gitignore" "$HOME/.gitignore_global"
 print_info "Linked .gitconfig and .gitignore_global."
 
-if command -v git >/dev/null 2>&1; then
-	git config --global core.excludesfile "$HOME/.gitignore_global"
-	print_info "Set ~/.gitignore_global as global git exclude file."
-else
-	print_warning "git not found, skipping global exclude file setup."
-fi
+# --- FIX 2: Removed redundant git config command that modifies the tracked .gitconfig file ---
+# if command -v git >/dev/null 2>&1; then
+#	git config --global core.excludesfile "$HOME/.gitignore_global"
+#	print_info "Set ~/.gitignore_global as global git exclude file."
+# else
+#	print_warning "git not found, skipping global exclude file setup."
+# fi
 
 
 mkdir -p "$HOME/.config/fish"; ln -sf "$DOTFILES_DIR/.config.fish" "$HOME/.config/fish/config.fish"

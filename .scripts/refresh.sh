@@ -34,7 +34,11 @@ then
 			print_info "Pulling updates from Git..."
 			cd "$REPO_ROOT"
             
-			# --- FIX: Implement Stash/Pop to handle local uncommitted changes ---
+			# --- IMMEDIATE FIX: Discard the problematic unstaged permission change ---
+			# This is a one-time fix required because the user manually ran chmod on a linked file.
+			git restore --staged --worktree "$HOME/.ssh_agent_init" 2>/dev/null || true
+            
+			# --- Implement Stash/Pop to handle local uncommitted changes ---
             
 			# 1. Stash changes, suppress output
 			# -u includes untracked files. STASHED=0 means stashed successfully.
@@ -51,7 +55,6 @@ then
 				if [ $STASHED -eq 0 ]; then
 					print_info "Re-applying stashed local changes..."
 					# --index tries to restore staged files back to staged
-					# Check return code of pop command to detect conflicts
 					if ! git stash pop --index; then 
 						print_warning "Conflict detected when popping stash. Please resolve manually and run setup again."
 					fi

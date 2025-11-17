@@ -41,6 +41,7 @@ echo "$DOTFILES_DIR" > "$HOME/.dotfiles-path"
 
 # Add ~/.local/bin to PATH immediately for this script
 # This ensures we can find locally installed Kitty for desktop integration.
+# FIX: Use secure append to match README and runtime configs
 export PATH="$PATH:$HOME/.local/bin"
 
 check_sudo_and_set_flag
@@ -71,6 +72,7 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 			;;
 		opensuse*|suse)
 			print_info "Installing packages for OpenSUSE based system..."
+			# FIX: Changed fd-find to fd
 			sudo zypper refresh && sudo zypper install -y curl git zsh fish unzip p7zip-full unrar zstd fzf bat fd ripgrep zoxide kitty google-inconsolata-fonts fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-utils libarchive-tools jq tmux neovim direnv
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "OpenSUSE installation failed."; fi
 			;;
@@ -194,6 +196,7 @@ ln -sf "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
 ln -sf "$DOTFILES_DIR/.gitignore" "$HOME/.gitignore_global"
 print_info "Linked .gitconfig and .gitignore_global."
 
+# FIX: Automate the final git config step
 if command -v git >/dev/null 2>&1; then
 	git config --global core.excludesfile "$HOME/.gitignore_global"
 	print_info "Set ~/.gitignore_global as global git exclude file."
@@ -213,6 +216,16 @@ if [ "$IS_TERMUX" = false ]; then
 	ln -sf "$DOTFILES_DIR/.fonts.conf" "$HOME/.config/fontconfig/fonts.conf"
 fi
 print_info "Dotfiles linked. Setup finished!"
+
+# --- FIX: Automate Script Permissions to avoid Git Modification Issues (The permanent fix) ---
+print_info "Ensuring dotfiles scripts are executable..."
+chmod +x "$HOME/.ssh_agent_init"
+chmod +x "$DOTFILES_DIR/.setup.sh"
+chmod +x "$DOTFILES_DIR/.scripts/refresh.sh"
+chmod +x "$DOTFILES_DIR/.scripts/cleanup.sh"
+chmod +x "$DOTFILES_DIR/.scripts/startfresh.sh"
+# Ensure the desktop script is executable if it was provided
+[ -f "$DOTFILES_DIR/.configure_desktop.sh" ] && chmod +x "$DOTFILES_DIR/.configure_desktop.sh"
 
 [ -f "$DOTFILES_DIR/.configure_desktop.sh" ] && bash "$DOTFILES_DIR/.configure_desktop.sh"
 exit 0

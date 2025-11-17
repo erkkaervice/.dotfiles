@@ -44,9 +44,7 @@ then
 	
 	# Check if the agent process (PID) is actually running
 	if kill -0 $SSH_AGENT_PID > /dev/null 2>&1; then
-        
-		# --- FIX: Only prompt for password if agent is running AND keys are MISSING ---
-        
+                
         # ssh-add -l returns 0 if keys are loaded, 1 if keys are missing/agent is empty, or 2 if agent is unavailable.
         if ssh-add -l > /dev/null 2>&1; then
             # Keys are loaded (return code 0). Do nothing.

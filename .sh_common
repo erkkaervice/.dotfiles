@@ -187,7 +187,6 @@ fi
 # SSH Agent
 [ -f "$HOME/.ssh_agent_init" ] && . "$HOME/.ssh_agent_init"
 
-# Tmux Auto-Attach Logic (FIXED: Only run in INTERACTIVE shells)
 if [ -n "$PS1" ]; then
     if command -v tmux >/dev/null 2>&1 && [ -z "$TMUX" ];
     then

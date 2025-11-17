@@ -1,6 +1,5 @@
 # ~/.zshrc: executed by zsh(1) for interactive shells.
 
-# FIX: Use POSIX-compliant method to check for interactive shell
 case $- in
 	*i*) ;;
 	*) return;;
@@ -61,7 +60,6 @@ _zsh_abbreviate_path_manual() {
 			local part=${path_parts[i]}
 			if [[ "$part" == .* ]];
 			then
-				 # FIX: Use reliable slice syntax to fix the original bug in the path logic
 				 result+=".${part:1:1}/"
 			 elif [[ -n "$part" ]];
 			then

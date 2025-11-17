@@ -40,9 +40,8 @@ then
 			STASHED=$?
             
 			# 2. Check if a stash was *actually* created
-			# We check if STASHED=0 (command success) AND
-			# if the output does NOT contain the "no changes" message.
-			local DID_STASH=1 # 1 = false (no stash created)
+			# FIX: Removed 'local' keyword, as this is a subshell, not a function.
+			DID_STASH=1 # 1 = false (no stash created)
 			if [ $STASHED -eq 0 ] && ! echo "$STASH_OUTPUT" | grep -q "No local changes to save"; then
 				DID_STASH=0 # 0 = true (stash was created)
 			fi

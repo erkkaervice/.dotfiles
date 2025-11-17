@@ -20,8 +20,9 @@ start_agent() {
 	# Create POSIX (sh/bash/zsh) agent file
 	/usr/bin/ssh-agent -s | sed 's/^echo/#echo/' > "${SSH_ENV_POSIX}"
 	
-	# Create Fish (csh-style) agent file
-	/usr/bin/ssh-agent -c | sed 's/^echo/#echo/' > "${SSH_ENV_FISH}"
+	# --- FIX: Changed 'setenv' to 'set -gx' for proper exporting from Fish ---
+	# Create Fish (csh-style) agent file, but make variables global
+	/usr/bin/ssh-agent -c | sed 's/^setenv /set -gx /' | sed 's/^echo/#echo/' > "${SSH_ENV_FISH}"
 	
 	# Set permissions
 	chmod 600 "${SSH_ENV_POSIX}"
@@ -30,7 +31,6 @@ start_agent() {
 	# Source the POSIX file for the *current* (sh/bash/zsh) shell
 	. "${SSH_ENV_POSIX}" > /dev/null
 	
-	# --- FIX: Removed 'ssh-add' ---
 	# Keys should be added manually by the user when needed.
 }
 
@@ -43,7 +43,6 @@ if [ -f "${SSH_ENV_POSIX}" ]; then
 	
 	# Check if the agent process (PID) is actually running
 	if kill -0 $SSH_AGENT_PID > /dev/null 2>&1; then
-		# --- FIX: Removed logic that auto-ran 'ssh-add' if keys were missing ---
 		# Agent is running, do nothing.
 		return 0
 	else

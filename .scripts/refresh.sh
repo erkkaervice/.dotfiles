@@ -32,20 +32,20 @@ then
 		(
 			print_info "Pulling updates from Git..."
 			cd "$REPO_ROOT"
-            
+
 			# --- FIX: Implement Stash/Pop to handle local uncommitted changes ---
-            
+
 			# 1. Stash changes, suppress output
 			# -u includes untracked files. STASHED=0 means stashed successfully.
 			STASH_OUTPUT=$(git stash push -u -m "Auto-stashed by dotfiles refresh script" 2>&1)
 			STASHED=$?
-            
+
 			# Check if stashing was successful (0) or if there were no changes (1)
 			if [ $STASHED -eq 0 ] || [ $STASHED -eq 1 ]; then
-				
+
 				# 2. Pull updates (will rebase due to .gitconfig)
 				git pull origin main || print_error "Git pull failed. Manual intervention may be required."
-				
+
 				# 3. Apply stash back IF AND ONLY IF changes were stashed (STASHED=0)
 				if [ $STASHED -eq 0 ]; then
 					print_info "Re-applying stashed local changes..."

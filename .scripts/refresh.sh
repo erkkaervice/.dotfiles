@@ -32,7 +32,9 @@ then
 		(
 			print_info "Pulling updates from Git..."
 			cd "$REPO_ROOT"
-                        
+            
+			# --- FIX: Implement Stash/Pop to handle local uncommitted changes ---
+            
 			# 1. Stash changes, suppress output
 			# -u includes untracked files. STASHED=0 means stashed successfully.
 			STASH_OUTPUT=$(git stash push -u -m "Auto-stashed by dotfiles refresh script" 2>&1)

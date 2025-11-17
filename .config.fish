@@ -110,6 +110,7 @@ function compile
 	end
 end
 
+# --- FIX: Corrected 'extract' function syntax (removed all semicolons, added indentation) ---
 function extract
 	if not command -v bsdtar > /dev/null
 		echo "extract: bsdtar (libarchive) is not installed." >&2
@@ -138,6 +139,7 @@ function extract
 end
 
 alias ipinfo='ipinformation'
+# --- FIX: Corrected 'ipinformation' function syntax (removed all semicolons) ---
 function ipinformation
 	if test -z "$argv[1]"
 		curl ipinfo.io | grep -v '"readme":'
@@ -164,7 +166,6 @@ function refresh
 	
 	if test -f "$SSH_ENV_POSIX"
 		# Force the bash sub-shell to load the agent, THEN run the script
-		# Use "bash" as $0 and pass $argv as $1, $2...
 		bash -c ". $SSH_ENV_POSIX; $REPO_ROOT/.scripts/refresh.sh \"\$@\"" bash $argv
 	else
 		# Fallback if agent file is missing

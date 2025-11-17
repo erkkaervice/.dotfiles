@@ -20,7 +20,7 @@ start_agent() {
 	# Create POSIX (sh/bash/zsh) agent file
 	/usr/bin/ssh-agent -s | sed 's/^echo/#echo/' > "${SSH_ENV_POSIX}"
 	
-	# --- FIX 1: Use 'set -gx' for proper exporting from Fish ---
+	# --- FIX: Use 'set -gx' so Fish EXPORTS variables to sub-shells ---
 	/usr/bin/ssh-agent -c | sed 's/^setenv /set -gx /' | sed 's/^echo/#echo/' > "${SSH_ENV_FISH}"
 	
 	# Set permissions
@@ -35,11 +35,19 @@ start_agent() {
 
 # --- Main Logic ---
 
-# --- FIX 2: Removed unreliable 'kill -0' check ---
-# If the agent file exists, source it and TRUST it.
+# Check if the POSIX environment file exists
 if [ -f "${SSH_ENV_POSIX}" ]; then
 	# Source the existing file
 	. "${SSH_ENV_POSIX}" > /dev/null
+	
+	# --- YOUR FIX (Correctly Kept): Check if the agent process is running ---
+	if kill -0 $SSH_AGENT_PID > /dev/null 2>&1; then
+		# Agent is running, do nothing.
+		return 0
+	else
+		# The agent file is stale (process died). Start a new one.
+		start_agent
+	fi
 else
 	# No agent file found. Start a new one for the first time.
 	start_agent

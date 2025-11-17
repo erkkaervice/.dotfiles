@@ -169,7 +169,8 @@ then
 fi
 
 # --- PATH Modifications (Secure Append) ---
-if [ -d "$HOME/.local/bin" ]; then
+if [ -d "$HOME/.local/bin" ];
+then
 	export PATH="$PATH:$HOME/.local/bin"
 fi
 
@@ -186,15 +187,17 @@ fi
 # SSH Agent
 [ -f "$HOME/.ssh_agent_init" ] && . "$HOME/.ssh_agent_init"
 
-# Tmux Auto-Attach Logic
-if command -v tmux >/dev/null 2>&1 && [ -z "$TMUX" ];
-then
-	if tmux has-session -t main 2>/dev/null;
-	then
-		exec tmux attach-session -t main
-	else
-		exec tmux new-session -s main
-	fi
+# Tmux Auto-Attach Logic (FIXED: Only run in INTERACTIVE shells)
+if [ -n "$PS1" ]; then
+    if command -v tmux >/dev/null 2>&1 && [ -z "$TMUX" ];
+    then
+        if tmux has-session -t main 2>/dev/null;
+        then
+            exec tmux attach-session -t main
+        else
+            exec tmux new-session -s main
+        fi
+    fi
 fi
 
 # Direnv (loads .envrc files)

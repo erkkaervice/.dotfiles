@@ -52,17 +52,18 @@ alias pscpu='ps auxf | sort -nr -k 3'
 # All Git aliases have been moved to ~/.gitconfig
 
 # --- Modern Tool Aliases ---
-# FIX: Removed extra 'end' statements that caused the crash
 if command -v batcat > /dev/null
 	alias cat='batcat --paging=never'
 else if command -v bat > /dev/null
 	alias cat='bat --paging=never'
+end
 end
 
 if command -v fdfind > /dev/null
 	alias find='fdfind'
 else if command -v fd > /dev/null
 	alias find='fd'
+end
 end
 
 if command -v rg > /dev/null; alias grep='rg'; end
@@ -202,7 +203,19 @@ end
 # --- SSH Agent ---
 set -l HOST_ID (uname -n)
 set -l SSH_ENV_FISH "$HOME/.ssh/agent-info-$HOST_ID.fish"
+
+# 1. Try to load existing agent
 if test -f "$SSH_ENV_FISH"
+	source "$SSH_ENV_FISH"
+end
+
+# 2. Check if agent is actually alive and has keys
+# ssh-add -l returns 0 if good, 1 if empty, 2 if dead/unreachable
+ssh-add -l > /dev/null 2>&1
+if test $status -ne 0
+	# Agent is dead or empty. Run the POSIX init script to fix/start it.
+	sh "$HOME/.ssh_agent_init"
+	# Reload the valid variables
 	source "$SSH_ENV_FISH"
 end
 

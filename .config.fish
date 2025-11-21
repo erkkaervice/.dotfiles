@@ -52,18 +52,17 @@ alias pscpu='ps auxf | sort -nr -k 3'
 # All Git aliases have been moved to ~/.gitconfig
 
 # --- Modern Tool Aliases ---
+# FIX: Removed extra 'end' statements that caused the crash
 if command -v batcat > /dev/null
 	alias cat='batcat --paging=never'
 else if command -v bat > /dev/null
 	alias cat='bat --paging=never'
-end
 end
 
 if command -v fdfind > /dev/null
 	alias find='fdfind'
 else if command -v fd > /dev/null
 	alias find='fd'
-end
 end
 
 if command -v rg > /dev/null; alias grep='rg'; end

@@ -57,13 +57,11 @@ if command -v batcat > /dev/null
 else if command -v bat > /dev/null
 	alias cat='bat --paging=never'
 end
-end
 
 if command -v fdfind > /dev/null
 	alias find='fdfind'
 else if command -v fd > /dev/null
 	alias find='fd'
-end
 end
 
 if command -v rg > /dev/null; alias grep='rg'; end

@@ -22,7 +22,7 @@ set -gx NAVIGATOR brave
 set -gx USER ervice; set -gx MAIL erkka@ervice.fi
 
 # --- Disable Fish Greeting ---
-function fish_greeting;
+function fish_greeting
 end
 
 # --- PATH Modifications (Secure Append) ---
@@ -45,7 +45,7 @@ alias free='free -m'
 # --- Processes ---
 alias psa="ps auxf";
 alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -e"
-alias psmem='ps auxf | sort -nr -k 4';
+alias psmem='ps auxf | sort -nr -k 4'
 alias pscpu='ps auxf | sort -nr -k 3'
 
 # --- Git Aliases ---
@@ -54,13 +54,18 @@ alias pscpu='ps auxf | sort -nr -k 3'
 # --- Modern Tool Aliases ---
 if command -v batcat > /dev/null
 	alias cat='batcat --paging=never'
-else if command -v bat > /dev/null;
-	alias cat='bat --paging=never'; end
+else if command -v bat > /dev/null
+	alias cat='bat --paging=never'
+end
+end
+
 if command -v fdfind > /dev/null
 	alias find='fdfind'
-else if command -v fd > /dev/null;
-	alias find='fd';
+else if command -v fd > /dev/null
+	alias find='fd'
 end
+end
+
 if command -v rg > /dev/null; alias grep='rg'; end
 alias code='flatpak run com.visualstudio.code'
 # Fallback alias for neovim (uses Flatpak if nvim is not in PATH)
@@ -110,7 +115,6 @@ function compile
 	end
 end
 
-# --- FIX: Corrected 'extract' function syntax (removed all semicolons, added indentation) ---
 function extract
 	if not command -v bsdtar > /dev/null
 		echo "extract: bsdtar (libarchive) is not installed." >&2
@@ -139,7 +143,6 @@ function extract
 end
 
 alias ipinfo='ipinformation'
-# --- FIX: Corrected 'ipinformation' function syntax (removed all semicolons) ---
 function ipinformation
 	if test -z "$argv[1]"
 		curl ipinfo.io | grep -v '"readme":'
@@ -154,24 +157,9 @@ function __get_dotfiles_repo_root
 	cat "$HOME/.dotfiles-path" 2>/dev/null; or echo "$HOME/.dotfiles"
 end
 
-# --- FIX: Modified 'refresh' to inject the agent into the bash sub-shell ---
 function refresh
 	set -l REPO_ROOT (__get_dotfiles_repo_root)
-	
-	# Manually source the POSIX agent file in the bash sub-shell
-	# This fixes the "passphrase" loop in Termux by giving the bash
-	# sub-shell the SSH_AUTH_SOCK variable from the POSIX file.
-	set -l HOST_ID (uname -n)
-	set -l SSH_ENV_POSIX "$HOME/.ssh/agent-info-$HOST_ID.posix"
-	
-	if test -f "$SSH_ENV_POSIX"
-		# Force the bash sub-shell to load the agent, THEN run the script
-		bash -c ". $SSH_ENV_POSIX; $REPO_ROOT/.scripts/refresh.sh \"\$@\"" bash $argv
-	else
-		# Fallback if agent file is missing
-		bash "$REPO_ROOT/.scripts/refresh.sh" $argv
-	end
-
+	bash "$REPO_ROOT/.scripts/refresh.sh" $argv
 	# Re-source the definitions after refresh
 	[ -f "$HOME/.config/fish/config.fish" ] && source "$HOME/.config/fish/config.fish"
 end
@@ -213,7 +201,6 @@ if status is-interactive
 end
 
 # --- SSH Agent ---
-# This eliminates the conflicting agent-starting logic.
 set -l HOST_ID (uname -n)
 set -l SSH_ENV_FISH "$HOME/.ssh/agent-info-$HOST_ID.fish"
 if test -f "$SSH_ENV_FISH"

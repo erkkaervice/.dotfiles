@@ -2,13 +2,10 @@
 #
 # .ssh_agent_init - POSIX-compliant SSH agent loader
 #
-# This script ensures a single ssh-agent is running per session,
-# and creates environment files for both POSIX (sh, zsh, bash)
-# and Fish (fish) shells.
+# This script ensures a single ssh-agent is running per session.
 #
 
 # --- Environment File Paths ---
-# We use hostname to ensure sockets are not shared across different machines
 HOST_ID=$(uname -n)
 SSH_ENV_POSIX="$HOME/.ssh/agent-info-$HOST_ID.posix"
 SSH_ENV_FISH="$HOME/.ssh/agent-info-$HOST_ID.fish"
@@ -20,29 +17,46 @@ start_agent() {
 	# Create POSIX (sh/bash/zsh) agent file
 	/usr/bin/ssh-agent -s | sed 's/^echo/#echo/' > "${SSH_ENV_POSIX}"
 	
-	# FIX 1: Use 'set -gx' for proper exporting from Fish
+	# Create Fish agent file (using set -gx for global export)
 	/usr/bin/ssh-agent -c | sed 's/^setenv /set -gx /' | sed 's/^echo/#echo/' > "${SSH_ENV_FISH}"
 	
 	# Set permissions
 	chmod 600 "${SSH_ENV_POSIX}"
 	chmod 600 "${SSH_ENV_FISH}"
 
-	# Source the POSIX file for the *current* (sh/bash/zsh) shell
+	# Source the file immediately
 	. "${SSH_ENV_POSIX}" > /dev/null
 	
-	# Keys should be added manually by the user when needed.
+	# AUTOMATION: Automatically ask for keys immediately upon creation
+	ssh-add
 }
 
 # --- Main Logic ---
 
-# --- FIX 2: Removed unreliable 'kill -0' check ---
-# This check fails in Termux sub-shells (like in 'refresh')
-# because the new shell cannot see the agent's process,
-# causing a new, empty agent to be incorrectly started.
+# 1. Check if the environment file exists
 if [ -f "${SSH_ENV_POSIX}" ]; then
-	# Source the existing file
+	# Source the settings (load SSH_AUTH_SOCK and SSH_AGENT_PID)
 	. "${SSH_ENV_POSIX}" > /dev/null
+	
+	# 2. Check Status using ssh-add -l
+	# Returns 0: Keys present (All good)
+	# Returns 1: Agent active, but no keys (Needs add)
+	# Returns 2: Socket dead (Needs restart)
+	
+	ssh-add -l > /dev/null 2>&1
+	RESULT=$?
+
+	if [ $RESULT -eq 2 ]; then
+		# Agent is unresponsive/dead. Start new one + Auto Prompt.
+		start_agent
+	elif [ $RESULT -eq 1 ]; then
+		# Agent is running but empty. Auto Prompt.
+		echo "Agent has no identities. Adding now..."
+		ssh-add
+	fi
+	
+	# If RESULT is 0, we do nothing. Total silence.
 else
-	# No agent file found. Start a new one for the first time.
+	# No agent file found. Start new one + Auto Prompt.
 	start_agent
 fi

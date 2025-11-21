@@ -14,20 +14,27 @@ SSH_ENV_FISH="$HOME/.ssh/agent-info-$HOST_ID.fish"
 start_agent() {
 	echo "Initializing new SSH agent..."
 	
-	# Create POSIX (sh/bash/zsh) agent file
-	/usr/bin/ssh-agent -s | sed 's/^echo/#echo/' > "${SSH_ENV_POSIX}"
+	# 1. Start ssh-agent ONCE and capture the output
+	# We use -s (POSIX) format as the base
+	AGENT_OUTPUT=$(ssh-agent -s)
 	
-	# Create Fish agent file (using set -gx for global export)
-	/usr/bin/ssh-agent -c | sed 's/^setenv /set -gx /' | sed 's/^echo/#echo/' > "${SSH_ENV_FISH}"
+	# 2. Write the POSIX file
+	echo "$AGENT_OUTPUT" | sed 's/^echo/#echo/' > "${SSH_ENV_POSIX}"
+	
+	# 3. Load the agent variables into the CURRENT script
+	# This allows us to access the generated PID and SOCK path immediately
+	eval "$AGENT_OUTPUT" > /dev/null
+	
+	# 4. Write the Fish file using the SAME variables
+	# This ensures Fish connects to the EXACT SAME process as Bash
+	echo "set -gx SSH_AUTH_SOCK $SSH_AUTH_SOCK" > "${SSH_ENV_FISH}"
+	echo "set -gx SSH_AGENT_PID $SSH_AGENT_PID" >> "${SSH_ENV_FISH}"
 	
 	# Set permissions
 	chmod 600 "${SSH_ENV_POSIX}"
 	chmod 600 "${SSH_ENV_FISH}"
 
-	# Source the file immediately
-	. "${SSH_ENV_POSIX}" > /dev/null
-	
-	# AUTOMATION: Automatically ask for keys immediately upon creation
+	# 5. Auto-add keys to this shared agent
 	ssh-add
 }
 

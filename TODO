@@ -76,3 +76,48 @@ Implement done_notify (Cross-platform completion function).
 Implement cross-platform clipboard function (c).
 
 Implement "Hard-Mode" Subsystem (for maximum system hardening).
+
+
+
+
+
+
+
+mkcd() { mkdir -p "$1" && cd "$1" }
+
+
+apps lists
+
+pre:
+git
+ssh
+
+core:
+curl
+fzf
+zoxide
+
+cyse:
+gitleaks
+nmap
+gnupg
+lynis
+tcpdump
+trivy
+metasploit?
+tor browser?
+
+shell level:
+fish
+neovim
+irssi
+
+
+gui level:
+kitty
+vscode
+discord
+brave
+spotify
+vlc?
+se ohjelmanlaukaisuappi

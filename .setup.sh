@@ -6,7 +6,7 @@
 # --- Helper Functions ---
 print_info() { echo "[INFO] $1"; }
 print_error() { echo "[ERROR] $1" >&2; }
-print_warning() { echo "[WARN] $1" >&2; } # Added warning helper
+print_warning() { echo "[WARN] $1" >&2; }
 
 # --- Global Variables ---
 CAN_INSTALL_PACKAGES=true # Assume yes initially
@@ -40,7 +40,6 @@ DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 echo "$DOTFILES_DIR" > "$HOME/.dotfiles-path"
 
 # Add ~/.local/bin to PATH immediately for this script
-# This ensures we can find locally installed Kitty for desktop integration.
 export PATH="$PATH:$HOME/.local/bin"
 
 check_sudo_and_set_flag
@@ -55,36 +54,41 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 	case "$OS_ID" in
 		termux)
 			print_info "Installing packages for Termux..."
-			# --- FIX: Added 'libarchive' (which provides bsdtar) ---
-			pkg update -y && pkg install -y curl git zsh fish unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg clang dnsutils jq tmux neovim direnv libarchive
+			# Removed 'zsh'
+			pkg update -y && pkg install -y curl git fish unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg clang dnsutils jq tmux neovim direnv libarchive
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Termux installation failed."; fi
 			;;
 		ubuntu|debian|pop|mint|kali)
 			print_info "Installing packages for Debian/Ubuntu/Kali based system..."
-			sudo apt-get update -qq && sudo apt-get install -y curl git zsh fish unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump build-essential dnsutils libarchive-tools jq tmux neovim direnv
+			# Removed 'zsh', changed 'batcat' to 'bat'
+			sudo apt-get update -qq && sudo apt-get install -y curl git fish unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump build-essential dnsutils libarchive-tools jq tmux neovim direnv
 			
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Debian/Ubuntu/Kali installation failed."; fi
 			;;
 		arch|manjaro|steamos)
 			print_info "Installing packages for Arch/SteamOS based system..."
-			sudo pacman -Syu --noconfirm --needed curl git zsh fish base-devel bind unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty ttf-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump bind jq tmux neovim direnv libarchive
+			# Removed 'zsh'
+			sudo pacman -Syu --noconfirm --needed curl git fish base-devel bind unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty ttf-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump bind jq tmux neovim direnv libarchive
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Arch/SteamOS installation failed."; fi
 			;;
 		opensuse*|suse)
 			print_info "Installing packages for OpenSUSE based system..."
-			sudo zypper refresh && sudo zypper install -y curl git zsh fish unzip p7zip-full unrar zstd fzf bat fd ripgrep zoxide kitty google-inconsolata-fonts fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-utils libarchive-tools jq tmux neovim direnv
+			# Removed 'zsh'
+			sudo zypper refresh && sudo zypper install -y curl git fish unzip p7zip-full unrar zstd fzf bat fd ripgrep zoxide kitty google-inconsolata-fonts fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-utils libarchive-tools jq tmux neovim direnv
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "OpenSUSE installation failed."; fi
 			;;
 		alpine)
 			print_info "Installing packages for Alpine based system..."
-			sudo apk update && sudo apk add curl git zsh fish unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-tools libarchive jq tmux neovim direnv
+			# Removed 'zsh'
+			sudo apk update && sudo apk add curl git fish unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-tools libarchive jq tmux neovim direnv
 			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Alpine installation failed."; fi
 			;;
 		macos)
 			if command -v brew >/dev/null; then
 				print_info "Installing packages for macOS (Homebrew)..."
 				brew update
-				brew install curl iproute2 git zsh fish unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty nmap gnupg trivy gitleaks lynis tcpdump gcc bind libarchive jq tmux neovim direnv
+				# Removed 'zsh' (macOS has it by default)
+				brew install curl iproute2 git fish unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty nmap gnupg trivy gitleaks lynis tcpdump gcc bind libarchive jq tmux neovim direnv
 				brew install --cask font-inconsolata 2>/dev/null || true
 			else INSTALL_FAILED=true; fi
 			[ $? -ne 0 ] && INSTALL_FAILED=true
@@ -121,7 +125,7 @@ if [ "$IS_TERMUX" = false ]; then
 		if ! command -v fzf >/dev/null 2>&1; then print_info "Fallback: FZF..."; git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf; ~/.fzf/install --all --no-bash --no-zsh --no-fish; ln -sf "$HOME/.fzf/bin/fzf" "$HOME/.local/bin/fzf"; fi
 	fi
 
-	# 2. Kitty Desktop Integration (Always check, even if installed)
+	# 2. Kitty Desktop Integration
 	if [ -d "$HOME/.local/kitty.app" ]; then
 		mkdir -p "$HOME/.local/share/applications"; DESKTOP_FILE="$HOME/.local/share/applications/kitty.desktop"
 		if [ ! -f "$DESKTOP_FILE" ] || ! grep -q "Exec=$HOME/.local/bin/kitty" "$DESKTOP_FILE"; then
@@ -137,36 +141,25 @@ fi
 
 # --- Custom Font Installation ---
 if [ "$IS_TERMUX" = false ]; then
-	# Define user font directory
 	[ "$OS_ID" == "macos" ] && UFD="$HOME/Library/Fonts" || UFD="$HOME/.local/share/fonts"
-	mkdir -p "$UFD" # Ensure destination directory exists
-	
+	mkdir -p "$UFD"
 	FONTS_DIR="$DOTFILES_DIR/.fonts"
 	if [ -d "$FONTS_DIR" ] && [ "$(ls -A "$FONTS_DIR"/*.ttf 2>/dev/null)" ]; then
 		print_info "Installing all custom TTF fonts from .fonts/ directory...";
 		cp -n "$FONTS_DIR"/*.ttf "$UFD"/ 2>/dev/null
-		
-		if ! ls "$UFD"/Merriweather*.ttf > /dev/null 2>&1; then
-			print_warning "'.fonts.conf' maps 'serif' to 'Merriweather', but no Merriweather*.ttf font was found in your .fonts/ directory."
-		fi
 	else
 		print_warning "No TTF fonts found in .fonts/ directory. Skipping font installation."
 	fi
-	
-	# Update font cache on Linux
 	[ "$OS_ID" != "macos" ] && command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$UFD"
 
 elif [ "$IS_TERMUX" = true ]; then
 	print_info "Installing Inconsolata Nerd Font (Termux)..."
 	mkdir -p "$HOME/.termux"
-	
 	LOCAL_FONT="$DOTFILES_DIR/.fonts/InconsolataNerdFont-Regular.ttf"
 	TERMUX_FONT="$HOME/.termux/font.ttf"
-	
 	if [ -f "$LOCAL_FONT" ]; then
 		print_info "Copying local Inconsolata Nerd Font to ~/.termux/font.ttf"
 		cp "$LOCAL_FONT" "$TERMUX_FONT"
-		
 		if [ -f "$TERMUX_FONT" ]; then
 			print_info "Applying font changes..."
 			command -v termux-reload-settings >/dev/null 2>&1 && termux-reload-settings
@@ -195,7 +188,6 @@ ln -sf "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
 ln -sf "$DOTFILES_DIR/.gitignore" "$HOME/.gitignore_global"
 print_info "Linked .gitconfig and .gitignore_global."
 
-
 mkdir -p "$HOME/.config/fish"; ln -sf "$DOTFILES_DIR/.config.fish" "$HOME/.config/fish/config.fish"
 mkdir -p "$HOME/.config/nvim"; ln -sf "$DOTFILES_DIR/.init.vim" "$HOME/.config/nvim/init.vim"
 mkdir -p "$HOME/.var/app/io.neovim.nvim/config/nvim"; ln -sf "$DOTFILES_DIR/.init.vim" "$HOME/.var/app/io.neovim.nvim/config/nvim/init.vim"
@@ -214,7 +206,6 @@ chmod +x "$DOTFILES_DIR/.setup.sh"
 chmod +x "$DOTFILES_DIR/.scripts/refresh.sh"
 chmod +x "$DOTFILES_DIR/.scripts/cleanup.sh"
 chmod +x "$DOTFILES_DIR/.scripts/startfresh.sh"
-# Ensure the desktop script is executable if it was provided
 [ -f "$DOTFILES_DIR/.configure_desktop.sh" ] && chmod +x "$DOTFILES_DIR/.configure_desktop.sh"
 
 [ -f "$DOTFILES_DIR/.configure_desktop.sh" ] && bash "$DOTFILES_DIR/.configure_desktop.sh"

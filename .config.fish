@@ -1,6 +1,8 @@
 # ~/.config.fish/config.fish - Fish shell configuration
 
-if not status is-interactive; end
+if not status is-interactive
+	exit
+end
 
 # --- Auto-Refresh (Once per session) ---
 set -l marker_file "$HOME/.dotfiles_initialized_"(id -u)
@@ -8,42 +10,51 @@ if not test -f "$marker_file"
 	if not command -v zoxide >/dev/null 2>&1
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
 		set -l S_SCRIPT "$HOME/.dotfiles/.setup.sh"
-		if test -f "$S_SCRIPT";
-			bash "$S_SCRIPT";
-		else; echo "[Auto-Setup] Error: Could not find .setup.sh";
+		if test -f "$S_SCRIPT"
+			bash "$S_SCRIPT"
+		else
+			echo "[Auto-Setup] Error: Could not find .setup.sh"
 		end
 	end
 	touch "$marker_file"
 end
 
 # --- Environment Variables (Global, Exported) ---
-set -gx TERMINAL kitty; set -gx EDITOR nvim;
+set -gx TERMINAL kitty
+set -gx EDITOR nvim
 set -gx NAVIGATOR brave
-set -gx USER ervice; set -gx MAIL erkka@ervice.fi
+set -gx USER ervice
+set -gx MAIL erkka@ervice.fi
 
 # --- Disable Fish Greeting ---
 function fish_greeting
 end
 
 # --- PATH Modifications (Secure Append) ---
-if test -d "$HOME/.local/bin"; fish_add_path --append "$HOME/.local/bin"; end
-if test -d "$HOME/.cargo/bin"; fish_add_path --append "$HOME/.cargo/bin";
+if test -d "$HOME/.local/bin"
+	fish_add_path --append "$HOME/.local/bin"
 end
-if test -d "/var/lib/flatpak/exports/bin"; fish_add_path --append "/var/lib/flatpak/exports/bin"; end
+if test -d "$HOME/.cargo/bin"
+	fish_add_path --append "$HOME/.cargo/bin"
+end
+if test -d "/var/lib/flatpak/exports/bin"
+	fish_add_path --append "/var/lib/flatpak/exports/bin"
+end
 
 # --- Command Color Settings ---
-alias ls='ls --color=auto'; alias grep='grep --color=auto';
+alias ls='ls --color=auto'
+alias grep='grep --color=auto'
 if command -v ip > /dev/null
 	alias ip='ip -color=auto'
 end
 alias rm='rm -I'
 
 # --- Disk Usage ---
-alias df='df -h';
+alias df='df -h'
 alias free='free -m'
 
 # --- Processes ---
-alias psa="ps auxf";
+alias psa="ps auxf"
 alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -e"
 alias psmem='ps auxf | sort -nr -k 4'
 alias pscpu='ps auxf | sort -nr -k 3'
@@ -64,43 +75,60 @@ else if command -v fd > /dev/null
 	alias find='fd'
 end
 
-if command -v rg > /dev/null; alias grep='rg'; end
+if command -v rg > /dev/null
+	alias grep='rg'
+end
+
 alias code='flatpak run com.visualstudio.code'
 # Fallback alias for neovim (uses Flatpak if nvim is not in PATH)
-if not command -v nvim > /dev/null;
-	and command -v flatpak > /dev/null
+if not command -v nvim > /dev/null; and command -v flatpak > /dev/null
 	alias nvim='flatpak run io.neovim.nvim'
 end
 
 # --- Functions ---
+
+function mkcd
+	mkdir -p $argv[1]
+	and cd $argv[1]
+end
+
 function fish_prompt
 	set -l user_name "ervice"
-	set -l c_cyan (set_color cyan);
-	set -l c_magenta (set_color magenta); set -l c_norm (set_color normal)
+	set -l c_cyan (set_color cyan)
+	set -l c_magenta (set_color magenta)
+	set -l c_norm (set_color normal)
 	echo -n $c_cyan"["$user_name"@"(prompt_hostname)(prompt_pwd)"]"$c_norm
 	set -l g_branch (git symbolic-ref --short HEAD 2> /dev/null)
 	if test -n "$g_branch"
-		set -l g_status (git status --porcelain 2> /dev/null);
-		set -l u ""; set -l s ""
-		if string match -q -- "* M *" $g_status;
-			or string match -q -- "*??*" $g_status; or string match -q -- "* D *" $g_status; set u "U";
+		set -l g_status (git status --porcelain 2> /dev/null)
+		set -l u ""
+		set -l s ""
+		if string match -q -- "* M *" $g_status; or string match -q -- "*??*" $g_status; or string match -q -- "* D *" $g_status
+			set u "U"
 		end
-		if string match -q -- "M *" $g_status; or string match -q -- "A *" $g_status;
-			or string match -q -- "D *" $g_status; set s "+"; end
+		if string match -q -- "M *" $g_status; or string match -q -- "A *" $g_status; or string match -q -- "D *" $g_status
+			set s "+"
+		end
 		echo -n $c_magenta(string trim -- "("$g_branch$u$s")")$c_norm
 	end
-	if fish_is_root_user;
-		echo -n "# "; else; echo -n "> "; end
+	if fish_is_root_user
+		echo -n "# "
+	else
+		echo -n "> "
+	end
 end
 
 function compile
-	if test -z "$argv[1]"; return 1;
+	if test -z "$argv[1]"
+		return 1
 	end
 	
 	set -l f (basename "$argv[1]")
 	set -l o (mktemp "/tmp/$f.XXXXXX")
-	if test -z "$o"; echo "Failed to create temp file" >&2;
-		return 1; end
+	if test -z "$o"
+		echo "Failed to create temp file" >&2
+		return 1
+	end
 	
 	if gcc "$argv[1]" -Wall -Wextra -Werror -o "$o"
 		"$o"
@@ -152,7 +180,8 @@ end
 
 # --- Dotfiles Management Wrappers ---
 function __get_dotfiles_repo_root
-	cat "$HOME/.dotfiles-path" 2>/dev/null; or echo "$HOME/.dotfiles"
+	cat "$HOME/.dotfiles-path" 2>/dev/null
+	or echo "$HOME/.dotfiles"
 end
 
 function refresh
@@ -176,11 +205,15 @@ end
 function networkscan
 	nmap -T4 -F $argv
 end
-if command -v sudo > /dev/null; and sudo -n true 2>/dev/null; alias audit='sudo lynis audit system';
-else; alias audit='lynis audit system'; end
+if command -v sudo > /dev/null; and sudo -n true 2>/dev/null
+	alias audit='sudo lynis audit system'
+else
+	alias audit='lynis audit system'
+end
 
 # --- Load Local Secrets (Ignored by Git) ---
-if test -f "$HOME/.config/shell_secrets"; source "$HOME/.config/shell_secrets";
+if test -f "$HOME/.config/shell_secrets"
+	source "$HOME/.config/shell_secrets"
 end
 
 # --- Init Integrations ---
@@ -188,8 +221,7 @@ end
 # This logic MUST only run in interactive shells, otherwise it breaks login.
 if status is-interactive
 	# Tmux Auto-Attach Logic
-	if command -v tmux > /dev/null;
-		and not set -q TMUX
+	if command -v tmux > /dev/null; and not set -q TMUX
 		if tmux has-session -t main 2>/dev/null
 			exec tmux attach-session -t main
 		else
@@ -240,10 +272,28 @@ if command -v direnv > /dev/null
 end
 
 # --- Auto-configure Git GPG Signing ---
-if command -v git > /dev/null;
-	and test -n "$GPG_SIGNING_KEY"
+if command -v git > /dev/null; and test -n "$GPG_SIGNING_KEY"
 	git config --global user.signingkey "$GPG_SIGNING_KEY"
 	git config --global commit.gpgsign true
 	git config --global tag.gpgSign true
 	echo "[INFO] Git GPG signing configured."
+end
+
+# --- VS Code Flatpak Shell Integration ---
+# Enables VS Code terminal integration when running via Flatpak (host-spawn)
+if test "$TERM_PROGRAM" = "vscode"
+	if command -v flatpak > /dev/null
+		# 1. Ask VS Code where the script is (returns /app/...)
+		set -l script_in_fp (flatpak run com.visualstudio.code --locate-shell-integration-path fish 2>/dev/null)
+		
+		# 2. Ask Flatpak where the app is stored on the host (returns /var/lib/...)
+		set -l fp_location (flatpak info -l com.visualstudio.code)
+		
+		# 3. Replace '/app' with the real host path
+		set -l real_path (string replace "/app" "$fp_location/files" "$script_in_fp")
+		
+		if test -f "$real_path"
+			source "$real_path"
+		end
+	end
 end

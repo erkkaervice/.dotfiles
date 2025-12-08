@@ -14,19 +14,19 @@ fi
 # --- Fish Shell Auto-Switch ---
 # This block is commented out by default.
 # Uncomment it if you want Bash/Zsh to *always* try to switch to Fish.
-# if [[ $DISPLAY ]];
-# then
-# 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
-# 		if command -v fish > /dev/null 2>&1;
-# then
-# 			export SHELL=/usr/bin/fish
-# 			exec fish "$@"
-# 			export SHELL=/bin/zsh
-# 			echo "Failed to switch to fish shell."
-# >&2
-# 		fi
-# 	fi
-# fi
+if [[ $DISPLAY ]];
+then
+	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
+		if command -v fish > /dev/null 2>&1;
+then
+			export SHELL=/usr/bin/fish
+			exec fish "$@"
+			export SHELL=/bin/zsh
+			echo "Failed to switch to fish shell."
+>&2
+		fi
+	fi
+fi
 
 # Initialize Zsh Completion System
 autoload -Uz compinit

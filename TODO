@@ -80,12 +80,6 @@ Implement "Hard-Mode" Subsystem (for maximum system hardening).
 
 
 
-
-
-
-mkcd() { mkdir -p "$1" && cd "$1" }
-
-
 apps lists
 
 pre:

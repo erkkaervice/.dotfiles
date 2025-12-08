@@ -1,12 +1,18 @@
-# Common Aliases, Functions, and Exports for Bash and Zsh	
+# Common Aliases, Functions, and Exports for Bash and Zsh
 
 # --- Auto-Refresh (Once per session) ---
-if [ ! -f "$HOME/.dotfiles_initialized_$(id -u)" ]; then	
-	if ! command -v zoxide >/dev/null 2>&1;
-	then	
+if [ ! -f "$HOME/.dotfiles_initialized_$(id -u)" ]
+then
+	if ! command -v zoxide >/dev/null 2>&1
+	then
 		echo "[Auto-Setup] Essential tools missing. Running setup..."
 		SETUP_SCRIPT="$HOME/.dotfiles/.setup.sh"
-		[ -f "$SETUP_SCRIPT" ] && bash "$SETUP_SCRIPT" || echo "[Auto-Setup] Error: Could not find .setup.sh"
+		if [ -f "$SETUP_SCRIPT" ]
+		then
+			bash "$SETUP_SCRIPT"
+		else
+			echo "[Auto-Setup] Error: Could not find .setup.sh"
+		fi
 	fi
 	touch "$HOME/.dotfiles_initialized_$(id -u)"
 fi
@@ -14,7 +20,7 @@ fi
 # --- Command Color Settings ---
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
-if command -v ip >/dev/null 2>&1;
+if command -v ip >/dev/null 2>&1
 then
 	alias ip='ip -color=auto'
 fi
@@ -27,37 +33,68 @@ alias free='free -m'
 # --- Processes ---
 alias psa="ps auxf"
 alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -e"
-alias psmem='ps auxf | sort -nr -k 4'	
+alias psmem='ps auxf | sort -nr -k 4'
 alias pscpu='ps auxf | sort -nr -k 3'
 
 # --- Modern Tool Aliases ---
-if command -v batcat > /dev/null 2>&1;
+if command -v batcat > /dev/null 2>&1
 then
-	alias cat='batcat --paging=never'	
-elif command -v bat > /dev/null 2>&1; then
+	alias cat='batcat --paging=never'
+elif command -v bat > /dev/null 2>&1
+then
 	alias cat='bat --paging=never'
-fi	
-if command -v fdfind > /dev/null 2>&1;
+fi
+
+if command -v fdfind > /dev/null 2>&1
 then
 	alias find='fdfind'
-elif command -v fd > /dev/null 2>&1; then
+elif command -v fd > /dev/null 2>&1
+then
 	alias find='fd'
 fi
-if command -v rg > /dev/null 2>&1;
+
+if command -v rg > /dev/null 2>&1
 then
 	alias grep='rg'
-fi	
+fi
+
 # Fallback alias for neovim (uses Flatpak if nvim is not in PATH)
-if ! command -v nvim >/dev/null 2>&1 && command -v flatpak >/dev/null 2>&1;
+if ! command -v nvim >/dev/null 2>&1 && command -v flatpak >/dev/null 2>&1
 then
 	alias nvim='flatpak run io.neovim.nvim'
 fi
 
-# --- Functions ---
+# Fallback alias for VS Code (uses Flatpak)
+if command -v flatpak >/dev/null 2>&1
+then
+	# We check if the flatpak package exists before aliasing
+	if flatpak list --app 2>/dev/null | grep -q com.visualstudio.code
+	then
+		alias code='flatpak run com.visualstudio.code'
+	fi
+fi
+
+# --- Utility Functions ---
+
+mkcd()
+{
+	mkdir -p "$1" && cd "$1"
+}
+
 alias compile='compiler'
-compiler() {
-	[[ $1 ]] || { echo "Missing operand" >&2; return 1; }	
-	[[ -r $1 ]] || { printf "File %s does not exist or is not readable\n" "$1" >&2; return 1; }	
+compiler()
+{
+	if [ -z "$1" ]
+	then
+		echo "Missing operand" >&2
+		return 1
+	fi
+	
+	if [ ! -r "$1" ]
+	then
+		printf "File %s does not exist or is not readable\n" "$1" >&2
+		return 1
+	fi
 	
 	local output_path
 	output_path=$(mktemp "${TMPDIR:-/tmp}/${1##*/}.XXXXXX") || { echo "Failed to create temp file" >&2; return 1; }
@@ -70,13 +107,20 @@ compiler() {
 }
 
 alias extract='extractor'
-extractor() {
+extractor()
+{
 	local c e i
 	
-	command -v bsdtar >/dev/null 2>&1 || { echo "bsdtar (libarchive) is not installed." >&2; return 1; }
+	if ! command -v bsdtar >/dev/null 2>&1
+	then
+		echo "bsdtar (libarchive) is not installed." >&2
+		return 1
+	fi
 	
-	for i in "$@"; do
-		if [ ! -f "$i" ]; then
+	for i in "$@"
+	do
+		if [ ! -f "$i" ]
+		then
 			echo "extractor: File '$i' does not exist." >&2
 			continue
 		fi
@@ -95,10 +139,10 @@ extractor() {
 			*) echo "extractor: Skipped '$i' (unknown extension)." >&2; c=1 ;;
 		esac
 		
-		if [ $e -eq 0 ] && [ $c -eq 0 ];
+		if [ $e -eq 0 ] && [ $c -eq 0 ]
 		then
 			echo "extractor: Successfully extracted '$i'"
-		elif [ $e -eq 1 ];
+		elif [ $e -eq 1 ]
 		then
 			echo "extractor: Encountered an error extracting '$i'" >&2
 		fi
@@ -106,14 +150,15 @@ extractor() {
 }
 
 # --- Service User (for Prompt) ---
-service_user() {
+service_user()
+{
 	echo "ervice"
 }
 
 # --- Dotfiles Management Wrappers ---
-# Get the repo root path once for all wrapper functions
-__get_dotfiles_repo_root() {
-	if [ -f "$HOME/.dotfiles-path" ];
+__get_dotfiles_repo_root()
+{
+	if [ -f "$HOME/.dotfiles-path" ]
 	then
 		cat "$HOME/.dotfiles-path"
 	else
@@ -121,21 +166,27 @@ __get_dotfiles_repo_root() {
 	fi
 }
 
-refresh() {
+refresh()
+{
 	local REPO_ROOT
 	REPO_ROOT=$(__get_dotfiles_repo_root)
 	bash "$REPO_ROOT/.scripts/refresh.sh" "$@"
 	# Re-source the definitions after refresh
-	[ -f "$HOME/.sh_common" ] && . "$HOME/.sh_common"
+	if [ -f "$HOME/.sh_common" ]
+	then
+		. "$HOME/.sh_common"
+	fi
 }
 
-cleanup() {
+cleanup()
+{
 	local REPO_ROOT
 	REPO_ROOT=$(__get_dotfiles_repo_root)
 	bash "$REPO_ROOT/.scripts/cleanup.sh" "$@"
 }
 
-startfresh() {
+startfresh()
+{
 	local REPO_ROOT
 	REPO_ROOT=$(__get_dotfiles_repo_root)
 	bash "$REPO_ROOT/.scripts/startfresh.sh" "$@"
@@ -143,8 +194,9 @@ startfresh() {
 
 # --- Network ---
 alias ipinfo='ipinformation'
-ipinformation() {
-	if [ -z "$1" ];
+ipinformation()
+{
+	if [ -z "$1" ]
 	then
 		curl ipinfo.io | grep -v '"readme":'
 	else
@@ -155,7 +207,7 @@ ipinformation() {
 alias networkscan='nmap -T4 -F'
 
 # --- System & Security ---
-if sudo -n true 2>/dev/null;
+if sudo -n true 2>/dev/null
 then
 	alias audit='sudo lynis audit system'
 else
@@ -163,19 +215,19 @@ else
 fi
 
 # --- Load Local Secrets (Ignored by Git) ---
-if [ -f "$HOME/.config/shell_secrets" ];
+if [ -f "$HOME/.config/shell_secrets" ]
 then
 	. "$HOME/.config/shell_secrets"
 fi
 
 # --- PATH Modifications (Secure Append) ---
-if [ -d "$HOME/.local/bin" ];
+if [ -d "$HOME/.local/bin" ]
 then
 	export PATH="$PATH:$HOME/.local/bin"
 fi
 
 # --- Auto-configure Git GPG Signing ---
-if command -v git >/dev/null 2>&1 && [ -n "$GPG_SIGNING_KEY" ];
+if command -v git >/dev/null 2>&1 && [ -n "$GPG_SIGNING_KEY" ]
 then
 	git config --global user.signingkey "$GPG_SIGNING_KEY"
 	git config --global commit.gpgsign true
@@ -185,50 +237,82 @@ fi
 
 # --- Init Integrations ---
 # SSH Agent
-[ -f "$HOME/.ssh_agent_init" ] && . "$HOME/.ssh_agent_init"
+if [ -f "$HOME/.ssh_agent_init" ]
+then
+	. "$HOME/.ssh_agent_init"
+fi
 
-if [ -n "$PS1" ]; then
-    if command -v tmux >/dev/null 2>&1 && [ -z "$TMUX" ];
-    then
-        if tmux has-session -t main 2>/dev/null;
-        then
-            exec tmux attach-session -t main
-        else
-            exec tmux new-session -s main
-        fi
-    fi
+if [ -n "$PS1" ]
+then
+	if command -v tmux >/dev/null 2>&1 && [ -z "$TMUX" ]
+	then
+		if tmux has-session -t main 2>/dev/null
+		then
+			exec tmux attach-session -t main
+		else
+			exec tmux new-session -s main
+		fi
+	fi
 fi
 
 # Direnv (loads .envrc files)
-if command -v direnv >/dev/null 2>&1;
+if command -v direnv >/dev/null 2>&1
 then
-	if [ -n "$BASH_VERSION" ]; then
+	if [ -n "$BASH_VERSION" ]
+	then
 		eval "$(direnv hook bash)"
-	elif [ -n "$ZSH_VERSION" ];
+	elif [ -n "$ZSH_VERSION" ]
 	then
 		eval "$(direnv hook zsh)"
 	fi
 fi
 
 # Zoxide (Smart 'cd' replacement)
-if command -v zoxide >/dev/null 2>&1; then
-	if [ -n "$BASH_VERSION" ];
+if command -v zoxide >/dev/null 2>&1
+then
+	if [ -n "$BASH_VERSION" ]
 	then
 		eval "$(zoxide init bash)"
-	elif [ -n "$ZSH_VERSION" ]; then
+	elif [ -n "$ZSH_VERSION" ]
+	then
 		eval "$(zoxide init zsh)"
 	fi
 fi
 
 # FZF (Keybindings)
-if [ -f "$HOME/.fzf.bash" ] && [ -n "$BASH_VERSION" ];
+if [ -f "$HOME/.fzf.bash" ] && [ -n "$BASH_VERSION" ]
 then
 	. "$HOME/.fzf.bash"
-elif [ -f "$HOME/.fzf.zsh" ] && [ -n "$ZSH_VERSION" ]; then
+elif [ -f "$HOME/.fzf.zsh" ] && [ -n "$ZSH_VERSION" ]
+then
 	. "$HOME/.fzf.zsh"
 # Fallback for package manager installs
-elif [ -f /usr/share/fzf/key-bindings.bash ] && [ -n "$BASH_VERSION" ]; then
+elif [ -f /usr/share/fzf/key-bindings.bash ] && [ -n "$BASH_VERSION" ]
+then
 	. /usr/share/fzf/key-bindings.bash
-elif [ -f /usr/share/fzf/key-bindings.zsh ] && [ -n "$ZSH_VERSION" ]; then
+elif [ -f /usr/share/fzf/key-bindings.zsh ] && [ -n "$ZSH_VERSION" ]
+then
 	. /usr/share/fzf/key-bindings.zsh
+fi
+
+# --- VS Code Flatpak Shell Integration ---
+# Enables VS Code terminal integration when running via Flatpak (host-spawn)
+if [ "$TERM_PROGRAM" = "vscode" ]
+then
+	if command -v flatpak >/dev/null 2>&1
+	then
+		# 1. Ask VS Code where the script is (returns /app/...)
+		SCRIPT_IN_FP=$(flatpak run com.visualstudio.code --locate-shell-integration-path zsh 2>/dev/null)
+		
+		# 2. Ask Flatpak where the app is stored on the host (returns /var/lib/...)
+		FP_LOCATION=$(flatpak info -l com.visualstudio.code)
+		
+		# 3. Replace '/app' with the real host path
+		REAL_PATH="${SCRIPT_IN_FP/\/app/$FP_LOCATION\/files}"
+		
+		if [ -f "$REAL_PATH" ]
+		then
+			. "$REAL_PATH"
+		fi
+	fi
 fi

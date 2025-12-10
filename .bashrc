@@ -95,7 +95,7 @@ _bash_custom_git_prompt() {
 
 # --- Bash Git-Aware Prompt ---
 # Format: [user@host abbr_dir](git-info)>
-PS1="\[\e[0;36m\][$(service_user)@\h$(_bash_abbreviate_path)]\[\e[0m\]\[\e[0;35m\]$(_bash_custom_git_prompt)\[\e[0m\]> "
+PS1="\e[0;36m[$(service_user)@\h$(_bash_abbreviate_path)]\e[0m\e[0;35m$(_bash_custom_git_prompt)\e[0m> "
 
 # --- Bash Specific Options ---
 shopt -s extglob

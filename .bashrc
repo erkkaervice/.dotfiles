@@ -12,19 +12,19 @@ fi
 # --- Fish Shell Auto-Switch ---
 # This block is commented out by default.
 # Uncomment it if you want Bash/Zsh to *always* try to switch to Fish.
-if [[ $DISPLAY ]];
-then
-	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
-		if command -v fish > /dev/null 2>&1;
-then
-			export SHELL=/usr/bin/fish
-			exec fish "$@"
-			export SHELL=/bin/bash
-			echo "Failed to switch to fish shell."
->&2
-		fi
-	fi
-fi
+# if [[ $DISPLAY ]];
+# then
+# 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
+# 		if command -v fish > /dev/null 2>&1;
+# then
+# 			export SHELL=/usr/bin/fish
+# 			exec fish "$@"
+# 			export SHELL=/bin/bash
+# 			echo "Failed to switch to fish shell."
+# >&2
+# 		fi
+# 	fi
+# fi
 
 # --- Path Abbreviation Function ---
 _bash_abbreviate_path() {
@@ -95,7 +95,7 @@ _bash_custom_git_prompt() {
 
 # --- Bash Git-Aware Prompt ---
 # Format: [user@host abbr_dir](git-info)>
-PS1="\e[0;36m[$(service_user)@\h$(_bash_abbreviate_path)]\e[0m\e[0;35m$(_bash_custom_git_prompt)\e[0m> "
+PS1="\[\e[0;36m\][$(service_user)@\h$(_bash_abbreviate_path)]\[\e[0m\]\[\e[0;35m\]$(_bash_custom_git_prompt)\[\e[0m\]> "
 
 # --- Bash Specific Options ---
 shopt -s extglob

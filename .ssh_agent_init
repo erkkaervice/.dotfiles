@@ -1,0 +1,69 @@
+#!/bin/sh
+#
+# .ssh_agent_init - POSIX-compliant SSH agent loader
+#
+# This script ensures a single ssh-agent is running per session.
+#
+
+# --- Environment File Paths ---
+HOST_ID=$(uname -n)
+SSH_ENV_POSIX="$HOME/.ssh/agent-info-$HOST_ID.posix"
+SSH_ENV_FISH="$HOME/.ssh/agent-info-$HOST_ID.fish"
+
+# --- Start Agent Function ---
+start_agent() {
+	echo "Initializing new SSH agent..."
+	
+	# 1. Start ssh-agent ONCE and capture the output
+	# We use -s (POSIX) format as the base
+	AGENT_OUTPUT=$(ssh-agent -s)
+	
+	# 2. Write the POSIX file
+	echo "$AGENT_OUTPUT" | sed 's/^echo/#echo/' > "${SSH_ENV_POSIX}"
+	
+	# 3. Load the agent variables into the CURRENT script
+	# This allows us to access the generated PID and SOCK path immediately
+	eval "$AGENT_OUTPUT" > /dev/null
+	
+	# 4. Write the Fish file using the SAME variables
+	# This ensures Fish connects to the EXACT SAME process as Bash
+	echo "set -gx SSH_AUTH_SOCK $SSH_AUTH_SOCK" > "${SSH_ENV_FISH}"
+	echo "set -gx SSH_AGENT_PID $SSH_AGENT_PID" >> "${SSH_ENV_FISH}"
+	
+	# Set permissions
+	chmod 600 "${SSH_ENV_POSIX}"
+	chmod 600 "${SSH_ENV_FISH}"
+
+	# 5. Auto-add keys to this shared agent
+	ssh-add
+}
+
+# --- Main Logic ---
+
+# 1. Check if the environment file exists
+if [ -f "${SSH_ENV_POSIX}" ]; then
+	# Source the settings (load SSH_AUTH_SOCK and SSH_AGENT_PID)
+	. "${SSH_ENV_POSIX}" > /dev/null
+	
+	# 2. Check Status using ssh-add -l
+	# Returns 0: Keys present (All good)
+	# Returns 1: Agent active, but no keys (Needs add)
+	# Returns 2: Socket dead (Needs restart)
+	
+	ssh-add -l > /dev/null 2>&1
+	RESULT=$?
+
+	if [ $RESULT -eq 2 ]; then
+		# Agent is unresponsive/dead. Start new one + Auto Prompt.
+		start_agent
+	elif [ $RESULT -eq 1 ]; then
+		# Agent is running but empty. Auto Prompt.
+		echo "Agent has no identities. Adding now..."
+		ssh-add
+	fi
+	
+	# If RESULT is 0, we do nothing. Total silence.
+else
+	# No agent file found. Start new one + Auto Prompt.
+	start_agent
+fi

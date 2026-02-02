@@ -1,0 +1,114 @@
+The Final, Definitive To-Do List
+Core Setup (Foundational Scripts):
+~~Implement Core Dependency Installation (gcc, host, jq, libarchive in .setup.sh)~~. DONE (Implemented robust, OS-specific package installation for all core tools, including gcc, bind-utils/dnsutils, jq, and libarchive-tools/bsdtar in .setup.sh).
+
+Add Flatpak/Snap update logic to .setup.sh.
+
+Provision Core Workstation (Install Docker Engine, Brave, VS Code, Spotify, Tor Browser, and Discord).
+
+Core Application Configs:
+~~Configure Neovim (init.vim)~~. DONE (The basic .init.vim is configured and symlinked for both native and Flatpak installations).
+
+~~Install & Configure tmux (Terminal Multiplexer)~~. DONE (Basic .tmux.conf is created and the auto-attach logic is implemented in .sh_common and .config.fish).
+
+~~Create a global .gitconfig (for aliases & settings)~~. DONE (The .gitconfig file exists with user info and productivity aliases).
+
+~~Install direnv (Automatic Environment Switching)~~. DONE (Installation handled by .setup.sh and hooks implemented in .sh_common and .config.fish).
+
+Install atuin (Encrypted Shell History Sync).
+
+Install lazygit (TUI Git Client).
+
+Install mosh (Mobile Shell).
+
+Install navi (Interactive Cheatsheet).
+
+Install lazydocker (TUI Docker Client).
+
+Install btop (TUI System Monitor).
+
+Security Hardening & Tools:
+Create a secure ~/.ssh/config.
+
+Install exiftool (metadata stripper).
+
+Install mitmproxy (intercepting proxy).
+
+Install mtr (network diagnostics).
+
+Install john (John the Ripper, password auditor).
+
+Install rkhunter and chkrootkit (threat scanners).
+
+Investigate pass (the GPG-based Password Manager).
+
+Create a 'sec-scan' master script (to intelligently run all available scanners).
+
+Implement git-clean-blobs function (for safe, local history rewriting).
+
+Shell & Font Upgrades:
+Add Shell Plugin Managers (like Fisher for Fish).
+
+~~Add Inconsolata Nerd Font (prerequisite for icons) to .fonts/ and .kitty.conf~~. DONE (Font preference set in .kitty.conf and fonts.conf).
+
+~~Add a Serif Font (e.g., Merriweather) to .fonts/ and .fonts.conf~~. DONE (Merriweather and Candara configured in .fonts.conf).
+
+~~Implement Termux-specific font installation (for Inconsolata Nerd Font)~~. DONE (Logic exists in .setup.sh to copy font to ~/.termux/font.ttf).
+
+Install eza (modern ls replacement with icons).
+
+Install starship (cross-shell prompt).
+
+Visual & GUI Themes:
+~~Add a full Kitty color scheme (e.g., Dracula, Gruvbox)~~. IN PROGRESS (Basic colors are set, but a complete theme is pending).
+
+Add Custom Linux Cursors.
+
+Master "Subsystem" Scripts:
+Create a comprehensive info dashboard).
+
+Create a hub TUI-like menu (to tie all other scripts together).
+
+~~Create a Maintenance Subsystem (to check for missing features/updates)~~. IN PROGRESS (Includes refresh, cleanup, and startfresh scripts).
+
+Implement done_notify (Cross-platform completion function).
+
+Implement cross-platform clipboard function (c).
+
+Implement "Hard-Mode" Subsystem (for maximum system hardening).
+
+
+
+
+apps lists
+
+pre:
+git
+ssh
+
+core:
+curl
+fzf
+zoxide
+
+cyse:
+gitleaks
+nmap
+gnupg
+lynis
+tcpdump
+trivy
+metasploit?
+tor browser?
+
+shell level:
+fish
+neovim
+
+
+gui level:
+kitty
+vscode
+brave
+spotify
+se ohjelmanlaukaisuappi

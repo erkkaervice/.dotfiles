@@ -67,52 +67,68 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 	case "$OS_ID" in
 		termux)
 			print_info "Installing packages for Termux..."
-			pkg update -y && pkg install -y curl git fish unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg clang dnsutils jq tmux neovim direnv libarchive
-			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Termux installation failed."; fi
+			pkg update -y
+			for pkg in curl git fish unzip p7zip unrar zstd fzf bat fd ripgrep zoxide nmap gnupg clang dnsutils jq tmux neovim direnv libarchive; do
+				pkg install -y "$pkg" || { INSTALL_FAILED=true; print_error "Failed to install $pkg"; }
+			done
 			;;
 		ubuntu|debian|pop|mint|kali|tails)
 			print_info "Installing packages for Debian family (Ubuntu, Kali, Tails)..."
-			# Tails note: Persistence must be configured for this to last reboot.
-			sudo apt-get update -qq && sudo apt-get install -y curl git fish unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump build-essential dnsutils libarchive-tools jq tmux neovim direnv
-			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Apt installation failed."; fi
+			sudo apt-get update -qq
+			for pkg in curl git fish unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump build-essential dnsutils libarchive-tools jq tmux neovim direnv; do
+				sudo apt-get install -y "$pkg" || { INSTALL_FAILED=true; print_error "Failed to install $pkg"; }
+			done
 			;;
 		arch|manjaro|steamos|systemrescue)
 			print_info "Installing packages for Arch family (SystemRescue, SteamOS)..."
-			# SystemRescue note: Usually runs as root, so sudo is fine.
-			sudo pacman -Syu --noconfirm --needed curl git fish base-devel bind-tools unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty ttf-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump jq tmux neovim direnv libarchive
-			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Pacman installation failed."; fi
+			sudo pacman -Syu --noconfirm
+			for pkg in curl git fish base-devel bind-tools unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty ttf-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump jq tmux neovim direnv libarchive; do
+				sudo pacman -S --noconfirm --needed "$pkg" || { INSTALL_FAILED=true; print_error "Failed to install $pkg"; }
+			done
 			;;
 		fedora|rhel|centos)
 			print_info "Installing packages for Fedora family..."
-			# 'fd-find' is the package, 'bind-utils' provides dig
-			sudo dnf install -y curl git fish unzip p7zip p7zip-plugins unrar zstd fzf bat fd-find ripgrep zoxide kitty inconsolata-fonts fontconfig nmap gnupg trivy gitleaks lynis tcpdump bind-utils libarchive jq tmux neovim direnv
-			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Dnf installation failed."; fi
+			for pkg in curl git fish unzip p7zip p7zip-plugins unrar zstd fzf bat fd-find ripgrep zoxide kitty levien-inconsolata-fonts fontconfig nmap gnupg trivy gitleaks lynis tcpdump bind-utils libarchive jq tmux neovim direnv; do
+				sudo dnf install -y "$pkg" || { INSTALL_FAILED=true; print_error "Failed to install $pkg"; }
+			done
 			;;
 		opensuse*|suse)
 			print_info "Installing packages for OpenSUSE..."
-			sudo zypper refresh && sudo zypper install -y curl git fish unzip p7zip-full unrar zstd fzf bat fd ripgrep zoxide kitty google-inconsolata-fonts fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-utils libarchive-tools jq tmux neovim direnv
-			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Zypper installation failed."; fi
+			sudo zypper refresh
+			for pkg in curl git fish unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty google-inconsolata-fonts fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-utils libarchive-tools jq tmux neovim direnv; do
+				sudo zypper install -y "$pkg" || { INSTALL_FAILED=true; print_error "Failed to install $pkg"; }
+			done
 			;;
 		alpine)
 			print_info "Installing packages for Alpine..."
-			sudo apk update && sudo apk add curl git fish unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-tools libarchive jq tmux neovim direnv
-			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Apk installation failed."; fi
+			sudo apk update
+			for pkg in curl git fish unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-tools libarchive jq tmux neovim direnv zsh-vcs; do
+				sudo apk add "$pkg" || { INSTALL_FAILED=true; print_error "Failed to install $pkg"; }
+			done
 			;;
 		nixos)
 			print_info "Installing packages for NixOS (Imperative User Profile)..."
-			# NixOS usually uses configuration.nix, but for portable dotfiles, nix-env works.
-			nix-env -iA nixos.curl nixos.git nixos.fish nixos.unzip nixos.p7zip nixos.unrar nixos.zstd nixos.fzf nixos.bat nixos.fd nixos.ripgrep nixos.zoxide nixos.kitty nixos.nmap nixos.gnupg nixos.trivy nixos.gitleaks nixos.lynis nixos.tcpdump nixos.bind nixos.libarchive nixos.jq nixos.tmux nixos.neovim nixos.direnv
-			if [ $? -ne 0 ]; then INSTALL_FAILED=true; print_error "Nix installation failed."; fi
+			for pkg in nixos.curl nixos.git nixos.fish nixos.unzip nixos.p7zip nixos.unrar nixos.zstd nixos.fzf nixos.bat nixos.fd nixos.ripgrep nixos.zoxide nixos.kitty nixos.nmap nixos.gnupg nixos.trivy nixos.gitleaks nixos.lynis nixos.tcpdump nixos.bind nixos.libarchive nixos.jq nixos.tmux nixos.neovim nixos.direnv; do
+				nix-env -iA "$pkg" || { INSTALL_FAILED=true; print_error "Failed to install $pkg"; }
+			done
 			;;
 		macos)
 			if command -v brew >/dev/null; then
 				print_info "Installing packages for macOS (Homebrew)..."
 				brew update
-				brew install curl iproute2 git fish unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty nmap gnupg trivy gitleaks lynis tcpdump gcc bind libarchive jq tmux neovim direnv
-				brew install --cask font-inconsolata 2>/dev/null || true
-			else INSTALL_FAILED=true; fi
-			[ $? -ne 0 ] && INSTALL_FAILED=true
-			[ "$INSTALL_FAILED" = true ] && print_error "Homebrew installation failed or skipped." || print_info "Homebrew installation successful."
+				for pkg in curl iproute2mac git fish unzip sevenzip unrar zstd fzf bat fd ripgrep zoxide kitty nmap gnupg trivy gitleaks lynis tcpdump gcc bind libarchive jq tmux neovim direnv; do
+					brew install "$pkg" || { INSTALL_FAILED=true; print_error "Failed to install $pkg"; }
+				done
+				brew install --cask font-inconsolata 2>/dev/null || { INSTALL_FAILED=true; print_error "Failed to install font-inconsolata"; }
+			else 
+				INSTALL_FAILED=true
+			fi
+			
+			if [ "$INSTALL_FAILED" = true ]; then
+				print_error "One or more Homebrew packages failed, or Homebrew is missing."
+			else
+				print_info "Homebrew installation successful."
+			fi
 			;;
 		*) 
 			print_error "Unsupported OS ID: $OS_ID. Attempting fallback local install..."

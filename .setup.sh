@@ -75,7 +75,7 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 		ubuntu|debian|pop|mint|kali|tails)
 			print_info "Installing packages for Debian family (Ubuntu, Kali, Tails)..."
 			sudo apt-get update -qq
-			for pkg in curl git fish unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump build-essential dnsutils libarchive-tools jq tmux neovim direnv; do
+			for pkg in curl git fish unzip p7zip-full unrar zstd fzf bat fd-find ripgrep zoxide kitty fonts-inconsolata fontconfig nmap gnupg lynis tcpdump build-essential dnsutils libarchive-tools jq tmux neovim direnv; do
 				sudo apt-get install -y "$pkg" || { INSTALL_FAILED=true; print_error "Failed to install $pkg"; }
 			done
 			;;
@@ -88,7 +88,7 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
 			;;
 		fedora|rhel|centos)
 			print_info "Installing packages for Fedora family..."
-			for pkg in curl git fish unzip p7zip p7zip-plugins unrar zstd fzf bat fd-find ripgrep zoxide kitty levien-inconsolata-fonts fontconfig nmap gnupg trivy gitleaks lynis tcpdump bind-utils libarchive jq tmux neovim direnv; do
+			for pkg in curl git fish unzip p7zip p7zip-plugins unrar zstd fzf bat fd-find ripgrep zoxide kitty levien-inconsolata-fonts fontconfig nmap gnupg lynis tcpdump bind-utils libarchive jq tmux neovim direnv; do
 				sudo dnf install -y "$pkg" || { INSTALL_FAILED=true; print_error "Failed to install $pkg"; }
 			done
 			;;
@@ -186,7 +186,7 @@ if [ "$IS_TERMUX" = false ]; then
 	FONTS_DIR="$DOTFILES_DIR/.fonts"
 	if [ -d "$FONTS_DIR" ] && [ "$(ls -A "$FONTS_DIR"/*.ttf 2>/dev/null)" ]; then
 		print_info "Installing all custom TTF fonts from .fonts/ directory...";
-		cp -n "$FONTS_DIR"/*.ttf "$UFD"/ 2>/dev/null
+		cp -f "$FONTS_DIR"/*.ttf "$UFD"/ 2>/dev/null
 	else
 		print_warning "No TTF fonts found in .fonts/ directory. Skipping font installation."
 	fi
@@ -224,7 +224,7 @@ fi
 print_info "Linking dotfiles..."
 for f in .sh_common .profile .bashrc .zshrc .bash_logout .ssh_agent_init; do ln -sf "$DOTFILES_DIR/$f" "$HOME/$f"; done
 
-ln -sf "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
+git config --global include.path "$DOTFILES_DIR/.gitconfig"
 ln -sf "$DOTFILES_DIR/.gitignore" "$HOME/.gitignore_global"
 print_info "Linked .gitconfig and .gitignore_global."
 
@@ -232,6 +232,8 @@ mkdir -p "$HOME/.config/fish"; ln -sf "$DOTFILES_DIR/.config.fish" "$HOME/.confi
 mkdir -p "$HOME/.config/nvim"; ln -sf "$DOTFILES_DIR/.init.vim" "$HOME/.config/nvim/init.vim"
 mkdir -p "$HOME/.var/app/io.neovim.nvim/config/nvim"; ln -sf "$DOTFILES_DIR/.init.vim" "$HOME/.var/app/io.neovim.nvim/config/nvim/init.vim"
 ln -sf "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
+
+touch "$HOME/.gitconfig_local"
 
 if [ "$IS_TERMUX" = false ]; then
 	mkdir -p "$HOME/.config/kitty" "$HOME/.config/fontconfig"

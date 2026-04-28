@@ -45,7 +45,7 @@ then
             fi
 
 			# 3. Pull updates
-			git pull origin main || print_error "Git pull failed. Manual intervention may be required."
+			git pull || print_error "Git pull failed. Manual intervention may be required."
 				
 			# 4. Apply stash back IF AND ONLY IF a stash was created (DID_STASH=0)
 			if [ $DID_STASH -eq 0 ]; then

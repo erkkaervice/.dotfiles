@@ -22,8 +22,7 @@ end
 # --- Environment Variables (Global, Exported) ---
 set -gx TERMINAL kitty
 set -gx EDITOR nvim
-set -gx NAVIGATOR brave
-set -gx USER ervice
+set -gx BROWSER brave
 set -gx MAIL erkka@ervice.fi
 
 # --- Disable Fish Greeting ---
@@ -79,7 +78,12 @@ if command -v rg > /dev/null
 	alias grep='rg'
 end
 
-alias code='flatpak run com.visualstudio.code'
+if command -v flatpak > /dev/null
+	if flatpak list --app 2>/dev/null | grep -q com.visualstudio.code
+		alias code='flatpak run com.visualstudio.code'
+	end
+end
+
 # Fallback alias for neovim (uses Flatpak if nvim is not in PATH)
 if not command -v nvim > /dev/null; and command -v flatpak > /dev/null
 	alias nvim='flatpak run io.neovim.nvim'
@@ -171,9 +175,9 @@ end
 alias ipinfo='ipinformation'
 function ipinformation
 	if test -z "$argv[1]"
-		curl ipinfo.io | grep -v '"readme":'
+		curl https://ipinfo.io | grep -v '"readme":'
 	else
-		curl "ipinfo.io/$argv[1]" | grep -v '"readme":'
+		curl "https://ipinfo.io/$argv[1]" | grep -v '"readme":'
 	end
 	echo
 end
@@ -187,8 +191,6 @@ end
 function refresh
 	set -l REPO_ROOT (__get_dotfiles_repo_root)
 	bash "$REPO_ROOT/.scripts/refresh.sh" $argv
-	# Re-source the definitions after refresh
-	[ -f "$HOME/.config/fish/config.fish" ] && source "$HOME/.config/fish/config.fish"
 end
 
 function cleanup
@@ -221,7 +223,7 @@ end
 # This logic MUST only run in interactive shells, otherwise it breaks login.
 if status is-interactive
 	# Tmux Auto-Attach Logic
-	if command -v tmux > /dev/null; and not set -q TMUX
+	if command -v tmux > /dev/null; and not set -q TMUX; and test "$TERM_PROGRAM" != "vscode"
 		if tmux has-session -t main 2>/dev/null
 			exec tmux attach-session -t main
 		else
@@ -273,10 +275,12 @@ end
 
 # --- Auto-configure Git GPG Signing ---
 if command -v git > /dev/null; and test -n "$GPG_SIGNING_KEY"
-	git config --global user.signingkey "$GPG_SIGNING_KEY"
-	git config --global commit.gpgsign true
-	git config --global tag.gpgSign true
-	echo "[INFO] Git GPG signing configured."
+	if test "(git config --global user.signingkey)" != "$GPG_SIGNING_KEY"
+		git config --global user.signingkey "$GPG_SIGNING_KEY"
+		git config --global commit.gpgsign true
+		git config --global tag.gpgSign true
+		echo "[INFO] Git GPG signing configured."
+	end
 end
 
 # --- VS Code Flatpak Shell Integration ---

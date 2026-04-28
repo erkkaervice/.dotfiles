@@ -20,13 +20,12 @@ then
 fi
 
 echo "--- WARNING: Starting Fresh (Removing all custom dotfile links) ---"
-echo "1. Removing config links..."
+echo "1. Removing config links... (Keeping shell_secrets intact)"
 rm -f ~/.sh_common ~/.profile ~/.bashrc ~/.zshrc ~/.bash_logout
 rm -f "$HOME/.ssh_agent_init"
 rm -rf ~/.config/fish
 rm -rf ~/.config/kitty
 rm -rf ~/.config/fontconfig
-rm -f "$HOME/.config/shell_secrets"
 rm -f "$HOME/.gitconfig" "$HOME/.gitignore_global"
 
 echo "2. Removing local user applications..."

@@ -8,7 +8,9 @@ then
 		if ! command -v zoxide >/dev/null 2>&1
 		then
 			echo "[Auto-Setup] Essential tools missing. Running setup..."
-			SETUP_SCRIPT="$HOME/.dotfiles/.setup.sh"
+			local repo_path="$HOME/.dotfiles"
+			[ -f "$HOME/.dotfiles-path" ] && repo_path=$(cat "$HOME/.dotfiles-path")
+			SETUP_SCRIPT="$repo_path/.setup.sh"
 			if [ -f "$SETUP_SCRIPT" ]
 			then
 				bash "$SETUP_SCRIPT"
@@ -56,11 +58,6 @@ then
 	alias find='fd'
 fi
 
-if command -v rg > /dev/null 2>&1
-then
-	alias grep='rg'
-fi
-
 # Fallback alias for neovim (uses Flatpak if nvim is not in PATH)
 if ! command -v nvim >/dev/null 2>&1 && command -v flatpak >/dev/null 2>&1
 then
@@ -103,7 +100,8 @@ compiler()
 	output_path=$(mktemp "${TMPDIR:-/tmp}/${1##*/}.XXXXXX") || { echo "Failed to create temp file" >&2; return 1; }
 	
 	gcc "$1" -Wall -Wextra -Werror -o "$output_path" && "$output_path"
-	local ret_code=$? # Capture exit code
+	local ret_code=$?
+	# Capture exit code
 	
 	rm "$output_path"
 	return $ret_code
@@ -201,9 +199,9 @@ ipinformation()
 {
 	if [ -z "$1" ]
 	then
-		curl ipinfo.io | grep -v '"readme":'
+		curl https://ipinfo.io | grep -v '"readme":'
 	else
-		curl "ipinfo.io/$1" | grep -v '"readme":'
+		curl "https://ipinfo.io/$1" | grep -v '"readme":'
 	fi
 	echo
 }
@@ -232,10 +230,12 @@ fi
 # --- Auto-configure Git GPG Signing ---
 if command -v git >/dev/null 2>&1 && [ -n "$GPG_SIGNING_KEY" ]
 then
-	git config --global user.signingkey "$GPG_SIGNING_KEY"
-	git config --global commit.gpgsign true
-	git config --global tag.gpgSign true
-	echo "[INFO] Git GPG signing configured."
+	if [ "$(git config --global user.signingkey)" != "$GPG_SIGNING_KEY" ]; then
+		git config --global user.signingkey "$GPG_SIGNING_KEY"
+		git config --global commit.gpgsign true
+		git config --global tag.gpgSign true
+		echo "[INFO] Git GPG signing configured."
+	fi
 fi
 
 # --- Init Integrations ---
@@ -248,7 +248,7 @@ then
 	fi
 fi
 
-if [ -n "$PS1" ]
+if [ -n "$PS1" ] && [ "$TERM_PROGRAM" != "vscode" ]
 then
 	if command -v tmux >/dev/null 2>&1 && [ -z "$TMUX" ]
 	then
@@ -307,8 +307,11 @@ if [ "$TERM_PROGRAM" = "vscode" ]
 then
 	if command -v flatpak >/dev/null 2>&1
 	then
+		local target_shell="zsh"
+		[ -n "$BASH_VERSION" ] && target_shell="bash"
+		
 		# 1. Ask VS Code where the script is (returns /app/...)
-		SCRIPT_IN_FP=$(flatpak run com.visualstudio.code --locate-shell-integration-path zsh 2>/dev/null)
+		SCRIPT_IN_FP=$(flatpak run com.visualstudio.code --locate-shell-integration-path "$target_shell" 2>/dev/null)
 		
 		# 2. Ask Flatpak where the app is stored on the host (returns /var/lib/...)
 		FP_LOCATION=$(flatpak info -l com.visualstudio.code)

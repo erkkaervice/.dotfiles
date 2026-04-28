@@ -8,6 +8,9 @@ print_info() { echo "[INFO] $1"; }
 print_warning() { echo "[WARN] $1" >&2; }
 print_error() { echo "[ERROR] $1" >&2; }
 
+# --- Configuration Variables ---
+WALLPAPER_PATH="$HOME/.dotfiles/.wallpaper/wallpaper.jpg"
+
 # --- Detect Desktop Environment ---
 detect_de() {
 	if [ -n "$XDG_CURRENT_DESKTOP" ]; then echo "$XDG_CURRENT_DESKTOP" | tr '[:upper:]' '[:lower:]'; return; fi
@@ -29,12 +32,31 @@ case "$CURRENT_DE" in
 			gsettings set org.gnome.desktop.interface font-name 'Candara 11'
 			gsettings set org.gnome.desktop.interface document-font-name 'Candara 11'
 			gsettings set org.gnome.desktop.interface monospace-font-name 'InconsolataNerdFont 12'
+			
+			# Apply Wallpaper natively for GNOME
+			if [ -f "$WALLPAPER_PATH" ]; then
+				print_info "Applying wallpaper via GNOME gsettings..."
+				gsettings set org.gnome.desktop.background picture-uri "file://$WALLPAPER_PATH"
+				gsettings set org.gnome.desktop.background picture-uri-dark "file://$WALLPAPER_PATH"
+			else
+				print_warning "Wallpaper file not found at $WALLPAPER_PATH"
+			fi
+			
 			print_info "GNOME settings updated."
 		else print_warning "gsettings not found."; fi ;;
 	*kde*|*plasma*)
 		print_info "Configuring KDE..."
 		if command -v kwriteconfig5 >/dev/null 2>&1; then
 			if [ "$KITTY_AVAILABLE" = true ]; then kwriteconfig5 --file kdeglobals --group General --key TerminalApplication kitty; kwriteconfig5 --file ~/.config/kdedefaults/kdeglobals --group General --key TerminalApplication kitty; fi
+			
+			# Apply Wallpaper natively for KDE Plasma
+			if [ -f "$WALLPAPER_PATH" ] && command -v plasma-apply-wallpaperimage >/dev/null 2>&1; then
+				print_info "Applying wallpaper via KDE plasma-apply-wallpaperimage..."
+				plasma-apply-wallpaperimage "$WALLPAPER_PATH"
+			elif [ ! -f "$WALLPAPER_PATH" ]; then
+				print_warning "Wallpaper file not found at $WALLPAPER_PATH"
+			fi
+			
 			print_info "KDE settings updated."
 		else print_warning "kwriteconfig5 not found."; fi ;;
 	*xfce*)
@@ -50,9 +72,34 @@ case "$CURRENT_DE" in
 			fi
 			xfconf-query -c xsettings -p /Gtk/FontName -s 'Candara 11' --create
 			xfconf-query -c xsettings -p /Gtk/MonospaceFontName -s 'InconsolataNerdFont 12' --create
+			
+			# Apply Wallpaper natively for XFCE
+			if [ -f "$WALLPAPER_PATH" ]; then
+				print_info "Applying wallpaper via XFCE xfconf-query..."
+				for property in $(xfconf-query -c xfce4-desktop -p /backdrop -l | grep -E "last-image$|image-path$"); do
+					xfconf-query -c xfce4-desktop -p "$property" -s "$WALLPAPER_PATH"
+				done
+			else
+				print_warning "Wallpaper file not found at $WALLPAPER_PATH"
+			fi
+			
 			print_info "XFCE settings updated."
 		else print_warning "xfconf-query not found."; fi ;;
-	*) print_warning "Unknown DE: $CURRENT_DE.";;
+	*) 
+		print_info "Unknown or Standalone WM detected: $CURRENT_DE."
+		
+		# Universal feh fallback for bare window managers (i3, bspwm, etc)
+		if [ -f "$WALLPAPER_PATH" ]; then
+			if command -v feh >/dev/null 2>&1; then
+				print_info "Applying wallpaper via feh fallback..."
+				feh --bg-scale "$WALLPAPER_PATH"
+			else
+				print_warning "feh is not installed. Cannot set wallpaper for this environment."
+			fi
+		else
+			print_warning "Wallpaper file not found at $WALLPAPER_PATH"
+		fi
+		;;
 esac
 
 if [ -f /etc/debian_version ] && command -v update-alternatives >/dev/null 2>&1; then

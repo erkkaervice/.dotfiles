@@ -33,3 +33,6 @@
 	
 [include]
 	path = ~/.gitconfig_local
+
+[gpg]
+	program = gpg

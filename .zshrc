@@ -6,24 +6,20 @@ case $- in
 esac
 
 # --- Source Common Settings ---
-if [[ -f ~/.sh_common ]];
-then
+if [[ -f ~/.sh_common ]]; then
 	source ~/.sh_common
 fi
 
 # --- Fish Shell Auto-Switch ---
 # This block is commented out by default.
 # Uncomment it if you want Bash/Zsh to *always* try to switch to Fish.
-# if [[ $DISPLAY ]];
-# then
+# if [[ $DISPLAY ]]; then
 # 	if [[ "$(ps -p $$ -o comm=)" != "fish" ]]; then
-# 		if command -v fish > /dev/null 2>&1;
-# then
+# 		if command -v fish > /dev/null 2>&1; then
 # 			export SHELL=/usr/bin/fish
 # 			exec fish "$@"
 # 			export SHELL=/bin/zsh
-# 			echo "Failed to switch to fish shell."
-# >&2
+# 			echo "Failed to switch to fish shell." >&2
 # 		fi
 # 	fi
 # fi
@@ -54,15 +50,12 @@ _zsh_abbreviate_path_manual() {
 	path_parts=( ${(s:/:)path_to_process} )
 	local result="$prefix"; local num_parts=${#path_parts[@]}; local i
 
-	for (( i=1; i <= num_parts; i++ ));
-	do
+	for (( i=1; i <= num_parts; i++ )); do
 		if (( i < num_parts )); then # Intermediate directory
 			local part=${path_parts[i]}
-			if [[ "$part" == .* ]];
-			then
+			if [[ "$part" == .* ]]; then
 				 result+=".${part:1:1}/"
-			 elif [[ -n "$part" ]];
-			then
+			 elif [[ -n "$part" ]]; then
 				result+="${part:0:1}/"
 			fi
 		elif [[ -n "${path_parts[i]}" ]]; then # Last directory
@@ -70,8 +63,7 @@ _zsh_abbreviate_path_manual() {
 		fi
 	done
 
-	if [[ "$result" == */ ]] && [[ "$num_parts" -eq 0 && "$prefix" != "/" ]];
-	then
+	if [[ "$result" == */ ]] && [[ "$num_parts" -eq 0 && "$prefix" != "/" ]]; then
 		result="${result%/}"
 	fi
 	echo "$result"
@@ -110,10 +102,10 @@ setopt HIST_IGNORE_DUPS
 setopt HIST_IGNORE_SPACE
 setopt APPEND_HISTORY
 setopt SHARE_HISTORY
-setopt INC_APPEND_HISTORY
 setopt CORRECT
 setopt COMPLETE_IN_WORD
 # setopt NO_BEEP
 
 HISTFILE=~/.zsh_history
 HISTSIZE=10000
+SAVEHIST=10000

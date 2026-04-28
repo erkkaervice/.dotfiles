@@ -224,7 +224,13 @@ fi
 print_info "Linking dotfiles..."
 for f in .sh_common .profile .bashrc .zshrc .bash_logout .ssh_agent_init; do ln -sf "$DOTFILES_DIR/$f" "$HOME/$f"; done
 
-git config --global include.path "$DOTFILES_DIR/.gitconfig"
+# Safely transition from symlink to include.path without infinite loops
+if [ -L "$HOME/.gitconfig" ]; then
+	rm -f "$HOME/.gitconfig"
+fi
+git config --global --unset-all include.path "$DOTFILES_DIR/.gitconfig" 2>/dev/null || true
+git config --global --add include.path "$DOTFILES_DIR/.gitconfig"
+
 ln -sf "$DOTFILES_DIR/.gitignore" "$HOME/.gitignore_global"
 print_info "Linked .gitconfig and .gitignore_global."
 

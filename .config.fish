@@ -222,8 +222,8 @@ end
 
 # This logic MUST only run in interactive shells, otherwise it breaks login.
 if status is-interactive
-	# Tmux Auto-Attach Logic
-	if command -v tmux > /dev/null; and not set -q TMUX; and test "$TERM_PROGRAM" != "vscode"; and test -z "$VSCODE_RESOLVING_ENVIRONMENT"
+	# Tmux Auto-Attach Logic: Removed the TERM_PROGRAM check to allow it in VS Code
+	if command -v tmux > /dev/null; and not set -q TMUX; and test -z "$VSCODE_RESOLVING_ENVIRONMENT"
 		if tmux has-session -t main 2>/dev/null
 			exec tmux attach-session -t main
 		else

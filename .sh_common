@@ -248,7 +248,8 @@ then
 	fi
 fi
 
-if [ -n "$PS1" ] && [ "$TERM_PROGRAM" != "vscode" ] && [ -z "$VSCODE_RESOLVING_ENVIRONMENT" ]
+# Updated: We only check if VSCODE_RESOLVING_ENVIRONMENT is set to avoid the probe
+if [ -n "$PS1" ] && [ -z "$VSCODE_RESOLVING_ENVIRONMENT" ]
 then
 	if command -v tmux >/dev/null 2>&1 && [ -z "$TMUX" ]
 	then

@@ -100,8 +100,7 @@ compiler()
 	output_path=$(mktemp "${TMPDIR:-/tmp}/${1##*/}.XXXXXX") || { echo "Failed to create temp file" >&2; return 1; }
 	
 	gcc "$1" -Wall -Wextra -Werror -o "$output_path" && "$output_path"
-	local ret_code=$?
-	# Capture exit code
+	local ret_code=$? # Capture exit code
 	
 	rm "$output_path"
 	return $ret_code
@@ -230,7 +229,8 @@ fi
 # --- Auto-configure Git GPG Signing ---
 if command -v git >/dev/null 2>&1 && [ -n "$GPG_SIGNING_KEY" ]
 then
-	if [ "$(git config --global user.signingkey)" != "$GPG_SIGNING_KEY" ]; then
+	if [ "$(git config --global user.signingkey)" != "$GPG_SIGNING_KEY" ]
+	then
 		git config --global user.signingkey "$GPG_SIGNING_KEY"
 		git config --global commit.gpgsign true
 		git config --global tag.gpgSign true
@@ -248,7 +248,7 @@ then
 	fi
 fi
 
-if [ -n "$PS1" ] && [ "$TERM_PROGRAM" != "vscode" ]
+if [ -n "$PS1" ] && [ "$TERM_PROGRAM" != "vscode" ] && [ -z "$VSCODE_RESOLVING_ENVIRONMENT" ]
 then
 	if command -v tmux >/dev/null 2>&1 && [ -z "$TMUX" ]
 	then
@@ -295,10 +295,10 @@ then
 # Fallback for package manager installs
 elif [ -f /usr/share/fzf/key-bindings.bash ] && [ -n "$BASH_VERSION" ]
 then
-	. /usr/share/fzf/key-bindings.bash
+	. "/usr/share/fzf/key-bindings.bash"
 elif [ -f /usr/share/fzf/key-bindings.zsh ] && [ -n "$ZSH_VERSION" ]
 then
-	. /usr/share/fzf/key-bindings.zsh
+	. "/usr/share/fzf/key-bindings.zsh"
 fi
 
 # --- VS Code Flatpak Shell Integration ---
@@ -307,21 +307,24 @@ if [ "$TERM_PROGRAM" = "vscode" ]
 then
 	if command -v flatpak >/dev/null 2>&1
 	then
-		local target_shell="zsh"
+		target_shell="zsh"
 		[ -n "$BASH_VERSION" ] && target_shell="bash"
 		
 		# 1. Ask VS Code where the script is (returns /app/...)
 		SCRIPT_IN_FP=$(flatpak run com.visualstudio.code --locate-shell-integration-path "$target_shell" 2>/dev/null)
 		
 		# 2. Ask Flatpak where the app is stored on the host (returns /var/lib/...)
-		FP_LOCATION=$(flatpak info -l com.visualstudio.code)
+		FP_LOCATION=$(flatpak info -l com.visualstudio.code 2>/dev/null)
 		
 		# 3. Replace '/app' with the real host path
-		REAL_PATH="${SCRIPT_IN_FP/\/app/$FP_LOCATION\/files}"
-		
-		if [ -f "$REAL_PATH" ]
+		if [ -n "$FP_LOCATION" ]
 		then
-			. "$REAL_PATH"
+			REAL_PATH="${SCRIPT_IN_FP/\/app/$FP_LOCATION\/files}"
+			
+			if [ -f "$REAL_PATH" ]
+			then
+				. "$REAL_PATH"
+			fi
 		fi
 	fi
 fi

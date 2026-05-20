@@ -223,7 +223,7 @@ end
 # This logic MUST only run in interactive shells, otherwise it breaks login.
 if status is-interactive
 	# Tmux Auto-Attach Logic
-	if command -v tmux > /dev/null; and not set -q TMUX; and test "$TERM_PROGRAM" != "vscode"
+	if command -v tmux > /dev/null; and not set -q TMUX; and test "$TERM_PROGRAM" != "vscode"; and test -z "$VSCODE_RESOLVING_ENVIRONMENT"
 		if tmux has-session -t main 2>/dev/null
 			exec tmux attach-session -t main
 		else
@@ -291,13 +291,15 @@ if test "$TERM_PROGRAM" = "vscode"
 		set -l script_in_fp (flatpak run com.visualstudio.code --locate-shell-integration-path fish 2>/dev/null)
 		
 		# 2. Ask Flatpak where the app is stored on the host (returns /var/lib/...)
-		set -l fp_location (flatpak info -l com.visualstudio.code)
+		set -l fp_location (flatpak info -l com.visualstudio.code 2>/dev/null)
 		
 		# 3. Replace '/app' with the real host path
-		set -l real_path (string replace "/app" "$fp_location/files" "$script_in_fp")
-		
-		if test -f "$real_path"
-			source "$real_path"
+		if test -n "$fp_location"
+			set -l real_path (string replace "/app" "$fp_location/files" "$script_in_fp")
+			
+			if test -f "$real_path"
+				source "$real_path"
+			end
 		end
 	end
 end

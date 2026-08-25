@@ -331,7 +331,8 @@ fi
 # Enables VS Code terminal integration when running via Flatpak (host-spawn)
 if [ "$TERM_PROGRAM" = "vscode" ]
 then
-	if command -v flatpak >/dev/null 2>&1
+	# Zero-cost check: Only run flatpak queries if the VS Code flatpak is actually installed
+	if [ -d "/var/lib/flatpak/app/com.visualstudio.code" ] || [ -d "$HOME/.local/share/flatpak/app/com.visualstudio.code" ]
 	then
 		target_shell="zsh"
 		[ -n "$BASH_VERSION" ] && target_shell="bash"

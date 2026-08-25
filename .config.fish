@@ -290,7 +290,8 @@ end
 # --- VS Code Flatpak Shell Integration ---
 # Enables VS Code terminal integration when running via Flatpak (host-spawn)
 if test "$TERM_PROGRAM" = "vscode"
-	if command -v flatpak > /dev/null
+	# Zero-cost check: Only run flatpak queries if the VS Code flatpak is actually installed
+	if test -d "/var/lib/flatpak/app/com.visualstudio.code"; or test -d "$HOME/.local/share/flatpak/app/com.visualstudio.code"
 		# 1. Ask VS Code where the script is (returns /app/...)
 		set -l script_in_fp (flatpak run com.visualstudio.code --locate-shell-integration-path fish 2>/dev/null)
 		

@@ -13,11 +13,11 @@ WALLPAPER_PATH="$HOME/.dotfiles/.wallpaper/wallpaper.jpg"
 
 # --- Detect Desktop Environment ---
 detect_de() {
-	if [ -n "$XDG_CURRENT_DESKTOP" ]; then echo "$XDG_CURRENT_DESKTOP" | tr '[:upper:]' '[:lower:]'; return; fi
-	if [ -n "$GNOME_DESKTOP_SESSION_ID" ]; then echo "gnome"
-	elif [ -n "$KDE_FULL_SESSION" ]; then echo "kde"
-	elif [ -f /usr/bin/xfce4-session ]; then echo "xfce"
-	else echo "unknown"; fi
+    if [ -n "$XDG_CURRENT_DESKTOP" ]; then echo "$XDG_CURRENT_DESKTOP" | tr '[:upper:]' '[:lower:]'; return; fi
+    if [ -n "$GNOME_DESKTOP_SESSION_ID" ]; then echo "gnome"
+    elif [ -n "$KDE_FULL_SESSION" ]; then echo "kde"
+    elif [ -f /usr/bin/xfce4-session ]; then echo "xfce"
+    else echo "unknown"; fi
 }
 
 # --- Main Logic ---
@@ -25,85 +25,100 @@ if ! command -v kitty >/dev/null 2>&1; then print_error "Kitty not found. Cannot
 CURRENT_DE=$(detect_de); print_info "Detected Desktop Environment: $CURRENT_DE"
 
 case "$CURRENT_DE" in
-	*gnome*|*unity*)
-		print_info "Configuring GNOME..."
-		if command -v gsettings >/dev/null 2>&1; then
-			if [ "$KITTY_AVAILABLE" = true ]; then gsettings set org.gnome.desktop.default-applications.terminal exec 'kitty'; gsettings set org.gnome.desktop.default-applications.terminal exec-arg ''; fi
-			gsettings set org.gnome.desktop.interface font-name 'Candara 11'
-			gsettings set org.gnome.desktop.interface document-font-name 'Candara 11'
-			gsettings set org.gnome.desktop.interface monospace-font-name 'InconsolataNerdFont 12'
-			
-			# Apply Wallpaper natively for GNOME
-			if [ -f "$WALLPAPER_PATH" ]; then
-				print_info "Applying wallpaper via GNOME gsettings..."
-				gsettings set org.gnome.desktop.background picture-uri "file://$WALLPAPER_PATH"
-				gsettings set org.gnome.desktop.background picture-uri-dark "file://$WALLPAPER_PATH"
-			else
-				print_warning "Wallpaper file not found at $WALLPAPER_PATH"
-			fi
-			
-			print_info "GNOME settings updated."
-		else print_warning "gsettings not found."; fi ;;
-	*kde*|*plasma*)
-		print_info "Configuring KDE..."
-		if command -v kwriteconfig5 >/dev/null 2>&1; then
-			if [ "$KITTY_AVAILABLE" = true ]; then kwriteconfig5 --file kdeglobals --group General --key TerminalApplication kitty; kwriteconfig5 --file ~/.config/kdedefaults/kdeglobals --group General --key TerminalApplication kitty; fi
-			
-			# Apply Wallpaper natively for KDE Plasma
-			if [ -f "$WALLPAPER_PATH" ] && command -v plasma-apply-wallpaperimage >/dev/null 2>&1; then
-				print_info "Applying wallpaper via KDE plasma-apply-wallpaperimage..."
-				plasma-apply-wallpaperimage "$WALLPAPER_PATH"
-			elif [ ! -f "$WALLPAPER_PATH" ]; then
-				print_warning "Wallpaper file not found at $WALLPAPER_PATH"
-			fi
-			
-			print_info "KDE settings updated."
-		else print_warning "kwriteconfig5 not found."; fi ;;
-	*xfce*)
-		print_info "Configuring XFCE..."
-		if command -v xfconf-query >/dev/null 2>&1; then
-			if [ "$KITTY_AVAILABLE" = true ]; then
-				xfconf-query -c xfce4-session -p /sessions/Failsafe/Client0_Command -t string -s "kitty" --create
-				if command -v exo-open >/dev/null 2>&1; then
-					mkdir -p ~/.config/xfce4/helpers
-					echo -e "[Desktop Entry]\nNoDisplay=true\nVersion=1.0\nEncoding=UTF-8\nType=X-XFCE-Helper\nX-XFCE-Category=TerminalEmulator\nX-XFCE-CommandsWithParameter=kitty \"%s\"\nX-XFCE-Commands=kitty\nIcon=kitty\nName=kitty\nStartupNotify=true" > ~/.config/xfce4/helpers/kitty.desktop
-					xfconf-query -c xfce4-session -p /general/TerminalEmulator -s kitty --create -t string
-				fi
-			fi
-			xfconf-query -c xsettings -p /Gtk/FontName -s 'Candara 11' --create
-			xfconf-query -c xsettings -p /Gtk/MonospaceFontName -s 'InconsolataNerdFont 12' --create
-			
-			# Apply Wallpaper natively for XFCE
-			if [ -f "$WALLPAPER_PATH" ]; then
-				print_info "Applying wallpaper via XFCE xfconf-query..."
-				for property in $(xfconf-query -c xfce4-desktop -p /backdrop -l | grep -E "last-image$|image-path$"); do
-					xfconf-query -c xfce4-desktop -p "$property" -s "$WALLPAPER_PATH"
-				done
-			else
-				print_warning "Wallpaper file not found at $WALLPAPER_PATH"
-			fi
-			
-			print_info "XFCE settings updated."
-		else print_warning "xfconf-query not found."; fi ;;
-	*) 
-		print_info "Unknown or Standalone WM detected: $CURRENT_DE."
-		
-		# Universal feh fallback for bare window managers (i3, bspwm, etc)
-		if [ -f "$WALLPAPER_PATH" ]; then
-			if command -v feh >/dev/null 2>&1; then
-				print_info "Applying wallpaper via feh fallback..."
-				feh --bg-scale "$WALLPAPER_PATH"
-			else
-				print_warning "feh is not installed. Cannot set wallpaper for this environment."
-			fi
-		else
-			print_warning "Wallpaper file not found at $WALLPAPER_PATH"
-		fi
-		;;
+    *gnome*|*unity*)
+        print_info "Configuring GNOME..."
+        if command -v gsettings >/dev/null 2>&1; then
+            if [ "$KITTY_AVAILABLE" = true ]; then gsettings set org.gnome.desktop.default-applications.terminal exec 'kitty'; gsettings set org.gnome.desktop.default-applications.terminal exec-arg ''; fi
+            gsettings set org.gnome.desktop.interface font-name 'Candara 11'
+            gsettings set org.gnome.desktop.interface document-font-name 'Candara 11'
+            gsettings set org.gnome.desktop.interface monospace-font-name 'InconsolataNerdFont 12'
+            
+            # Apply Wallpaper natively for GNOME
+            if [ -f "$WALLPAPER_PATH" ]; then
+                print_info "Applying wallpaper via GNOME gsettings..."
+                gsettings set org.gnome.desktop.background picture-uri "file://$WALLPAPER_PATH"
+                gsettings set org.gnome.desktop.background picture-uri-dark "file://$WALLPAPER_PATH"
+            else
+                print_warning "Wallpaper file not found at $WALLPAPER_PATH"
+            fi
+            
+            print_info "GNOME settings updated."
+        else print_warning "gsettings not found."; fi ;;
+    *kde*|*plasma*)
+        print_info "Configuring KDE..."
+        # Determine if we are on Plasma 5 or Plasma 6
+        if command -v kwriteconfig6 >/dev/null 2>&1; then KWC="kwriteconfig6"
+        elif command -v kwriteconfig5 >/dev/null 2>&1; then KWC="kwriteconfig5"
+        else KWC=""; fi
+        
+        if [ -n "$KWC" ]; then
+            if [ "$KITTY_AVAILABLE" = true ]; then 
+                $KWC --file kdeglobals --group General --key TerminalApplication kitty
+                $KWC --file ~/.config/kdedefaults/kdeglobals --group General --key TerminalApplication kitty
+            fi
+            
+            # Apply Desktop UI and Terminal Fonts
+            print_info "Applying Candara and InconsolataNerdFont to KDE..."
+            $KWC --file kdeglobals --group General --key font "Candara,11,-1,5,50,0,0,0,0,0"
+            $KWC --file kdeglobals --group General --key menuFont "Candara,11,-1,5,50,0,0,0,0,0"
+            $KWC --file kdeglobals --group General --key toolBarFont "Candara,11,-1,5,50,0,0,0,0,0"
+            $KWC --file kdeglobals --group General --key fixed "InconsolataNerdFont,12,-1,5,50,0,0,0,0,0"
+            
+            # Apply Wallpaper natively for KDE Plasma
+            if [ -f "$WALLPAPER_PATH" ] && command -v plasma-apply-wallpaperimage >/dev/null 2>&1; then
+                print_info "Applying wallpaper via KDE plasma-apply-wallpaperimage..."
+                plasma-apply-wallpaperimage "$WALLPAPER_PATH"
+            elif [ ! -f "$WALLPAPER_PATH" ]; then
+                print_warning "Wallpaper file not found at $WALLPAPER_PATH"
+            fi
+            
+            print_info "KDE settings updated."
+        else print_warning "Neither kwriteconfig5 nor kwriteconfig6 found."; fi ;;
+    *xfce*)
+        print_info "Configuring XFCE..."
+        if command -v xfconf-query >/dev/null 2>&1; then
+            if [ "$KITTY_AVAILABLE" = true ]; then
+                xfconf-query -c xfce4-session -p /sessions/Failsafe/Client0_Command -t string -s "kitty" --create
+                if command -v exo-open >/dev/null 2>&1; then
+                    mkdir -p ~/.config/xfce4/helpers
+                    echo -e "[Desktop Entry]\nNoDisplay=true\nVersion=1.0\nEncoding=UTF-8\nType=X-XFCE-Helper\nX-XFCE-Category=TerminalEmulator\nX-XFCE-CommandsWithParameter=kitty \"%s\"\nX-XFCE-Commands=kitty\nIcon=kitty\nName=kitty\nStartupNotify=true" > ~/.config/xfce4/helpers/kitty.desktop
+                    xfconf-query -c xfce4-session -p /general/TerminalEmulator -s kitty --create -t string
+                fi
+            fi
+            xfconf-query -c xsettings -p /Gtk/FontName -s 'Candara 11' --create
+            xfconf-query -c xsettings -p /Gtk/MonospaceFontName -s 'InconsolataNerdFont 12' --create
+            
+            # Apply Wallpaper natively for XFCE
+            if [ -f "$WALLPAPER_PATH" ]; then
+                print_info "Applying wallpaper via XFCE xfconf-query..."
+                for property in $(xfconf-query -c xfce4-desktop -p /backdrop -l | grep -E "last-image$|image-path$"); do
+                    xfconf-query -c xfce4-desktop -p "$property" -s "$WALLPAPER_PATH"
+                done
+            else
+                print_warning "Wallpaper file not found at $WALLPAPER_PATH"
+            fi
+            
+            print_info "XFCE settings updated."
+        else print_warning "xfconf-query not found."; fi ;;
+    *) 
+        print_info "Unknown or Standalone WM detected: $CURRENT_DE."
+        
+        # Universal feh fallback for bare window managers (i3, bspwm, etc)
+        if [ -f "$WALLPAPER_PATH" ]; then
+            if command -v feh >/dev/null 2>&1; then
+                print_info "Applying wallpaper via feh fallback..."
+                feh --bg-scale "$WALLPAPER_PATH"
+            else
+                print_warning "feh is not installed. Cannot set wallpaper for this environment."
+            fi
+        else
+            print_warning "Wallpaper file not found at $WALLPAPER_PATH"
+        fi
+        ;;
 esac
 
 if [ -f /etc/debian_version ] && command -v update-alternatives >/dev/null 2>&1; then
-	if [ "$EUID" -ne 0 ] && ! sudo -n true >/dev/null 2>&1; then print_warning "Not root. Skipping update-alternatives."
-	elif [ "$KITTY_AVAILABLE" = true ]; then print_info "Setting Debian alternatives priority..."; sudo update-alternatives --install /usr/bin/x-terminal-emulator x-terminal-emulator "$(which kitty)" 50; fi
+    if [ "$EUID" -ne 0 ] && ! sudo -n true >/dev/null 2>&1; then print_warning "Not root. Skipping update-alternatives."
+    elif [ "$KITTY_AVAILABLE" = true ]; then print_info "Setting Debian alternatives priority..."; sudo update-alternatives --install /usr/bin/x-terminal-emulator x-terminal-emulator "$(which kitty)" 50; fi
 fi
 exit 0

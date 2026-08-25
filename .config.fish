@@ -148,28 +148,57 @@ function compile
 end
 
 function extract
-	if not command -v bsdtar > /dev/null
-		echo "extract: bsdtar (libarchive) is not installed." >&2
-		return 1
-	end
 	for i in $argv
-		switch "$i"
-			case '*.tar.bz2' '*.tar.gz' '*.tar.xz' '*.tbz2' '*.tgz' '*.txz' '*.tar'
-				bsdtar xvf "$i"
-			case '*.zip'
-				unzip "$i"
-			case '*.rar'
-				unrar x "$i"
-			case '*.7z'
-				7z x "$i"
-			case '*.gz'
-				gunzip "$i"
-			case '*.xz'
-				unxz "$i"
-			case '*.zst'
-				unzstd "$i"
-			case '*'
-				echo "extract: Skipped '$i' (unknown extension)." >&2
+		if not test -f "$i"
+			echo "extract: File '$i' does not exist." >&2
+			continue
+		end
+
+		if command -v bsdtar > /dev/null
+			switch "$i"
+				case '*.tar.bz2' '*.tar.gz' '*.tar.xz' '*.tbz2' '*.tgz' '*.txz' '*.tar'
+					bsdtar xvf "$i"
+				case '*.zip'
+					unzip "$i"
+				case '*.rar'
+					unrar x "$i"
+				case '*.7z'
+					7z x "$i"
+				case '*.gz'
+					gunzip "$i"
+				case '*.xz'
+					unxz "$i"
+				case '*.zst'
+					unzstd "$i"
+				case '*'
+					echo "extract: Skipped '$i' (unknown extension)." >&2
+			end
+		else
+			# Fallback to standard native tools if bsdtar is missing
+			switch "$i"
+				case '*.tar.bz2' '*.tbz2'
+					tar xvjf "$i"
+				case '*.tar.gz' '*.tgz'
+					tar xvzf "$i"
+				case '*.tar.xz' '*.txz'
+					tar xvJf "$i"
+				case '*.tar'
+					tar xvf "$i"
+				case '*.zip'
+					unzip "$i"
+				case '*.rar'
+					unrar x "$i"
+				case '*.7z'
+					7z x "$i"
+				case '*.gz'
+					gunzip "$i"
+				case '*.xz'
+					unxz "$i"
+				case '*.zst'
+					unzstd "$i"
+				case '*'
+					echo "extract: Skipped '$i' (unknown extension or missing tool)." >&2
+			end
 		end
 	end
 end

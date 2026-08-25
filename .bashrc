@@ -91,8 +91,9 @@ _bash_prompt_command() {
 	PS1="\[\e[0;36m\][${SERVICE_USER}@\h${abbr_path}]\[\e[0m\]\[\e[0;35m\]${git_info}\[\e[0m\]> "
 }
 
-# Use PROMPT_COMMAND to evaluate the prompt variables before drawing
-PROMPT_COMMAND=_bash_prompt_command
+# Use PROMPT_COMMAND to evaluate the prompt variables before drawing,
+# safely prepending to preserve OS-level VTE or title integrations.
+PROMPT_COMMAND="_bash_prompt_command${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
 
 # --- Bash Specific Options ---
 shopt -s extglob

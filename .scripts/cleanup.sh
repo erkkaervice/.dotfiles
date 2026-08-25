@@ -110,13 +110,14 @@ then
 			sudo journalctl --vacuum-size=2G
 		}
 		
+		# Changed -atime to -mtime to protect active files on noatime mounts
 		[ -d "/tmp" ] && {
 			echo "Cleaning global /tmp (files older than 7 days)..."
-			sudo find /tmp -type f -atime +7 -delete 2>/dev/null
+			sudo find /tmp -type f -mtime +7 -delete 2>/dev/null
 		}
 		[ -d "/var/tmp" ] && {
 			echo "Cleaning global /var/tmp (files older than 7 days)..."
-			sudo find /var/tmp -type f -atime +7 -delete 2>/dev/null
+			sudo find /var/tmp -type f -mtime +7 -delete 2>/dev/null
 		}
 	fi
 	

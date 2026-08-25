@@ -37,7 +37,7 @@ rm -rf ~/.local/share/applications/kitty.desktop
 rm -f "$HOME/.local/bin/nvim"
 
 rm -f "$HOME/.dotfiles_initialized_$(id -u)"
-rm -f "$HOME/.dotfiles-path" # (C3) Remove path file
+rm -f "$HOME/.dotfiles-path" 
 
 echo "3. Creating temporary recovery files to prevent Zsh/Bash wizard..."
 
@@ -61,9 +61,13 @@ cp "$HOME/.bashrc" "$HOME/.zshrc"
 
 
 echo "--- ENVIRONMENT RESET. Starting fresh session. ---"
-BASH_PATH=/bin/bash
+# Dynamically locate the correct Bash executable path
+BASH_PATH=$(command -v bash)
+[ -z "$BASH_PATH" ] && BASH_PATH="/bin/sh"
+
 if [ -f /data/data/com.termux/files/usr/bin/bash ];
 then
 	BASH_PATH=/data/data/com.termux/files/usr/bin/bash
 fi
+
 exec $BASH_PATH --login

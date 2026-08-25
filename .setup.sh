@@ -88,7 +88,7 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
             ;;
         fedora|rhel|centos)
             print_info "Installing packages for Fedora family..."
-            for pkg in curl git fish unzip p7zip p7zip-plugins unrar zstd fzf bat fd-find ripgrep zoxide kitty levien-inconsolata-fonts fontconfig nmap gnupg lynis tcpdump bind-utils libarchive jq tmux neovim direnv; do
+            for pkg in curl git fish unzip p7zip p7zip-plugins unrar zstd fzf bat fd-find ripgrep zoxide kitty levien-inconsolata-fonts fontconfig nmap gnupg lynis tcpdump bind-utils bsdtar jq tmux neovim direnv; do
                 sudo dnf install -y "$pkg" || { INSTALL_FAILED=true; print_error "Failed to install $pkg"; }
             done
             ;;
@@ -102,7 +102,7 @@ if [ "$CAN_INSTALL_PACKAGES" = true ]; then
         alpine)
             print_info "Installing packages for Alpine..."
             sudo apk update
-            for pkg in curl git fish unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-tools libarchive jq tmux neovim direnv zsh-vcs; do
+            for pkg in curl git fish unzip p7zip unrar zstd fzf bat fd ripgrep zoxide kitty font-inconsolata fontconfig nmap gnupg trivy gitleaks lynis tcpdump gcc bind-tools libarchive-tools jq tmux neovim direnv zsh-vcs; do
                 sudo apk add "$pkg" || { INSTALL_FAILED=true; print_error "Failed to install $pkg"; }
             done
             ;;
@@ -165,7 +165,17 @@ if [ "$IS_TERMUX" = false ]; then
         if ! command -v fzf >/dev/null 2>&1; then print_info "Fallback: FZF..."; git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf; ~/.fzf/install --all --no-bash --no-zsh --no-fish; ln -sf "$HOME/.fzf/bin/fzf" "$HOME/.local/bin/fzf"; fi
     fi
 
-    # 2. Kitty Desktop Integration
+    # 4. Neovim Flatpak Wrapper (For Git subprocess integration)
+    if ! command -v nvim >/dev/null 2>&1 && command -v flatpak >/dev/null 2>&1; then
+        if flatpak list --app 2>/dev/null | grep -q io.neovim.nvim; then
+            print_info "Creating local wrapper for Flatpak Neovim..."
+            echo '#!/bin/sh' > "$HOME/.local/bin/nvim"
+            echo 'exec flatpak run io.neovim.nvim "$@"' >> "$HOME/.local/bin/nvim"
+            chmod +x "$HOME/.local/bin/nvim"
+        fi
+    fi
+
+    # 5. Kitty Desktop Integration
     if [ -d "$HOME/.local/kitty.app" ]; then
         mkdir -p "$HOME/.local/share/applications"; DESKTOP_FILE="$HOME/.local/share/applications/kitty.desktop"
         if [ ! -f "$DESKTOP_FILE" ] || ! grep -q "Exec=$HOME/.local/bin/kitty" "$DESKTOP_FILE"; then
@@ -237,6 +247,7 @@ print_info "Linked .gitconfig and .gitignore_global."
 mkdir -p "$HOME/.config/fish"; ln -sf "$DOTFILES_DIR/.config.fish" "$HOME/.config/fish/config.fish"
 mkdir -p "$HOME/.config/nvim"; ln -sf "$DOTFILES_DIR/.init.vim" "$HOME/.config/nvim/init.vim"
 mkdir -p "$HOME/.var/app/io.neovim.nvim/config/nvim"; ln -sf "$DOTFILES_DIR/.init.vim" "$HOME/.var/app/io.neovim.nvim/config/nvim/init.vim"
+ln -sf "$DOTFILES_DIR/.init.vim" "$HOME/.vimrc"
 ln -sf "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
 
 touch "$HOME/.gitconfig_local"

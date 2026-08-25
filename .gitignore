@@ -24,14 +24,11 @@ ehthumbs.db
 # Emacs
 #*#
 .*.elc
-# VS Code
-.vscode/
 
 # --- Language/Tool Cache ---
 __pycache__/
 *.pyc
 *.pyo
-.python-version
 
 # Node.js
 node_modules/

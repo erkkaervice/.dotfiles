@@ -26,7 +26,7 @@ then
 fi
 if [ -n "$ZSH_VERSION" ];
 then
-	# include .zshrc if it
+	# include .zshrc if it exists
 	if [ -f "$HOME/.zshrc" ];
 	then
 		# Zsh should automatically source .zshrc for interactive login shells

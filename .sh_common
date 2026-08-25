@@ -69,8 +69,8 @@ fi
 # Fallback alias for neovim (uses Flatpak if nvim is not in PATH)
 if ! command -v nvim >/dev/null 2>&1 && command -v flatpak >/dev/null 2>&1
 then
-	# Prevent blind alias trap by checking if it's actually installed
-	if flatpak list --app 2>/dev/null | grep -q io.neovim.nvim
+	# Zero-cost check: verify the app directory exists system-wide or user-wide
+	if [ -d "/var/lib/flatpak/app/io.neovim.nvim" ] || [ -d "$HOME/.local/share/flatpak/app/io.neovim.nvim" ]
 	then
 		alias nvim='flatpak run io.neovim.nvim'
 	fi
@@ -79,8 +79,7 @@ fi
 # Fallback alias for VS Code (uses Flatpak)
 if command -v flatpak >/dev/null 2>&1
 then
-	# We check if the flatpak package exists before aliasing
-	if flatpak list --app 2>/dev/null | grep -q com.visualstudio.code
+	if [ -d "/var/lib/flatpak/app/com.visualstudio.code" ] || [ -d "$HOME/.local/share/flatpak/app/com.visualstudio.code" ]
 	then
 		alias code='flatpak run com.visualstudio.code'
 	fi

@@ -79,14 +79,16 @@ if command -v rg > /dev/null
 end
 
 if command -v flatpak > /dev/null
-	if flatpak list --app 2>/dev/null | grep -q com.visualstudio.code
+	if test -d "/var/lib/flatpak/app/com.visualstudio.code"; or test -d "$HOME/.local/share/flatpak/app/com.visualstudio.code"
 		alias code='flatpak run com.visualstudio.code'
 	end
 end
 
 # Fallback alias for neovim (uses Flatpak if nvim is not in PATH)
 if not command -v nvim > /dev/null; and command -v flatpak > /dev/null
-	alias nvim='flatpak run io.neovim.nvim'
+	if test -d "/var/lib/flatpak/app/io.neovim.nvim"; or test -d "$HOME/.local/share/flatpak/app/io.neovim.nvim"
+		alias nvim='flatpak run io.neovim.nvim'
+	end
 end
 
 # --- Functions ---

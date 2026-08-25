@@ -79,10 +79,20 @@ _bash_custom_git_prompt() {
 	fi
 }
 
-
 # --- Bash Git-Aware Prompt ---
-# Format: [user@host abbr_dir](git-info)>
-PS1='\e[0;36m[$(service_user)@\h$(_bash_abbreviate_path)]\e[0m\e[0;35m$(_bash_custom_git_prompt)\e[0m> '
+# Fetch service user once at initialization to save CPU cycles
+SERVICE_USER=$(service_user 2>/dev/null || echo "ervice")
+
+_bash_prompt_command() {
+	local abbr_path=$(_bash_abbreviate_path)
+	local git_info=$(_bash_custom_git_prompt)
+	
+	# Wrap ANSI color codes in \[ \] to prevent visual line-wrapping bugs
+	PS1="\[\e[0;36m\][${SERVICE_USER}@\h${abbr_path}]\[\e[0m\]\[\e[0;35m\]${git_info}\[\e[0m\]> "
+}
+
+# Use PROMPT_COMMAND to evaluate the prompt variables before drawing
+PROMPT_COMMAND=_bash_prompt_command
 
 # --- Bash Specific Options ---
 shopt -s extglob

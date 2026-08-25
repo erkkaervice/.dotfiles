@@ -275,7 +275,8 @@ end
 
 # --- Auto-configure Git GPG Signing ---
 if command -v git > /dev/null; and test -n "$GPG_SIGNING_KEY"
-	if test "(git config --global user.signingkey)" != "$GPG_SIGNING_KEY"
+	# Removed quotes around the command substitution so it evaluates properly
+	if test (git config --global user.signingkey 2>/dev/null) != "$GPG_SIGNING_KEY"
 		git config --global user.signingkey "$GPG_SIGNING_KEY"
 		git config --global commit.gpgsign true
 		git config --global tag.gpgSign true

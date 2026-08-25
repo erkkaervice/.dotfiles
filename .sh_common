@@ -263,15 +263,16 @@ then
 fi
 
 # --- Init Integrations ---
-# Only load integrations if the shell is interactive
+
+# SSH Agent (Must be outside the interactive check so ~/.profile catches it for GUI logins)
+if [ -f "$HOME/.ssh_agent_init" ]
+then
+	. "$HOME/.ssh_agent_init"
+fi
+
+# Only load remaining integrations if the shell is interactive
 if [ -n "$PS1" ]
 then
-	# SSH Agent
-	if [ -f "$HOME/.ssh_agent_init" ]
-	then
-		. "$HOME/.ssh_agent_init"
-	fi
-
 	# Tmux
 	if [ -z "$VSCODE_RESOLVING_ENVIRONMENT" ]
 	then

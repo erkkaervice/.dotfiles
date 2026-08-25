@@ -93,8 +93,12 @@ precmd() {
     # Store path in a variable
     ABBREVIATED_WD=$(_zsh_abbreviate_path_manual)
 }
-# Use the variable in the prompt string
-PROMPT='%F{cyan}[$(service_user)@%m${ABBREVIATED_WD}]%f${vcs_info_msg_0_}> '
+
+# Fetch service user once at initialization to save CPU cycles
+SERVICE_USER=$(service_user 2>/dev/null || echo "ervice")
+
+# Use the static variable instead of a subshell function
+PROMPT='%F{cyan}[${SERVICE_USER}@%m${ABBREVIATED_WD}]%f${vcs_info_msg_0_}> '
 
 # --- Zsh Specific Options ---
 setopt EXTENDED_GLOB

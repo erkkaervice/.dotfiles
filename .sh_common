@@ -24,7 +24,14 @@ fi
 
 # --- Command Color Settings ---
 alias ls='ls --color=auto'
-alias grep='grep --color=auto'
+
+if command -v rg >/dev/null 2>&1
+then
+	alias grep='rg'
+else
+	alias grep='grep --color=auto'
+fi
+
 if command -v ip >/dev/null 2>&1
 then
 	alias ip='ip -color=auto'
@@ -61,7 +68,11 @@ fi
 # Fallback alias for neovim (uses Flatpak if nvim is not in PATH)
 if ! command -v nvim >/dev/null 2>&1 && command -v flatpak >/dev/null 2>&1
 then
-	alias nvim='flatpak run io.neovim.nvim'
+	# Prevent blind alias trap by checking if it's actually installed
+	if flatpak list --app 2>/dev/null | grep -q io.neovim.nvim
+	then
+		alias nvim='flatpak run io.neovim.nvim'
+	fi
 fi
 
 # Fallback alias for VS Code (uses Flatpak)
@@ -111,12 +122,6 @@ extractor()
 {
 	local c e i
 	
-	if ! command -v bsdtar >/dev/null 2>&1
-	then
-		echo "bsdtar (libarchive) is not installed." >&2
-		return 1
-	fi
-	
 	for i in "$@"
 	do
 		if [ ! -f "$i" ]
@@ -128,16 +133,34 @@ extractor()
 		c=0
 		e=0
 		
-		case "$i" in
-			*.tar.bz2|*.tar.gz|*.tar.xz|*.tbz2|*.tgz|*.txz|*.tar) bsdtar xvf "$i" || e=1 ;;
-			*.zip) unzip "$i" || e=1 ;;
-			*.rar) unrar x "$i" || e=1 ;;
-			*.7z) 7z x "$i" || e=1 ;;
-			*.gz) gunzip "$i" || e=1 ;;
-			*.xz) unxz "$i" || e=1 ;;
-			*.zst) unzstd "$i" || e=1 ;;
-			*) echo "extractor: Skipped '$i' (unknown extension)." >&2; c=1 ;;
-		esac
+		if command -v bsdtar >/dev/null 2>&1
+		then
+			case "$i" in
+				*.tar.bz2|*.tar.gz|*.tar.xz|*.tbz2|*.tgz|*.txz|*.tar) bsdtar xvf "$i" || e=1 ;;
+				*.zip) unzip "$i" || e=1 ;;
+				*.rar) unrar x "$i" || e=1 ;;
+				*.7z) 7z x "$i" || e=1 ;;
+				*.gz) gunzip "$i" || e=1 ;;
+				*.xz) unxz "$i" || e=1 ;;
+				*.zst) unzstd "$i" || e=1 ;;
+				*) echo "extractor: Skipped '$i' (unknown extension)." >&2; c=1 ;;
+			esac
+		else
+			# Fallback to standard native tools if bsdtar is missing
+			case "$i" in
+				*.tar.bz2|*.tbz2) tar xvjf "$i" || e=1 ;;
+				*.tar.gz|*.tgz) tar xvzf "$i" || e=1 ;;
+				*.tar.xz|*.txz) tar xvJf "$i" || e=1 ;;
+				*.tar) tar xvf "$i" || e=1 ;;
+				*.zip) unzip "$i" || e=1 ;;
+				*.rar) unrar x "$i" || e=1 ;;
+				*.7z) 7z x "$i" || e=1 ;;
+				*.gz) gunzip "$i" || e=1 ;;
+				*.xz) unxz "$i" || e=1 ;;
+				*.zst) unzstd "$i" || e=1 ;;
+				*) echo "extractor: Skipped '$i' (unknown extension or missing tool)." >&2; c=1 ;;
+			esac
+		fi
 		
 		if [ $e -eq 0 ] && [ $c -eq 0 ]
 		then
@@ -221,10 +244,10 @@ then
 fi
 
 # --- PATH Modifications (Secure Append) ---
-if [ -d "$HOME/.local/bin" ]
-then
-	export PATH="$PATH:$HOME/.local/bin"
-fi
+case ":$PATH:" in
+	*":$HOME/.local/bin:"*) ;;
+	*) [ -d "$HOME/.local/bin" ] && export PATH="$PATH:$HOME/.local/bin" ;;
+esac
 
 # --- Auto-configure Git GPG Signing ---
 if command -v git >/dev/null 2>&1 && [ -n "$GPG_SIGNING_KEY" ]
@@ -239,67 +262,68 @@ then
 fi
 
 # --- Init Integrations ---
-# SSH Agent
-if [[ $- == *i* ]]
+# Only load integrations if the shell is interactive
+if [[ $- == *i* ]] || [ -n "$PS1" ]
 then
+	# SSH Agent
 	if [ -f "$HOME/.ssh_agent_init" ]
 	then
 		. "$HOME/.ssh_agent_init"
 	fi
-fi
 
-# Updated: We only check if VSCODE_RESOLVING_ENVIRONMENT is set to avoid the probe
-if [ -n "$PS1" ] && [ -z "$VSCODE_RESOLVING_ENVIRONMENT" ]
-then
-	if command -v tmux >/dev/null 2>&1 && [ -z "$TMUX" ]
+	# Tmux
+	if [ -z "$VSCODE_RESOLVING_ENVIRONMENT" ]
 	then
-		if tmux has-session -t main 2>/dev/null
+		if command -v tmux >/dev/null 2>&1 && [ -z "$TMUX" ]
 		then
-			exec tmux attach-session -t main
-		else
-			exec tmux new-session -s main
+			if tmux has-session -t main 2>/dev/null
+			then
+				exec tmux attach-session -t main
+			else
+				exec tmux new-session -s main
+			fi
 		fi
 	fi
-fi
 
-# Direnv (loads .envrc files)
-if command -v direnv >/dev/null 2>&1
-then
-	if [ -n "$BASH_VERSION" ]
+	# Direnv (loads .envrc files)
+	if command -v direnv >/dev/null 2>&1
 	then
-		eval "$(direnv hook bash)"
-	elif [ -n "$ZSH_VERSION" ]
-	then
-		eval "$(direnv hook zsh)"
+		if [ -n "$BASH_VERSION" ]
+		then
+			eval "$(direnv hook bash)"
+		elif [ -n "$ZSH_VERSION" ]
+		then
+			eval "$(direnv hook zsh)"
+		fi
 	fi
-fi
 
-# Zoxide (Smart 'cd' replacement)
-if command -v zoxide >/dev/null 2>&1
-then
-	if [ -n "$BASH_VERSION" ]
+	# Zoxide (Smart 'cd' replacement)
+	if command -v zoxide >/dev/null 2>&1
 	then
-		eval "$(zoxide init bash)"
-	elif [ -n "$ZSH_VERSION" ]
-	then
-		eval "$(zoxide init zsh)"
+		if [ -n "$BASH_VERSION" ]
+		then
+			eval "$(zoxide init bash)"
+		elif [ -n "$ZSH_VERSION" ]
+		then
+			eval "$(zoxide init zsh)"
+		fi
 	fi
-fi
 
-# FZF (Keybindings)
-if [ -f "$HOME/.fzf.bash" ] && [ -n "$BASH_VERSION" ]
-then
-	. "$HOME/.fzf.bash"
-elif [ -f "$HOME/.fzf.zsh" ] && [ -n "$ZSH_VERSION" ]
-then
-	. "$HOME/.fzf.zsh"
-# Fallback for package manager installs
-elif [ -f /usr/share/fzf/key-bindings.bash ] && [ -n "$BASH_VERSION" ]
-then
-	. "/usr/share/fzf/key-bindings.bash"
-elif [ -f /usr/share/fzf/key-bindings.zsh ] && [ -n "$ZSH_VERSION" ]
-then
-	. "/usr/share/fzf/key-bindings.zsh"
+	# FZF (Keybindings)
+	if [ -f "$HOME/.fzf.bash" ] && [ -n "$BASH_VERSION" ]
+	then
+		. "$HOME/.fzf.bash"
+	elif [ -f "$HOME/.fzf.zsh" ] && [ -n "$ZSH_VERSION" ]
+	then
+		. "$HOME/.fzf.zsh"
+	# Fallback for package manager installs
+	elif [ -f /usr/share/fzf/key-bindings.bash ] && [ -n "$BASH_VERSION" ]
+	then
+		. "/usr/share/fzf/key-bindings.bash"
+	elif [ -f /usr/share/fzf/key-bindings.zsh ] && [ -n "$ZSH_VERSION" ]
+	then
+		. "/usr/share/fzf/key-bindings.zsh"
+	fi
 fi
 
 # --- VS Code Flatpak Shell Integration ---

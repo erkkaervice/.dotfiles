@@ -26,12 +26,15 @@ rm -f "$HOME/.ssh_agent_init"
 rm -rf ~/.config/fish
 rm -rf ~/.config/kitty
 rm -rf ~/.config/fontconfig
-rm -f "$HOME/.gitconfig" "$HOME/.gitignore_global"
+rm -f "$HOME/.gitconfig" "$HOME/.gitignore_global" "$HOME/.gitconfig_local"
+rm -f "$HOME/.tmux.conf" "$HOME/.vimrc"
+rm -rf "$HOME/.config/nvim" "$HOME/.var/app/io.neovim.nvim/config/nvim"
 
 echo "2. Removing local user applications..."
 rm -rf ~/.local/kitty.app
 rm -rf ~/.fzf
 rm -rf ~/.local/share/applications/kitty.desktop
+rm -f "$HOME/.local/bin/nvim"
 
 rm -f "$HOME/.dotfiles_initialized_$(id -u)"
 rm -f "$HOME/.dotfiles-path" # (C3) Remove path file

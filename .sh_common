@@ -1,26 +1,27 @@
 # Common Aliases, Functions, and Exports for Bash and Zsh
 
 # --- Auto-Refresh (Once per session) ---
-if [[ $- == *i* ]]
-then
-	if [ ! -f "$HOME/.dotfiles_initialized_$(id -u)" ]
-	then
-		if ! command -v zoxide >/dev/null 2>&1
+case "$-" in
+	*i*)
+		if [ ! -f "$HOME/.dotfiles_initialized_$(id -u)" ]
 		then
-			echo "[Auto-Setup] Essential tools missing. Running setup..."
-			local repo_path="$HOME/.dotfiles"
-			[ -f "$HOME/.dotfiles-path" ] && repo_path=$(cat "$HOME/.dotfiles-path")
-			SETUP_SCRIPT="$repo_path/.setup.sh"
-			if [ -f "$SETUP_SCRIPT" ]
+			if ! command -v zoxide >/dev/null 2>&1
 			then
-				bash "$SETUP_SCRIPT"
-			else
-				echo "[Auto-Setup] Error: Could not find .setup.sh"
+				echo "[Auto-Setup] Essential tools missing. Running setup..."
+				local repo_path="$HOME/.dotfiles"
+				[ -f "$HOME/.dotfiles-path" ] && repo_path=$(cat "$HOME/.dotfiles-path")
+				SETUP_SCRIPT="$repo_path/.setup.sh"
+				if [ -f "$SETUP_SCRIPT" ]
+				then
+					bash "$SETUP_SCRIPT"
+				else
+					echo "[Auto-Setup] Error: Could not find .setup.sh"
+				fi
 			fi
+			touch "$HOME/.dotfiles_initialized_$(id -u)"
 		fi
-		touch "$HOME/.dotfiles_initialized_$(id -u)"
-	fi
-fi
+		;;
+esac
 
 # --- Command Color Settings ---
 alias ls='ls --color=auto'
@@ -263,7 +264,7 @@ fi
 
 # --- Init Integrations ---
 # Only load integrations if the shell is interactive
-if [[ $- == *i* ]] || [ -n "$PS1" ]
+if [ -n "$PS1" ]
 then
 	# SSH Agent
 	if [ -f "$HOME/.ssh_agent_init" ]

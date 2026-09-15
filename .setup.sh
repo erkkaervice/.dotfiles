@@ -232,6 +232,8 @@ fi
 
 # --- Link Dotfiles ---
 print_info "Linking dotfiles..."
+mkdir -p "$HOME/.ssh"
+ln -sf "$DOTFILES_DIR/.ssh_config" "$HOME/.ssh/config"
 for f in .sh_common .profile .bashrc .zshrc .bash_logout .ssh_agent_init; do ln -sf "$DOTFILES_DIR/$f" "$HOME/$f"; done
 
 # Safely transition from symlink to include.path without infinite loops

@@ -1,0 +1,15 @@
+# -----------------------------------
+# Ervice (Default)
+# -----------------------------------
+Host github.com
+    HostName github.com
+    User erkkaervice
+    IdentityFile ~/.ssh/id_ed25519
+
+# -----------------------------------
+# FSE (Moodle Server)
+# -----------------------------------
+Host moodle.fsea.fi
+    HostName 204.168.187.111
+    User root
+    IdentityFile ~/.ssh/id_ed25519_fse

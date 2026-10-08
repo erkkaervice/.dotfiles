@@ -11,5 +11,5 @@ Host github.com
 # -----------------------------------
 Host moodle.fsea.fi
     HostName 204.168.187.111
-    User root
+    User erkka
     IdentityFile ~/.ssh/id_ed25519_fse
